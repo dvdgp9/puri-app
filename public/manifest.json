@@ -1,0 +1,32 @@
+{
+  "name": "Puri Ebone",
+  "short_name": "Puri",
+  "description": "Sistema de control de asistencia y gestión de actividades",
+  "start_url": "/index.php",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#23AAC5",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "orientation": "portrait",
+  "categories": ["utilities", "productivity"],
+  "prefer_related_applications": false
+} 

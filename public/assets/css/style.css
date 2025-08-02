@@ -1,0 +1,1196 @@
+/* Importar Montserrat de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #23AAC5;
+    --primary-dark: #1d8a9e;
+    --text-color: #333;
+    --background-light: #f5f5f5;
+    --white: #ffffff;
+    --error-color: #dc3545;
+    --success-color: #44ad5c;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+body {
+    background: var(--background-light);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    background: var(--white);
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+}
+
+.logo {
+    max-width: 200px;
+    height: auto;
+    margin-bottom: 1.5rem;
+}
+
+.subtitle {
+    display: block;
+    color: var(--text-color);
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+h1 {
+    color: var(--primary-color);
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.error-message {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: var(--error-color);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group {
+    text-align: left;
+    margin-bottom: 1rem;
+}
+
+label {
+    display: block;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+select, input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e1e1e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+select:focus, input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(35, 170, 197, 0.1);
+}
+
+button {
+    background: var(--primary-color);
+    color: var(--white);
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.container {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .container {
+        padding: 1.5rem;
+    }
+    
+    h1 {
+        font-size: 1.75rem;
+    }
+    
+    .logo {
+        max-width: 150px;
+    }
+}
+
+/* Estilos para listados de instalaciones/actividades */
+.list-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columnas de igual tamaño */
+    gap: 1rem;
+    width: 100%;
+    max-width: 1200px; /* Aumentado para acomodar 3 columnas */
+    margin: 2rem 0;
+    list-style: none; /* Quita los puntos de la lista */
+}
+
+.list-item {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5em;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    padding: 1.5rem;
+}
+
+.list-item .item-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9375rem;
+    font-weight: 500;
+}
+
+.list-item a:hover .item-title{
+    color: var(--secondary-color);
+}
+
+.list-item a {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-decoration: none;
+    width: 100%;
+}
+
+.item-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.item-actions a {
+    padding: 5px 10px;
+    border-radius: 50px;
+    text-decoration: none;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    border: none;
+    font-size: 0.875rem;
+}
+
+.edit-button {
+    background-color: #d1b594;
+    color: #222222;
+}
+
+.edit-button:hover {
+    background-color: #c1a584;
+    color: #222222;
+}
+
+.delete-button {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.delete-button:hover {
+    background-color: #d74c3c;
+    color: white;
+}
+
+.item-actions a i {
+    margin-right: 5px;
+}
+
+/* Para el formulario de añadir */
+.add-form {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-top: 2rem;
+    width: 100%;
+    max-width: 600px;
+}
+
+.add-form h2 {
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+}
+
+/* Ajuste responsive para tablets grandes */
+@media (max-width: 992px) {
+    .list-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Ajuste responsive para tablets pequeñas */
+@media (max-width: 768px) {
+    .list-container {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+    }
+    .item-actions {
+        flex-direction: column;
+        gap: 5px;
+        width: 30%;
+    }
+     .item-actions a{
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Ajuste responsive para móviles */
+@media (max-width: 576px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Ajustes para la tabla de asistencias */
+    .attendance-table {
+        font-size: 0.9rem;
+        margin: 1rem 0 0 0;
+    }
+
+    .attendance-table th,
+    .attendance-table td {
+        padding: 0.75rem;
+    }
+
+    /* Ajustes para los botones de asistencia */
+    .attendance-buttons {
+        flex-direction: row;
+        justify-content: center;
+        gap: 1.2rem;
+    }
+
+    .btn-attendance {
+        width: 44px; /* Tamaño fijo para cuadrados */
+        height: 44px; /* Tamaño fijo para cuadrados */
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Ocultar texto en móvil */
+    .btn-attendance span {
+        display: none;
+    }
+
+    /* Ajustar icono en móvil */
+    .btn-attendance::before {
+        font-size: 1.2rem;
+        margin: 0;
+        position: absolute;
+    }
+
+    /* Ajustes para el formulario */
+    .add-form {
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .add-form h2 {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    input, select {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    label {
+        font-size: 0.9rem;
+    }
+
+    button[type="submit"] {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .list-container {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+    }
+    
+    .list-item {
+        padding: 1rem;
+    }
+
+    .breadcrumbs {
+        font-size: 14px;
+        gap: 0.3rem;
+    }
+    
+    .breadcrumbs .separator {
+        margin: 0 0.15rem;
+    }
+
+    .date-container {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .date-picker-form {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Estilos para la tabla de asistencias */
+.attendance-table {
+    width: 100%;
+    max-width: 800px;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin: 1rem auto; /* Centrar la tabla */
+    font-family: 'Montserrat', sans-serif;
+}
+
+.attendance-table thead {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.attendance-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+}
+
+.attendance-table tbody tr:nth-child(even) {
+    background-color: rgba(35, 170, 197, 0.1); /* Color corporativo con opacidad */
+}
+
+.attendance-table tbody tr:nth-child(odd) {
+    background-color: var(--white);
+}
+
+.attendance-table td {
+    padding: 1rem;
+    border: none;
+}
+
+/* Botones de asistencia */
+.attendance-buttons {
+    display: flex;
+    gap: 1.2rem;
+}
+
+.btn-attendance {
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    opacity: 0.4;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-attendance.asiste {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.btn-attendance.no-asiste {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.btn-attendance.selected {
+    opacity: 1;
+    transform: scale(1.10);
+}
+
+/* Iconos para los botones */
+.btn-attendance::before {
+    font-size: 1.1rem;
+}
+
+.btn-attendance.asiste::before {
+    content: "✓";
+}
+
+.btn-attendance.no-asiste::before {
+    content: "✕";
+}
+
+/* Estilos para el menú modal */
+.menu-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 3em;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3sease;
+    margin-bottom: 20px;
+}
+
+.menu-button:hover {
+    background-color: var(--primary-dark);
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-backdrop.show {
+    opacity: 1;
+    display: flex;
+}
+
+.modal {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-backdrop.show .modal {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.modal h3 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+}
+
+.nav-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.nav-item {
+    padding: 12px;
+    background: var(--background-light);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-item:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateX(5px);
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-color);
+    padding: 5px;
+}
+
+/* Ajuste responsive */
+@media (max-width: 768px) {
+    body {
+        padding-top: 70px; /* Espacio para el botón fijo */
+    }
+
+    .menu-button {
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 999; /* Por debajo del modal pero por encima del resto */
+        margin-bottom: 0;
+        font-size: 0.9rem; /* Ligeramente más pequeño en móvil */
+        padding: 8px 15px; /* Padding más compacto */
+    }
+
+    h1 {
+        margin-top: 20px; /* Añadir espacio después del botón fijo */
+        font-size: 1.5rem; /* Título más pequeño en móvil */
+    }
+
+    /* Ajustar el modal para móviles */
+    .modal {
+        margin-top: 60px; /* Dar espacio para que no se solape con el botón */
+        width: 85%; /* Un poco más estrecho en móvil */
+        max-height: calc(100vh - 100px); /* Altura máxima para evitar que se salga de la pantalla */
+        overflow-y: auto; /* Permitir scroll si el contenido es muy largo */
+    }
+
+    .nav-list {
+        padding: 10px 0; /* Reducir padding vertical */
+    }
+
+    .nav-item {
+        padding: 12px 15px; /* Hacer los items del menú más fáciles de tocar */
+        font-size: 0.95rem; /* Texto ligeramente más pequeño */
+    }
+}
+
+/* Estilos generales para los items de la lista */
+.list-item {
+    background-color: #ffffff;
+    border: 1px solid #23AAC5;
+    padding: 15px;
+    border-radius: 10px;
+    transition: background-color 0.3sease, transform 0.3sease, box-shadow 0.3sease;
+}
+
+/* Estilo para el título y hover específico */
+.list-item .item-title {
+    color: #333333; /* Tu color primario */
+    transition: color 0.3s ease;
+    display: inline-block; /* Para que el hover solo afecte al texto */
+    font-weight: 400;  /* Añadido font-weight */
+}
+
+.list-item:hover{
+    background-color: #f9f9f9;
+}
+
+.list-item a:hover .item-title{
+    color: var(--primary-color); /* O el color que desees al hacer hover */
+}
+
+.list-item a {
+  display: flex;
+  flex-direction: column; /* Cambiamos a columna para el margen */
+  align-items: flex-start; /* Alineamos al inicio */
+  text-decoration: none; /* Quitar subrayado del enlace */
+  width: 100%;
+}
+
+/* Contenedor para los botones de acción */
+.item-actions {
+    display: flex; /* Alinear horizontalmente */
+    gap: 10px; /* Espacio entre los botones */
+    align-items: center; /* Centrar verticalmente */
+}
+
+/* Botón de opciones (tres puntos) */
+.options-button {
+    background-color: transparent; /* Fondo transparente */
+    border: none;
+    font-size: 1.2rem; /* Tamaño de los puntos */
+    color: #666; /* Color de los puntos */
+    cursor: pointer;
+    padding: 5px; /* Algo de padding */
+    border-radius: 45%; /* Para que sea circular */
+}
+
+.options-button:hover,
+.options-button:focus { /* Mejor para accesibilidad */
+    background-color: rgba(0, 0, 0, 0.1); /* Fondo ligero al hacer hover/focus */
+    color: #333; /* Color más oscuro */
+    outline: none; /* Quita el outline por defecto en focus */
+}
+
+/* Modal de opciones */
+.options-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.options-modal .modal {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    max-width: 300px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    transform: translateY(0); /* Asegura que no haya transformación inicial */
+    transition: transform 0.3s ease; /* Suaviza cualquier cambio */
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    padding: 5px;
+    line-height: 1;
+    transition: color 0.3s ease;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.modal-options a {
+    width: 100%;
+    justify-content: center;
+    text-decoration: none; /* Quitar subrayado */
+    display: flex; /* Para centrar el contenido */
+    align-items: center; /* Centrar verticalmente */
+}
+
+/* Estilos para los botones dentro del modal (reusamos estilos) */
+.modal-options .edit-button,
+.modal-options .delete-button {
+    padding: 10px 15px; /* Más padding */
+    border-radius: 5px; /* Bordes redondeados, no circulares */
+    /* Resto de estilos (colores) se heredan de las clases .edit-button y .delete-button */
+}
+
+/* Botón de editar */
+.edit-button {
+    background-color: #d1b594; /* Crema */
+    color: #222222; /* Texto oscuro */
+    border-radius: 5px;
+}
+
+.edit-button:hover {
+    background-color: #c1a584; /* Crema más oscuro en hover */
+    color: #222222;
+}
+
+/* Botón de borrar */
+.delete-button {
+    background-color: #e74c3c; /* Rojo */
+    color: white;
+    border-radius: 5px;
+}
+
+.delete-button:hover {
+    background-color: #d74c3c; /* Rojo más oscuro en hover */
+    color: white;
+}
+
+/* Estilos para los iconos (Font Awesome) */
+.item-actions a i {
+    margin-right: 5px; /* Espacio entre icono y texto */
+}
+
+/* Ajustes responsive (mantenemos lo que tenías y ajustamos) */
+
+/* Tablets */
+@media (max-width: 992px) {
+    .list-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Móviles */
+@media (max-width: 768px) {
+    .list-container {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+    }
+    /* Ajuste para los botones en pantallas pequeñas */
+    .item-actions {
+        flex-direction: column; /* Apilar verticalmente */
+        gap: 5px; /* Reducir espacio */
+        width: 30%;
+    }
+     .item-actions a{
+        width: 100%;
+        justify-content: center;
+    }
+    .options-button{
+        width: fit-content;
+    }
+}
+
+.item-title-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+/* Añadir margen al botón de confirmar asistencia */
+.confirm-attendance-button {
+    margin-bottom: 20px;
+}
+
+/* Barra inferior */
+.bottom-bar {
+    width: 100%;
+    background-color: var(--primary-color);
+    padding: 5px;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+
+.excel-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+.excel-button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    margin: 0;
+}
+
+.excel-button label {
+    margin: 0;
+    padding: 0;
+}
+
+.excel-button:hover {
+    color: #e0e0e0;
+}
+
+@media (max-width: 768px) {
+    .excel-buttons {
+        justify-content: center;
+    }
+}
+
+/* Contenedor principal de la página de instalaciones */
+.content-wrapper {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.content-container {
+    width: 100%;
+    background: white;
+    padding: 2rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5em;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.content-container h1 {
+    text-align: left;
+    margin-bottom: 0.5rem;
+}
+
+.center-name {
+    display: block;
+    margin-bottom: 2rem;
+    color: var(--text-color);
+}
+
+/* Botón de crear nueva instalación */
+.create-button {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #23AAC5;
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #23AAC5;
+    border-radius: 3em;
+    background: white;
+    transition: all 0.2sease;
+}
+
+.create-button:hover {
+    color: #666666;
+    border-color: #cccccc;
+}
+
+.date-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.date-display {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 500;
+    gap: 0.5rem;
+}
+
+.date-display i {
+    color: var(--primary-color);
+}
+
+.date-picker-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.date-picker-form input[type="date"] {
+    padding: 8px 16px;
+    border: 1px solid var(--primary-color);
+    border-radius: 50px;
+    font-family: 'Montserrat', sans-serif;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: transparent;
+}
+
+.date-picker-form input[type="date"]:hover {
+    background-color: rgba(35, 170, 197, 0.1);
+}
+
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 14px;
+    color: var(--text-color);
+    flex-wrap: wrap;
+    line-height: 1.2;
+}
+
+.breadcrumbs a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+}
+
+.breadcrumbs a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+.breadcrumbs .separator {
+    color: #666;
+    margin: 0 0.25rem;
+    white-space: nowrap;
+}
+
+.breadcrumbs .current {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+/* Sistema unificado de botones */
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    border: 1px solid transparent;
+}
+
+.button i {
+    font-size: 0.9em;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+/* Variantes de botones */
+.btn-primary {
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-cancel {
+    background: #f5f5f5;
+    color: var(--text-color);
+    border-color: #e1e1e1;
+}
+
+.btn-cancel:hover {
+    background: #e9e9e9;
+    color: var(--text-color);
+    transform: translateY(-1px);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline:hover {
+    background: var(--primary-color);
+    color: var(--white);
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background: var(--error-color);
+    color: var(--white);
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
+.btn-edit {
+    background: #d1b594;
+    color: #222222;
+}
+
+.btn-edit:hover {
+    background: #c1a584;
+    transform: translateY(-1px);
+}
+
+/* Tamaños de botones */
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 0.875rem;
+}
+
+.btn-lg {
+    padding: 16px 32px;
+    font-size: 1.125rem;
+}
+
+/* Botón con borde redondeado */
+.btn-rounded {
+    border-radius: 50px;
+}
+
+/* Estilos para las tarjetas de actividades */
+.activity-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.activity-name {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.activity-name i,
+.activity-schedule i {
+    color: var(--primary-color);
+    font-size: 0.8em;
+    width: 1.2em;
+    text-align: center;
+}
+
+.activity-schedule {
+    font-size: 0.9rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Estilos para secciones de actividades */
+.section-title {
+  margin-top: 30px;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.empty-message {
+  color: #666;
+  font-style: italic;
+  margin: 20px 0;
+}
+
+/* Estilos para actividades finalizadas */
+.finished-activities .list-item {
+  opacity: 0.8;
+  background-color: #f9f9f9;
+}
+
+.finished-activities .activity-name i {
+  color: #999;
+}
+
+.activity-dates {
+  margin-top: 5px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.activity-dates i {
+  margin-right: 5px;
+  color: #666;
+}
+
+/* Estilos para los nuevos componentes de selección de días y horas */
+.days-selector {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.days-selector label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  font-weight: normal;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.days-selector label:hover {
+  background-color: #e9ecef;
+}
+
+.days-selector input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+/* Estilos responsivos para los selectores */
+@media (max-width: 768px) {
+  .days-selector {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .days-selector {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Estilos para el campo de horario oculto */
+#horario {
+  display: none;
+}
