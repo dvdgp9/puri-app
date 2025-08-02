@@ -18,16 +18,26 @@ if (!$actividad) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = filter_input(INPUT_POST, 'nombre', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $horario = filter_input(INPUT_POST, 'horario', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    // Procesar días de la semana
+    $dias_semana = isset($_POST['dias_semana']) ? implode(',', $_POST['dias_semana']) : '';
+    $hora_inicio = filter_input(INPUT_POST, 'hora_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $hora_fin = filter_input(INPUT_POST, 'hora_fin', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $instalacion_id = filter_input(INPUT_POST, 'instalacion_id', FILTER_VALIDATE_INT); // IMPORTANT
+    
+    // Mantener compatibilidad con campo legacy
+    $horario = '';
+    if (!empty($dias_semana) && !empty($hora_inicio) && !empty($hora_fin)) {
+        $horario = "$dias_semana $hora_inicio-$hora_fin";
+    }
+    
     $fecha_inicio = filter_input(INPUT_POST, 'fecha_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $fecha_fin = filter_input(INPUT_POST, 'fecha_fin', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    if (empty($nombre) || empty($horario) || !$instalacion_id || empty($fecha_inicio)) {
-        $error = "El nombre, el horario, la instalación y la fecha de inicio son obligatorios.";
+    if (empty($nombre) || (empty($dias_semana) && empty($_POST['horario'])) || !$instalacion_id || empty($fecha_inicio)) {
+        $error = "El nombre, los días de la semana, la instalación y la fecha de inicio son obligatorios.";
     } else {
-        $stmt = $pdo->prepare("UPDATE actividades SET nombre = ?, horario = ?, instalacion_id = ?, fecha_inicio = ?, fecha_fin = ? WHERE id = ?");
-        $result = $stmt->execute([$nombre, $horario, $instalacion_id, $fecha_inicio, $fecha_fin ?: null, $id]);
+        $stmt = $pdo->prepare("UPDATE actividades SET nombre = ?, horario = ?, dias_semana = ?, hora_inicio = ?, hora_fin = ?, instalacion_id = ?, fecha_inicio = ?, fecha_fin = ? WHERE id = ?");
+        $result = $stmt->execute([$nombre, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null, $id]);
 
         if ($result) {
              // Redirigir a la lista de actividades, *incluyendo el instalacion_id*
@@ -58,8 +68,54 @@ require_once 'includes/header.php';
         <label for="nombre">Nombre:</label>
         <input type="text" id="nombre" name="nombre" value="<?php echo htmlspecialchars($actividad['nombre']); ?>" required>
         <br>
-        <label for="horario">Horario:</label>
-        <input type="text" id="horario" name="horario" value="<?php echo htmlspecialchars($actividad['horario']); ?>" required>
+        <!-- Selector de días de la semana -->
+        <label>
+            <i class="fas fa-calendar-days"></i> Días de la semana
+        </label>
+        <div class="checkbox-group">
+            <?php 
+            // Convertir el valor de dias_semana en un array
+            $dias_seleccionados = !empty($actividad['dias_semana']) ? 
+                                  explode(',', $actividad['dias_semana']) : [];
+            $dias_semana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+            
+            foreach ($dias_semana as $dia): 
+            ?>
+                <label class="checkbox-inline">
+                    <input type="checkbox" 
+                           name="dias_semana[]" 
+                           value="<?php echo $dia; ?>" 
+                           <?php echo in_array($dia, $dias_seleccionados) ? 'checked' : ''; ?>>
+                    <?php echo $dia; ?>
+                </label>
+            <?php endforeach; ?>
+        </div>
+        <br>
+
+        <!-- Selectores de hora de inicio y fin -->
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="hora_inicio">
+                    <i class="fas fa-clock"></i> Hora de inicio
+                </label>
+                <input type="time" 
+                       id="hora_inicio" 
+                       name="hora_inicio" 
+                       required
+                       value="<?php echo htmlspecialchars($actividad['hora_inicio'] ?? ''); ?>">
+            </div>
+            
+            <div class="form-group col-md-6">
+                <label for="hora_fin">
+                    <i class="fas fa-clock"></i> Hora de finalización
+                </label>
+                <input type="time" 
+                       id="hora_fin" 
+                       name="hora_fin" 
+                       required
+                       value="<?php echo htmlspecialchars($actividad['hora_fin'] ?? ''); ?>">
+            </div>
+        </div>
         <br>
          <label for="instalacion_id">Instalacion ID:</label>
         <input type="number" id="instalacion_id" name="instalacion_id" value="<?php echo htmlspecialchars($actividad['instalacion_id']); ?>" required>

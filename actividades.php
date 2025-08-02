@@ -142,7 +142,18 @@ require_once 'includes/header.php';
                     </div>
                     <div class="activity-schedule">
                       <i class="fas fa-clock"></i>
-                      <span><?php echo htmlspecialchars($actividad['horario']); ?></span>
+                      <span>
+                        <?php 
+                        if (!empty($actividad['dias_semana'])) {
+                            echo htmlspecialchars($actividad['dias_semana']);
+                            if (!empty($actividad['hora_inicio']) && !empty($actividad['hora_fin'])) {
+                                echo ' ' . htmlspecialchars($actividad['hora_inicio']) . ' - ' . htmlspecialchars($actividad['hora_fin']);
+                            }
+                        } else {
+                            echo htmlspecialchars($actividad['horario']);
+                        }
+                        ?>
+                      </span>
                     </div>
                     <div class="activity-dates">
                       <i class="fas fa-calendar-alt"></i>
@@ -181,7 +192,18 @@ require_once 'includes/header.php';
                     </div>
                     <div class="activity-schedule">
                       <i class="fas fa-clock"></i>
-                      <span><?php echo htmlspecialchars($actividad['horario']); ?></span>
+                      <span>
+                        <?php 
+                        if (!empty($actividad['dias_semana'])) {
+                            echo htmlspecialchars($actividad['dias_semana']);
+                            if (!empty($actividad['hora_inicio']) && !empty($actividad['hora_fin'])) {
+                                echo ' ' . htmlspecialchars($actividad['hora_inicio']) . ' - ' . htmlspecialchars($actividad['hora_fin']);
+                            }
+                        } else {
+                            echo htmlspecialchars($actividad['horario']);
+                        }
+                        ?>
+                      </span>
                     </div>
                     <div class="activity-dates">
                       <i class="fas fa-calendar-check"></i>

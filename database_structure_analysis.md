@@ -16,24 +16,17 @@
 | `id` | INT | PK | Identificador único de la actividad |
 | `instalacion_id` | INT | FK | Referencia a la instalación donde se realiza |
 | `nombre` | VARCHAR | | Nombre descriptivo de la actividad |
-| `horario` | VARCHAR | | Horario en formato texto (ej: "Lunes y Miércoles 10:00-11:30") - Campo legacy |
-| `dias_semana` | SET | NULL | Días de la semana en que se realiza la actividad (Lunes, Martes, etc.) |
-| `hora_inicio` | TIME | NULL | Hora de inicio de la actividad |
-| `hora_fin` | TIME | NULL | Hora de finalización de la actividad |
+| `horario` | VARCHAR | | Horario en formato texto (LEGACY - mantenido por compatibilidad) |
+| `dias_semana` | SET | | Días de la semana estructurados (Lunes, Martes, etc.) |
+| `hora_inicio` | TIME | | Hora de inicio de la actividad |
+| `hora_fin` | TIME | | Hora de finalización de la actividad |
 | `fecha_inicio` | DATE | | Fecha de inicio de la actividad |
 | `fecha_fin` | DATE | NULL | Fecha de finalización (opcional) |
 
-**Implementación en UI**:
-- Los campos `dias_semana`, `hora_inicio` y `hora_fin` serán utilizados en los formularios de creación/edición de actividades
-- El campo `horario` se mantendrá temporalmente para compatibilidad con la UI existente
-- Se propone reemplazar el campo de texto plano por selectores estructurados:
-  - Checkbox o select múltiple para `dias_semana`
-  - Inputs de tipo time para `hora_inicio` y `hora_fin`
-
 **Ejemplos de datos**:
-- ID 1: "Natación Avanzada", Instalación 1, "Lunes y Miércoles 10:00-11:30"
-- ID 2: "Baloncesto Juvenil", Instalación 2, "Martes y Jueves 16:00-17:30"
-- ID 3: "Fitness Funcional", Instalación 3, "Lunes, Miércoles y Viernes 09:00-10:00"
+- ID 1: "Natación Avanzada", Instalación 1, Horario: "Lunes y Miércoles 10:00-11:30", Días: "Lunes,Miércoles", Inicio: 10:00, Fin: 11:30
+- ID 2: "Baloncesto Juvenil", Instalación 2, Horario: "Martes y Jueves 16:00-17:30", Días: "Martes,Jueves", Inicio: 16:00, Fin: 17:30
+- ID 3: "Fitness Funcional", Instalación 3, Horario: "Lunes, Miércoles y Viernes 09:00-10:00", Días: "Lunes,Miércoles,Viernes", Inicio: 09:00, Fin: 10:00
 
 ### 2. Tabla: `asistencias`
 **Total de registros**: 24
