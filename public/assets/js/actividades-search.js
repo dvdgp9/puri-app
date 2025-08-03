@@ -7,9 +7,9 @@ function filtrarActividades() {
     
     // Obtener todas las actividades
     const actividades = {
-        activas: Array.from(document.querySelectorAll('.active-activities .list-item')),
-        programadas: Array.from(document.querySelectorAll('.scheduled-activities .list-item')),
-        finalizadas: Array.from(document.querySelectorAll('.finished-activities .list-item'))
+        activas: Array.from(document.querySelectorAll('ul.list-container:not(.scheduled-activities):not(.finished-activities) .list-item')),
+        programadas: Array.from(document.querySelectorAll('ul.scheduled-activities .list-item')),
+        finalizadas: Array.from(document.querySelectorAll('ul.finished-activities .list-item'))
     };
     
     // Filtrar y ordenar cada categoría
@@ -41,7 +41,22 @@ function filtrarActividades() {
 
 // Función para actualizar la vista de una categoría
 function actualizarVista(categoria, actividadesFiltradas) {
-    const contenedor = document.querySelector(`.${categoria === 'activas' ? 'active' : categoria === 'programadas' ? 'scheduled' : 'finished'}-activities .list-container`);
+    let selector;
+    if (categoria === 'activas') {
+        selector = 'ul.list-container:not(.scheduled-activities):not(.finished-activities)';
+    } else if (categoria === 'programadas') {
+        selector = 'ul.scheduled-activities';
+    } else {
+        selector = 'ul.finished-activities';
+    }
+    
+    const contenedor = document.querySelector(selector);
+    
+    // Si no se encuentra el contenedor, salir
+    if (!contenedor) {
+        console.error('No se encontró el contenedor para la categoría:', categoria);
+        return;
+    }
     
     // Limpiar contenedor
     contenedor.innerHTML = '';
@@ -53,9 +68,10 @@ function actualizarVista(categoria, actividadesFiltradas) {
         });
     } else {
         // Mostrar mensaje de no resultados
-        const mensaje = document.createElement('p');
+        const mensaje = document.createElement('li');
         mensaje.className = 'empty-message';
         mensaje.textContent = 'No se encontraron actividades que coincidan con la búsqueda.';
+        mensaje.style.listStyle = 'none';
         contenedor.appendChild(mensaje);
     }
 }
@@ -63,12 +79,12 @@ function actualizarVista(categoria, actividadesFiltradas) {
 // Función para mostrar mensaje si no hay resultados en ninguna categoría
 function mostrarMensajeSinResultados() {
     const todasVacias = [
-        document.querySelectorAll('.active-activities .list-item').length === 0 && 
-        !document.querySelector('.active-activities .list-container').querySelector('.empty-message'),
-        document.querySelectorAll('.scheduled-activities .list-item').length === 0 && 
-        !document.querySelector('.scheduled-activities .list-container').querySelector('.empty-message'),
-        document.querySelectorAll('.finished-activities .list-item').length === 0 && 
-        !document.querySelector('.finished-activities .list-container').querySelector('.empty-message')
+        document.querySelectorAll('ul.list-container:not(.scheduled-activities):not(.finished-activities) .list-item').length === 0 && 
+        !document.querySelector('ul.list-container:not(.scheduled-activities):not(.finished-activities) .empty-message'),
+        document.querySelectorAll('ul.scheduled-activities .list-item').length === 0 && 
+        !document.querySelector('ul.scheduled-activities .empty-message'),
+        document.querySelectorAll('ul.finished-activities .list-item').length === 0 && 
+        !document.querySelector('ul.finished-activities .empty-message')
     ].every(vacio => vacio);
     
     const mensajeGlobal = document.getElementById('no-results-message');
