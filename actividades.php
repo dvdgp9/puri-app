@@ -33,7 +33,7 @@ function abreviarDias($dias) {
         $diasAbreviados[] = isset($abreviaciones[$dia]) ? $abreviaciones[$dia] : $dia;
     }
     
-    return implode(' ', $diasAbreviados);
+    return implode(' | ', $diasAbreviados);
 }
 
 // Función para formatear las horas
@@ -176,7 +176,7 @@ require_once 'includes/header.php';
                         if (!empty($actividad['dias_semana'])) {
                             echo abreviarDias(htmlspecialchars($actividad['dias_semana']));
                             if (!empty($actividad['hora_inicio']) && !empty($actividad['hora_fin'])) {
-                                echo ' ' . formatearHora($actividad['hora_inicio']) . ' - ' . formatearHora($actividad['hora_fin']);
+                                echo ' → ' . formatearHora($actividad['hora_inicio']) . ' - ' . formatearHora($actividad['hora_fin']);
                             }
                         } else {
                             echo htmlspecialchars($actividad['horario']);
@@ -226,7 +226,7 @@ require_once 'includes/header.php';
                         if (!empty($actividad['dias_semana'])) {
                             echo abreviarDias(htmlspecialchars($actividad['dias_semana']));
                             if (!empty($actividad['hora_inicio']) && !empty($actividad['hora_fin'])) {
-                                echo ' ' . formatearHora($actividad['hora_inicio']) . ' - ' . formatearHora($actividad['hora_fin']);
+                                echo ' → ' . formatearHora($actividad['hora_inicio']) . ' - ' . formatearHora($actividad['hora_fin']);
                             }
                         } else {
                             echo htmlspecialchars($actividad['horario']);
