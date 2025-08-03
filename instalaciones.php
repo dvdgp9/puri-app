@@ -49,6 +49,7 @@ require_once 'includes/header.php';
         <div class="sort-box">
           <label for="sort-select">Ordenar por:</label>
           <select id="sort-select">
+            <option value="" disabled selected>Seleccionar orden</option>
             <option value="nombre-asc">Nombre (A-Z)</option>
             <option value="nombre-desc">Nombre (Z-A)</option>
           </select>

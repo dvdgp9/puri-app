@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
         instalacionesOriginales.push(item.cloneNode(true));
     });
     
+    // Aplicar ordenación inicial
+    filtrarInstalaciones();
+    
     // Configurar event listeners
     const searchInput = document.getElementById('search-input');
     const sortSelect = document.getElementById('sort-select');

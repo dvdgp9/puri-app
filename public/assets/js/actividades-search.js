@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', function() {
         actividadesOriginales.finalizadas.push(item.cloneNode(true));
     });
     
+    // Aplicar ordenación inicial
+    filtrarActividades();
+    
     // Configurar event listeners
     const searchInput = document.getElementById('search-input');
     const sortSelect = document.getElementById('sort-select');
