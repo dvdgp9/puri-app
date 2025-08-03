@@ -39,6 +39,27 @@ require_once 'includes/header.php';
     <div class="content-container">
       <h1>Mira, mira, ¡qué instalaciones tan apañadas!</h1>
       <span class="item-title center-name"><?php echo html_entity_decode(htmlspecialchars($centro['nombre'])); ?></span>
+      
+      <!-- Barra de búsqueda y ordenación -->
+      <div class="search-sort-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="search-input" placeholder="Buscar instalaciones...">
+        </div>
+        <div class="sort-box">
+          <label for="sort-select">Ordenar por:</label>
+          <select id="sort-select">
+            <option value="nombre-asc">Nombre (A-Z)</option>
+            <option value="nombre-desc">Nombre (Z-A)</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Mensaje de no resultados -->
+      <div id="no-results-message" class="no-results-message" style="display: none;">
+        <p>No se encontraron instalaciones que coincidan con la búsqueda.</p>
+      </div>
+      
       <ul class="list-container">
         <?php foreach($instalaciones as $instalacion): ?>
           <li class="list-item">

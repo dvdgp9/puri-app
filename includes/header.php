@@ -11,5 +11,8 @@
     <?php if (isset($extraStyles)): ?>
         <?php echo $extraStyles; ?>
     <?php endif; ?>
+    <?php if (isset($pageTitle) && $pageTitle === 'Instalaciones'): ?>
+        <script defer src="public/assets/js/instalaciones-search.js"></script>
+    <?php endif; ?>
 </head>
 <body> 
