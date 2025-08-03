@@ -14,6 +14,35 @@ if(!isset($_GET['instalacion_id'])){
 }
 $instalacion_id = $_GET['instalacion_id'];
 
+// Función para abreviar los días de la semana
+function abreviarDias($dias) {
+    $abreviaciones = [
+        'Lunes' => 'L',
+        'Martes' => 'M',
+        'Miércoles' => 'X',
+        'Jueves' => 'J',
+        'Viernes' => 'V',
+        'Sábado' => 'S',
+        'Domingo' => 'D'
+    ];
+    
+    $diasArray = explode(',', $dias);
+    $diasAbreviados = [];
+    
+    foreach ($diasArray as $dia) {
+        $diasAbreviados[] = isset($abreviaciones[$dia]) ? $abreviaciones[$dia] : $dia;
+    }
+    
+    return implode(' ', $diasAbreviados);
+}
+
+// Función para formatear las horas
+function formatearHora($hora) {
+    if (empty($hora)) return '';
+    $horaObj = new DateTime($hora);
+    return $horaObj->format('G:i') . 'h';
+}
+
 // Consultamos los datos de la instalación y el centro
 $stmt_instalacion = $pdo->prepare("SELECT i.nombre as instalacion_nombre, c.nombre as centro_nombre 
                                   FROM instalaciones i 
@@ -145,9 +174,9 @@ require_once 'includes/header.php';
                       <span>
                         <?php 
                         if (!empty($actividad['dias_semana'])) {
-                            echo htmlspecialchars($actividad['dias_semana']);
+                            echo abreviarDias(htmlspecialchars($actividad['dias_semana']));
                             if (!empty($actividad['hora_inicio']) && !empty($actividad['hora_fin'])) {
-                                echo ' ' . htmlspecialchars($actividad['hora_inicio']) . ' - ' . htmlspecialchars($actividad['hora_fin']);
+                                echo ' ' . formatearHora($actividad['hora_inicio']) . ' - ' . formatearHora($actividad['hora_fin']);
                             }
                         } else {
                             echo htmlspecialchars($actividad['horario']);
@@ -195,9 +224,9 @@ require_once 'includes/header.php';
                       <span>
                         <?php 
                         if (!empty($actividad['dias_semana'])) {
-                            echo htmlspecialchars($actividad['dias_semana']);
+                            echo abreviarDias(htmlspecialchars($actividad['dias_semana']));
                             if (!empty($actividad['hora_inicio']) && !empty($actividad['hora_fin'])) {
-                                echo ' ' . htmlspecialchars($actividad['hora_inicio']) . ' - ' . htmlspecialchars($actividad['hora_fin']);
+                                echo ' ' . formatearHora($actividad['hora_inicio']) . ' - ' . formatearHora($actividad['hora_fin']);
                             }
                         } else {
                             echo htmlspecialchars($actividad['horario']);
