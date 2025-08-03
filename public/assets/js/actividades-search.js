@@ -1,20 +1,48 @@
 // actividades-search.js
 
+// Almacenar los datos originales de las actividades
+let actividadesOriginales = {
+    activas: [],
+    programadas: [],
+    finalizadas: []
+};
+
+// Inicializar los datos originales cuando el DOM esté cargado
+document.addEventListener('DOMContentLoaded', function() {
+    // Almacenar copias de los elementos originales
+    document.querySelectorAll('ul.list-container:not(.scheduled-activities):not(.finished-activities) .list-item').forEach(item => {
+        actividadesOriginales.activas.push(item.cloneNode(true));
+    });
+    
+    document.querySelectorAll('ul.scheduled-activities .list-item').forEach(item => {
+        actividadesOriginales.programadas.push(item.cloneNode(true));
+    });
+    
+    document.querySelectorAll('ul.finished-activities .list-item').forEach(item => {
+        actividadesOriginales.finalizadas.push(item.cloneNode(true));
+    });
+    
+    // Configurar event listeners
+    const searchInput = document.getElementById('search-input');
+    const sortSelect = document.getElementById('sort-select');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', filtrarActividades);
+    }
+    
+    if (sortSelect) {
+        sortSelect.addEventListener('change', filtrarActividades);
+    }
+});
+
 // Función para filtrar actividades
 function filtrarActividades() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase();
     const sortBy = document.getElementById('sort-select').value;
     
-    // Obtener todas las actividades
-    const actividades = {
-        activas: Array.from(document.querySelectorAll('ul.list-container:not(.scheduled-activities):not(.finished-activities) .list-item')),
-        programadas: Array.from(document.querySelectorAll('ul.scheduled-activities .list-item')),
-        finalizadas: Array.from(document.querySelectorAll('ul.finished-activities .list-item'))
-    };
-    
-    // Filtrar y ordenar cada categoría
-    Object.keys(actividades).forEach(categoria => {
-        const actividadesFiltradas = actividades[categoria].filter(item => {
+    // Filtrar y ordenar cada categoría usando los datos originales
+    Object.keys(actividadesOriginales).forEach(categoria => {
+        const actividadesFiltradas = actividadesOriginales[categoria].filter(item => {
             const nombre = item.querySelector('.activity-name span').textContent.toLowerCase();
             return nombre.includes(searchTerm);
         });
@@ -64,7 +92,9 @@ function actualizarVista(categoria, actividadesFiltradas) {
     // Añadir actividades filtradas
     if (actividadesFiltradas.length > 0) {
         actividadesFiltradas.forEach(item => {
-            contenedor.appendChild(item);
+            // Clonar el elemento para evitar problemas de referencia
+            const itemClonado = item.cloneNode(true);
+            contenedor.appendChild(itemClonado);
         });
     } else {
         // Mostrar mensaje de no resultados
@@ -95,17 +125,3 @@ function mostrarMensajeSinResultados() {
         mensajeGlobal.style.display = 'none';
     }
 }
-
-// Event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('search-input');
-    const sortSelect = document.getElementById('sort-select');
-    
-    if (searchInput) {
-        searchInput.addEventListener('input', filtrarActividades);
-    }
-    
-    if (sortSelect) {
-        sortSelect.addEventListener('change', filtrarActividades);
-    }
-});
