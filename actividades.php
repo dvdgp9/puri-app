@@ -90,6 +90,15 @@ $pageTitle = "Actividades";
 require_once 'includes/header.php';
 ?>
 
+<script>
+// Variables globales para la búsqueda
+var instalacionId = <?php echo json_encode($instalacion_id); ?>;
+<script>
+  // Variables globales para la búsqueda
+  var instalacionId = <?php echo json_encode($instalacion_id); ?>;
+  </script>
+  <script src="public/assets/js/actividades-search.js"></script>
+  
   <button class="menu-button" onclick="showModal()">Volver a...</button>
   
   <div class="modal-backdrop" id="menuModal">
@@ -158,8 +167,28 @@ require_once 'includes/header.php';
       <h1>¡Vamos a ver qué se hace por aquí!</h1>
       <div class="breadcrumbs">
         <a href="instalaciones.php"><?php echo htmlspecialchars($info['centro_nombre']); ?></a>
-        <span class="separator">›</span>
-        <span class="current"><?php echo htmlspecialchars($info['instalacion_nombre']); ?></span>
+        <span>/</span>
+        <span><?php echo htmlspecialchars($info['instalacion_nombre']); ?></span>
+      </div>
+      
+      <!-- Barra de búsqueda y ordenación -->
+      <div class="search-sort-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="search-input" placeholder="Buscar actividades...">
+        </div>
+        <div class="sort-box">
+          <label for="sort-select">Ordenar por:</label>
+          <select id="sort-select">
+            <option value="nombre-asc">Nombre (A-Z)</option>
+            <option value="nombre-desc">Nombre (Z-A)</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Mensaje de no resultados -->
+      <div id="no-results-message" class="no-results-message" style="display: none;">
+        <p>No se encontraron actividades que coincidan con la búsqueda.</p>
       </div>
       
       <!-- Actividades Activas -->
