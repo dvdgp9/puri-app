@@ -166,9 +166,9 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
     <div class="content-container">
       <h1>¡Vamos a ver qué se hace por aquí!</h1>
       <div class="breadcrumbs">
-        <a href="instalaciones.php"><?php echo htmlspecialchars($info['centro_nombre']); ?></a>
+        <a href="instalaciones.php"><?php echo htmlspecialchars(html_entity_decode($info['centro_nombre'])); ?></a>
         <span>/</span>
-        <span><?php echo htmlspecialchars($info['instalacion_nombre']); ?></span>
+        <span><?php echo htmlspecialchars(html_entity_decode($info['instalacion_nombre'])); ?></span>
       </div>
       
       <!-- Barra de búsqueda y ordenación -->

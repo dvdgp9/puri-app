@@ -408,11 +408,11 @@ require_once 'includes/header.php';
     <div class="content-container">
       <h1>Pasa lista, que yo vigilo</h1>
       <div class="breadcrumbs">
-        <a href="instalaciones.php"><?php echo htmlspecialchars($actividad['centro_nombre']); ?></a>
+        <a href="instalaciones.php"><?php echo htmlspecialchars(html_entity_decode($actividad['centro_nombre'])); ?></a>
         <span class="separator">›</span>
-        <a href="actividades.php?instalacion_id=<?php echo htmlspecialchars($actividad['instalacion_id']); ?>"><?php echo htmlspecialchars($actividad['instalacion_nombre']); ?></a>
+        <a href="actividades.php?instalacion_id=<?php echo htmlspecialchars($actividad['instalacion_id']); ?>"><?php echo htmlspecialchars(html_entity_decode($actividad['instalacion_nombre'])); ?></a>
         <span class="separator">›</span>
-        <span class="current"><?php echo htmlspecialchars($actividad['nombre']); ?></span>
+        <span class="current"><?php echo htmlspecialchars(html_entity_decode($actividad['nombre'])); ?></span>
       </div>
       
       <?php 
