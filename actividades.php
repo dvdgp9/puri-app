@@ -65,13 +65,21 @@ $stmt = $pdo->prepare("
 $stmt->execute([$instalacion_id]);
 $todas_actividades = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Separar actividades activas y finalizadas
+// Separar actividades programadas, activas y finalizadas
+$actividades_programadas = [];
 $actividades_activas = [];
 $actividades_finalizadas = [];
 
 foreach ($todas_actividades as $actividad) {
+    $hoy = strtotime(date('Y-m-d'));
+    $fecha_inicio = strtotime($actividad['fecha_inicio']);
+    
+    // Si la fecha de inicio es posterior a hoy, está programada
+    if ($fecha_inicio > $hoy) {
+        $actividades_programadas[] = $actividad;
+    }
     // Si no tiene fecha de fin o la fecha de fin es mayor o igual a hoy, está activa
-    if (empty($actividad['fecha_fin']) || strtotime($actividad['fecha_fin']) >= strtotime(date('Y-m-d'))) {
+    elseif (empty($actividad['fecha_fin']) || strtotime($actividad['fecha_fin']) >= $hoy) {
         $actividades_activas[] = $actividad;
     } else {
         $actividades_finalizadas[] = $actividad;
@@ -167,6 +175,58 @@ require_once 'includes/header.php';
                   <div class="activity-card">
                     <div class="activity-name">
                       <i class="fas fa-play"></i>
+                      <span><?php echo htmlspecialchars($actividad['nombre']); ?></span>
+                    </div>
+                    <div class="activity-schedule">
+                      <i class="fas fa-clock"></i>
+                      <span>
+                        <?php 
+                        if (!empty($actividad['dias_semana'])) {
+                            echo abreviarDias(htmlspecialchars($actividad['dias_semana']));
+                            if (!empty($actividad['hora_inicio']) && !empty($actividad['hora_fin'])) {
+                                echo ' → ' . formatearHora($actividad['hora_inicio']) . ' - ' . formatearHora($actividad['hora_fin']);
+                            }
+                        } else {
+                            echo htmlspecialchars($actividad['horario']);
+                        }
+                        ?>
+                      </span>
+                    </div>
+                    <div class="activity-dates">
+                      <i class="fas fa-calendar-alt"></i>
+                      <span>
+                        Desde: <?php echo date('d/m/Y', strtotime($actividad['fecha_inicio'])); ?>
+                        <?php if (!empty($actividad['fecha_fin'])): ?>
+                          - Hasta: <?php echo date('d/m/Y', strtotime($actividad['fecha_fin'])); ?>
+                        <?php endif; ?>
+                      </span>
+                    </div>
+                  </div>
+                </a>
+                <div class="item-actions">
+                  <button class="options-button" onclick="showOptionsModal(<?php echo $actividad['id']; ?>)">
+                    <i class="fas fa-ellipsis-h"></i>
+                  </button>
+                </div>
+              </div>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+      
+      <!-- Actividades Programadas -->
+      <h2 class="section-title">Actividades Programadas</h2>
+      <?php if (empty($actividades_programadas)): ?>
+        <p class="empty-message">No hay actividades programadas en esta instalación.</p>
+      <?php else: ?>
+        <ul class="list-container scheduled-activities">
+          <?php foreach($actividades_programadas as $actividad): ?>
+            <li class="list-item">
+              <div class="item-title-container">
+                <a href="asistencia.php?actividad_id=<?php echo $actividad['id']; ?>">
+                  <div class="activity-card">
+                    <div class="activity-name">
+                      <i class="fas fa-calendar-plus"></i>
                       <span><?php echo htmlspecialchars($actividad['nombre']); ?></span>
                     </div>
                     <div class="activity-schedule">
