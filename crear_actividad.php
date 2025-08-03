@@ -30,6 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dias_semana = isset($_POST['dias_semana']) ? implode(',', $_POST['dias_semana']) : '';
     $hora_inicio = filter_input(INPUT_POST, 'hora_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $hora_fin = filter_input(INPUT_POST, 'hora_fin', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $fecha_inicio = filter_input(INPUT_POST, 'fecha_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $fecha_fin = filter_input(INPUT_POST, 'fecha_fin', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     
     // Mantener compatibilidad con campo legacy
     $horario = '';
@@ -37,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $horario = "$dias_semana $hora_inicio-$hora_fin";
     }
   
-    if (empty($nombre) || (empty($dias_semana) && empty($_POST['horario'])) || empty($fecha_inicio)) {
+    if (empty($nombre) || empty($dias_semana) || empty($fecha_inicio)) {
         $error = "El nombre, los días de la semana y la fecha de inicio son obligatorios.";
     } else {
         $stmt = $pdo->prepare("INSERT INTO actividades (nombre, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
