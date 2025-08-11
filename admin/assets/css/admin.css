@@ -2,24 +2,31 @@
  * Estilos específicos para el panel de administración SPA
  */
 
-/* Variables CSS para el admin */
+/* Importar Montserrat de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+/* Variables CSS para el admin - usando paleta de Puri */
 :root {
-    --admin-primary: #667eea;
-    --admin-primary-dark: #5a67d8;
-    --admin-secondary: #764ba2;
+    --admin-primary: #23AAC5;
+    --admin-primary-dark: #1d8a9e;
+    --admin-secondary: #23AAC5;
     --admin-sidebar-bg: #2d3748;
     --admin-sidebar-text: #e2e8f0;
     --admin-sidebar-hover: #4a5568;
-    --admin-content-bg: #f7fafc;
+    --admin-content-bg: #f5f5f5;
     --admin-border: #e2e8f0;
-    --admin-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --admin-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    --text-color: #333;
+    --white: #ffffff;
+    --error-color: #dc3545;
+    --success-color: #44ad5c;
 }
 
 /* Layout principal */
 .admin-body {
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Montserrat', sans-serif;
     background-color: var(--admin-content-bg);
     overflow-x: hidden;
 }

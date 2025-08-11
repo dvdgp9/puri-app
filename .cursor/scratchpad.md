@@ -79,9 +79,10 @@ Implementar un dashboard Single Page Application (SPA) con:
 - ✅ **FASE 1 COMPLETADA** - Base SPA y Autenticación
   - Tablas `admins` y `admin_asignaciones` creadas en BD
   - Sistema de login completo con middleware de autorización
+  - Login actualizado con estilos y paleta de colores de Puri (Montserrat + #23AAC5)
   - Estructura base SPA con router client-side y sistema de navegación
   - API endpoints base implementados (auth, centros, stats)
-  - CSS y JavaScript base para la SPA
+  - CSS y JavaScript base para la SPA con estilos consistentes de Puri
 - 🔄 **PRÓXIMO**: Fase 2 - Framework SPA Core
   - Sidebar dinámico con navegación AJAX
   - Sistema de vistas/componentes
