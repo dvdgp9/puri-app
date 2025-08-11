@@ -143,7 +143,7 @@ try {
         INNER JOIN instalaciones i ON a.instalacion_id = i.id
         INNER JOIN centros c ON i.centro_id = c.id
         WHERE 1=1 $centro_filter
-        ORDER BY a.created_at DESC
+        ORDER BY a.id DESC
         LIMIT 10
     ";
     $stmt = $pdo->prepare($query);
