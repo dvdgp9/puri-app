@@ -67,8 +67,8 @@ class DashboardComponent extends BaseComponent {
     async load() {
         this.showLoading();
         try {
-            // Usar endpoint de prueba para debug
-            const response = await fetch('api/test_stats.php');
+            // Usar endpoint oficial de estadísticas
+            const response = await fetch('api/stats/dashboard.php');
             this.data = await response.json();
             
             if (!this.data.success) {
