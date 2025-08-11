@@ -112,7 +112,17 @@ Implementar un dashboard Single Page Application (SPA) con:
 
 **Estado**: ✅ SOLUCIONADO - Login funciona correctamente.
 
-### ✅ PROBLEMAS SOLUCIONADOS EXITOSAMENTE:
+### 🔧 PROBLEMA ACTUAL: Dashboard falló tras limpieza de endpoints
+
+**Problema**: Tras eliminar `test_stats.php` y cambiar al endpoint oficial, el dashboard volvió a fallar
+**Causa**: El endpoint oficial `/admin/api/stats/dashboard.php` tenía problemas de conexión a BD
+**Solución implementada**:
+1. ✅ Agregada conexión PDO directa al endpoint oficial
+2. ✅ Copiada configuración de BD que funcionaba en el test
+3. ✅ Mejorado manejo de errores con mensajes específicos
+4. 🔄 **Pendiente**: Confirmar que funciona correctamente
+
+### ✅ PROBLEMAS SOLUCIONADOS PREVIAMENTE:
 
 **Problema 1**: Dashboard no muestra estadísticas (error de carga de datos)
 **Causa**: API de estadísticas usa middleware problemático y posibles errores en consultas SQL

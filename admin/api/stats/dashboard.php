@@ -5,7 +5,12 @@
 
 session_start();
 header('Content-Type: application/json');
-require_once '../../../config/config.php';
+
+// Configuración de la base de datos (copia para evitar problemas)
+define('DB_HOST', 'localhost');
+define('DB_USER', 'pasarusr');
+define('DB_PASS', 'pasarcontr');
+define('DB_NAME', 'pasarlistabdd');
 
 // Verificar autenticación sin redirecciones
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
@@ -18,6 +23,16 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 }
 
 try {
+    $pdo = new PDO(
+        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+        DB_USER,
+        DB_PASS,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
+    
     $admin_info = [
         'id' => $_SESSION['admin_id'],
         'username' => $_SESSION['admin_username'],
@@ -140,12 +155,19 @@ try {
         'data' => $stats
     ]);
     
+} catch (PDOException $e) {
+    error_log("Error de BD en API stats/dashboard: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Error de base de datos: ' . $e->getMessage()
+    ]);
 } catch (Exception $e) {
     error_log("Error en API stats/dashboard: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Error interno del servidor'
+        'error' => 'Error interno del servidor: ' . $e->getMessage()
     ]);
 }
 ?>
