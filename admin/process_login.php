@@ -35,8 +35,8 @@ try {
         $_SESSION['admin_role'] = $admin['role'];
         $_SESSION['admin_logged_in'] = true;
         
-        // Redirigir al dashboard
-        header("Location: dashboard.php");
+        // Redirigir directamente a la SPA
+        header("Location: index.html");
         exit;
     } else {
         // Credenciales incorrectas

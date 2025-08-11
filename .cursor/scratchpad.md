@@ -95,6 +95,20 @@ Implementar un dashboard Single Page Application (SPA) con:
 
 ## Executor's Feedback or Assistance Requests
 
+### 🚨 PROBLEMA IDENTIFICADO Y SOLUCIONADO: Loop de redirección en login
+
+**Problema**: El usuario reportó que después del login exitoso, se quedaba en un loop de redirección entre login y dashboard.
+
+**Causa raíz**: El middleware de autenticación (`auth_middleware.php`) se ejecutaba automáticamente y causaba redirecciones conflictivas entre PHP y la SPA.
+
+**Solución implementada**:
+1. ✅ Cambiado `process_login.php` para redirigir directamente a `index.html` (SPA)
+2. ✅ Creado `check_session.php` - endpoint específico para verificación de sesión sin redirecciones
+3. ✅ Actualizado `app.js` para usar el nuevo endpoint de verificación de sesión
+4. ✅ Eliminado el conflicto entre middleware PHP y navegación SPA
+
+**Estado**: Solución implementada, pendiente de prueba por el usuario.
+
 ### Información Adicional Necesaria del Usuario:
 1. **Rol de Admin**: ¿Debe ser un usuario completamente separado o un flag en la tabla de centros?
 2. **Límites**: ¿Cuántas instalaciones/actividades máximo se pueden crear de una vez?

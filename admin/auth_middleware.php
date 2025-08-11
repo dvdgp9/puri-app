@@ -64,7 +64,7 @@ function logout() {
 // Auto-ejecutar verificación de autenticación si se incluye este archivo
 // (excepto en login.php y process_login.php)
 $current_file = basename($_SERVER['PHP_SELF']);
-if (!in_array($current_file, ['login.php', 'process_login.php'])) {
+if (!in_array($current_file, ['login.php', 'process_login.php', 'index.html'])) {
     requireAdminAuth();
 }
 ?>

@@ -40,21 +40,26 @@ class AdminApp {
      */
     async checkAuthentication() {
         try {
-            const response = await api.checkAuth();
+            const response = await fetch('check_session.php');
+            const data = await response.json();
             
-            if (response.success && response.user) {
-                this.currentUser = response.user;
-                window.AdminApp.currentUser = response.user;
+            if (data.authenticated && data.user) {
+                this.currentUser = data.user;
+                window.AdminApp.currentUser = data.user;
                 
                 // Actualizar información del usuario en la UI
                 this.updateUserInfo();
                 
                 return true;
             } else {
+                // Redirigir al login si no está autenticado
+                window.location.href = data.redirect || 'login.php';
                 throw new Error('Usuario no autenticado');
             }
         } catch (error) {
             console.error('Error verificando autenticación:', error);
+            // En caso de error, redirigir al login
+            window.location.href = 'login.php';
             throw error;
         }
     }
