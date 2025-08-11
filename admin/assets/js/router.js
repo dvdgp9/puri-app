@@ -97,10 +97,13 @@ class AdminRouter {
         }
 
         // Verificar permisos si es necesario
-        if (routeConfig.requireSuperAdmin && !AdminApp.currentUser?.isSuperAdmin) {
-            this.navigate('dashboard');
-            Utils.showNotification('No tienes permisos para acceder a esta sección', 'error');
-            return;
+        if (routeConfig.requireSuperAdmin) {
+            const currentUser = window.AdminApp?.currentUser;
+            if (!currentUser || !currentUser.isSuperAdmin) {
+                this.navigate('dashboard');
+                Utils.showNotification('No tienes permisos para acceder a esta sección', 'error');
+                return;
+            }
         }
 
         // Actualizar la ruta actual

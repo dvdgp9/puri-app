@@ -67,10 +67,16 @@ class DashboardComponent extends BaseComponent {
     async load() {
         this.showLoading();
         try {
-            this.data = await api.getDashboardStats();
+            // Usar endpoint de prueba para debug
+            const response = await fetch('api/test_stats.php');
+            this.data = await response.json();
+            
+            if (!this.data.success) {
+                throw new Error(this.data.error || 'Error desconocido');
+            }
         } catch (error) {
             console.error('Error cargando dashboard:', error);
-            this.showError('Error al cargar las estadísticas del dashboard');
+            this.showError('Error al cargar las estadísticas del dashboard: ' + error.message);
             return;
         }
     }

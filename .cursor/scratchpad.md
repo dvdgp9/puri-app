@@ -107,7 +107,23 @@ Implementar un dashboard Single Page Application (SPA) con:
 3. ✅ Actualizado `app.js` para usar el nuevo endpoint de verificación de sesión
 4. ✅ Eliminado el conflicto entre middleware PHP y navegación SPA
 
-**Estado**: Solución implementada, pendiente de prueba por el usuario.
+**Estado**: ✅ SOLUCIONADO - Login funciona correctamente.
+
+### 🔧 NUEVOS PROBLEMAS IDENTIFICADOS Y EN PROCESO:
+
+**Problema 1**: Dashboard no muestra estadísticas (error de carga de datos)
+**Causa**: API de estadísticas usa middleware problemático y posibles errores en consultas SQL
+**Solución en progreso**:
+1. ✅ Actualizado `/admin/api/stats/dashboard.php` para evitar middleware problemático
+2. ✅ Creado `/admin/api/test_stats.php` - endpoint de debug simplificado
+3. ✅ Actualizado `DashboardComponent` para usar endpoint de prueba
+4. 🔄 Pendiente: Probar y debuggear consultas SQL
+
+**Problema 2**: Error de permisos superadmin
+**Causa**: Timing issue en verificación de permisos del router
+**Solución implementada**:
+1. ✅ Mejorada lógica de verificación de permisos en `router.js`
+2. ✅ Verificación más robusta de `window.AdminApp.currentUser`
 
 ### Información Adicional Necesaria del Usuario:
 1. **Rol de Admin**: ¿Debe ser un usuario completamente separado o un flag en la tabla de centros?

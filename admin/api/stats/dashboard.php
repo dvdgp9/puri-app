@@ -3,12 +3,26 @@
  * Estadísticas para el dashboard principal
  */
 
+session_start();
 header('Content-Type: application/json');
-require_once '../../auth_middleware.php';
 require_once '../../../config/config.php';
 
+// Verificar autenticación sin redirecciones
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'error' => 'No autorizado'
+    ]);
+    exit;
+}
+
 try {
-    $admin_info = getAdminInfo();
+    $admin_info = [
+        'id' => $_SESSION['admin_id'],
+        'username' => $_SESSION['admin_username'],
+        'role' => $_SESSION['admin_role']
+    ];
     
     // Base para filtrar por centros asignados si no es superadmin
     $centro_filter = '';
