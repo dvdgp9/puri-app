@@ -29,10 +29,10 @@ Implementar un dashboard Single Page Application (SPA) con:
 - [x] Sistema de rutas client-side (hash routing)
 - [x] API endpoints base (/admin/api/)
 
-### Fase 2: Framework SPA Core
-- [ ] Sidebar dinámico con navegación AJAX
-- [ ] Sistema de vistas/componentes (centros, instalaciones, actividades)
-- [ ] Loader/spinner para transiciones
+### Fase 2: Framework SPA Core - EN PROGRESO
+- [x] Sidebar dinámico con navegación AJAX
+- [x] Sistema de vistas/componentes (centros, instalaciones, actividades)
+- [x] Loader/spinner para transiciones
 - [ ] Manejo de estados y cache local
 - [ ] Middleware de autorización client-side
 
@@ -83,11 +83,15 @@ Implementar un dashboard Single Page Application (SPA) con:
   - Estructura base SPA con router client-side y sistema de navegación
   - API endpoints base implementados (auth, centros, stats)
   - CSS y JavaScript base para la SPA con estilos consistentes de Puri
-- 🔄 **PRÓXIMO**: Fase 2 - Framework SPA Core
-  - Sidebar dinámico con navegación AJAX
-  - Sistema de vistas/componentes
-  - Loader/spinner para transiciones
-  - Manejo de estados y cache local
+- ✅ **FASE 2 CASI COMPLETADA** - Framework SPA Core
+  - ✅ Sidebar dinámico con navegación AJAX (ya implementado en HTML/CSS)
+  - ✅ Sistema de vistas/componentes implementado
+    - `DashboardComponent` - Dashboard principal con métricas y estadísticas
+    - `CentrosComponent`, `InstalacionesComponent`, `ActividadesComponent` - Placeholders
+    - `EstadisticasComponent`, `SuperadminComponent` - Placeholders
+  - ✅ Loader/spinner para transiciones implementado
+  - ✅ Estilos CSS completos para dashboard y componentes
+- 🔄 **PRÓXIMO**: Completar Fase 2 (cache local y middleware client-side)
 
 ## Executor's Feedback or Assistance Requests
 
