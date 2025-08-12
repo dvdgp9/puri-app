@@ -899,99 +899,134 @@ function setupActivityModal() {
  * Configurar selector de centros para actividades
  */
 function setupActivityCenterSelector() {
-    const centerInput = document.getElementById('activityCenterSearch');
-    const centerDropdown = document.getElementById('activityCenterDropdown');
-    const centerHidden = document.getElementById('activityCenter');
+    // Usar el mismo patrón que el modal de instalaciones que funciona
+    initActivityCenterSelector();
+}
+
+/**
+ * Inicializar selector de centros para actividades
+ */
+function initActivityCenterSelector() {
+    const wrapper = document.querySelector('#createActivityModal .custom-select-wrapper');
+    const input = document.getElementById('activityCenterSearch');
+    const dropdown = document.getElementById('activityCenterDropdown');
+    const hiddenInput = document.getElementById('activityCenter');
     
-    if (!centerInput || !centerDropdown || !centerHidden) return;
+    if (!wrapper || !input || !dropdown || !hiddenInput) return;
     
-    let centers = [];
-    
-    // Cargar centros al hacer foco
-    centerInput.addEventListener('focus', async function() {
-        if (centers.length === 0) {
-            await loadActivityCenters();
+    // Evento click en input para abrir/cerrar
+    input.addEventListener('click', function() {
+        wrapper.classList.toggle('open');
+        if (wrapper.classList.contains('open') && !window.activityCenters) {
+            loadActivityCenters();
         }
     });
     
-    // Búsqueda en tiempo real
-    centerInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        filterActivityCenters(searchTerm);
+    // Evento input para filtrar
+    input.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        if (window.activityCenters) {
+            const filtered = window.activityCenters.filter(centro => 
+                centro.nombre && centro.nombre.toLowerCase().includes(query)
+            );
+            renderActivityCenterOptions(filtered);
+        }
+        
+        if (!wrapper.classList.contains('open')) {
+            wrapper.classList.add('open');
+        }
     });
     
-    // Cargar centros
-    async function loadActivityCenters() {
-        try {
-            centerDropdown.innerHTML = '<div class="custom-select-loading">Cargando centros...</div>';
-            
-            const response = await fetch('api/centros/list_for_selector.php');
-            const data = await response.json();
-            
-            if (data.success) {
-                centers = data.centros;
-                renderActivityCenters(centers);
-            } else {
-                centerDropdown.innerHTML = '<div class="custom-select-no-results">Error cargando centros</div>';
-            }
-        } catch (error) {
-            console.error('Error loading centers:', error);
-            centerDropdown.innerHTML = '<div class="custom-select-no-results">Error cargando centros</div>';
-        }
-    }
-    
-    // Renderizar centros
-    function renderActivityCenters(centersToShow) {
-        if (centersToShow.length === 0) {
-            centerDropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron centros</div>';
-            return;
-        }
-        
-        const html = centersToShow.map(center => `
-            <div class="custom-select-option" data-value="${center.id}" data-text="${center.nombre}">
-                <div class="option-content">
-                    <div class="option-title">${center.nombre}</div>
-                    <div class="option-subtitle">${center.direccion}</div>
-                </div>
-            </div>
-        `).join('');
-        
-        centerDropdown.innerHTML = html;
-        
-        // Agregar eventos a opciones
-        centerDropdown.querySelectorAll('.custom-select-option').forEach(option => {
-            option.addEventListener('click', function() {
-                const value = this.dataset.value;
-                const text = this.dataset.text;
-                
-                centerInput.value = text;
-                centerHidden.value = value;
-                centerDropdown.style.display = 'none';
-                
-                // Limpiar y cargar instalaciones
-                loadActivityInstallations(value);
-                
-                clearFieldError('activityCenter');
-            });
-        });
-    }
-    
-    // Filtrar centros
-    function filterActivityCenters(searchTerm) {
-        const filtered = centers.filter(center => 
-            center.nombre.toLowerCase().includes(searchTerm) ||
-            center.direccion.toLowerCase().includes(searchTerm)
-        );
-        renderActivityCenters(filtered);
-        centerDropdown.style.display = 'block';
-    }
-    
-    // Ocultar dropdown al hacer clic fuera
+    // Cerrar al hacer click fuera
     document.addEventListener('click', function(e) {
-        if (!centerInput.contains(e.target) && !centerDropdown.contains(e.target)) {
-            centerDropdown.style.display = 'none';
+        if (!wrapper.contains(e.target)) {
+            wrapper.classList.remove('open');
         }
     });
+    
+    // Manejar teclas
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            wrapper.classList.remove('open');
+        }
+    });
+}
+
+/**
+ * Cargar centros para actividades
+ */
+async function loadActivityCenters() {
+    try {
+        const response = await fetch('api/centros/list_for_selector.php');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Guardar centros globalmente para filtrado
+            window.activityCenters = data.centros;
+            
+            // Mostrar todos los centros inicialmente
+            renderActivityCenterOptions(data.centros);
+            
+        } else {
+            showNotification('Error al cargar centros: ' + data.message, 'error');
+            showActivityCenterSelectorError('Error al cargar centros');
+        }
+    } catch (error) {
+        console.error('Error loading centers:', error);
+        showNotification('Error al cargar centros', 'error');
+        showActivityCenterSelectorError('Error de conexión');
+    }
+}
+
+/**
+ * Renderizar opciones de centros para actividades
+ */
+function renderActivityCenterOptions(centros) {
+    const dropdown = document.getElementById('activityCenterDropdown');
+    
+    if (centros.length === 0) {
+        dropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron centros</div>';
+        return;
+    }
+    
+    dropdown.innerHTML = centros.map(centro => 
+        `<div class="custom-select-option" data-value="${centro.id}" data-name="${escapeHtml(centro.nombre)}">
+            <div class="option-content">
+                <div class="option-title">${centro.nombre}</div>
+                <div class="option-subtitle">${centro.direccion || ''}</div>
+            </div>
+        </div>`
+    ).join('');
+    
+    // Agregar eventos click a las opciones
+    dropdown.querySelectorAll('.custom-select-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const value = this.dataset.value;
+            const name = this.dataset.name;
+            
+            // Actualizar input y valor oculto
+            document.getElementById('activityCenterSearch').value = name;
+            document.getElementById('activityCenter').value = value;
+            
+            // Cerrar dropdown
+            const wrapper = document.querySelector('#createActivityModal .custom-select-wrapper');
+            wrapper.classList.remove('open');
+            
+            // Cargar instalaciones para este centro
+            loadActivityInstallations(value);
+            
+            // Limpiar error si existe
+            clearFieldError('activityCenter');
+        });
+    });
+}
+
+/**
+ * Mostrar error en selector de centros para actividades
+ */
+function showActivityCenterSelectorError(message) {
+    const dropdown = document.getElementById('activityCenterDropdown');
+    dropdown.innerHTML = `<div class="custom-select-no-results">${message}</div>`;
 }
 
 /**
@@ -1026,70 +1061,94 @@ async function loadActivityInstallations(centroId) {
 }
 
 /**
- * Configurar selector de instalaciones
+ * Configurar selector de instalaciones para actividades
  */
 function setupActivityInstallationSelector(installations) {
-    const installationInput = document.getElementById('activityInstallationSearch');
-    const installationDropdown = document.getElementById('activityInstallationDropdown');
-    const installationHidden = document.getElementById('activityInstallation');
+    const wrapper = document.querySelector('#createActivityModal .form-group:nth-child(2) .custom-select-wrapper');
+    const input = document.getElementById('activityInstallationSearch');
+    const dropdown = document.getElementById('activityInstallationDropdown');
+    const hiddenInput = document.getElementById('activityInstallation');
     
-    // Renderizar instalaciones
-    function renderInstallations(installationsToShow) {
-        if (installationsToShow.length === 0) {
-            installationDropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron instalaciones</div>';
-            return;
+    if (!wrapper || !input || !dropdown || !hiddenInput) return;
+    
+    // Guardar instalaciones globalmente
+    window.activityInstallations = installations;
+    
+    // Evento click en input para abrir/cerrar
+    input.addEventListener('click', function() {
+        if (!input.disabled) {
+            wrapper.classList.toggle('open');
         }
-        
-        const html = installationsToShow.map(installation => `
-            <div class="custom-select-option" data-value="${installation.id}" data-text="${installation.nombre}">
-                <div class="option-content">
-                    <div class="option-title">${installation.nombre}</div>
-                </div>
-            </div>
-        `).join('');
-        
-        installationDropdown.innerHTML = html;
-        
-        // Agregar eventos a opciones
-        installationDropdown.querySelectorAll('.custom-select-option').forEach(option => {
-            option.addEventListener('click', function() {
-                const value = this.dataset.value;
-                const text = this.dataset.text;
-                
-                installationInput.value = text;
-                installationHidden.value = value;
-                installationDropdown.style.display = 'none';
-                
-                clearFieldError('activityInstallation');
-            });
-        });
-    }
+    });
     
-    // Búsqueda en tiempo real
-    installationInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const filtered = installations.filter(installation => 
-            installation.nombre.toLowerCase().includes(searchTerm)
+    // Evento input para filtrar
+    input.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        const filtered = installations.filter(instalacion => 
+            instalacion.nombre && instalacion.nombre.toLowerCase().includes(query)
         );
-        renderInstallations(filtered);
-        installationDropdown.style.display = 'block';
+        renderActivityInstallationOptions(filtered);
+        
+        if (!wrapper.classList.contains('open') && !input.disabled) {
+            wrapper.classList.add('open');
+        }
     });
     
-    // Mostrar todas al hacer foco
-    installationInput.addEventListener('focus', function() {
-        renderInstallations(installations);
-        installationDropdown.style.display = 'block';
-    });
-    
-    // Ocultar dropdown al hacer clic fuera
+    // Cerrar al hacer click fuera
     document.addEventListener('click', function(e) {
-        if (!installationInput.contains(e.target) && !installationDropdown.contains(e.target)) {
-            installationDropdown.style.display = 'none';
+        if (!wrapper.contains(e.target)) {
+            wrapper.classList.remove('open');
+        }
+    });
+    
+    // Manejar teclas
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            wrapper.classList.remove('open');
         }
     });
     
     // Renderizar inicialmente
-    renderInstallations(installations);
+    renderActivityInstallationOptions(installations);
+}
+
+/**
+ * Renderizar opciones de instalaciones para actividades
+ */
+function renderActivityInstallationOptions(instalaciones) {
+    const dropdown = document.getElementById('activityInstallationDropdown');
+    
+    if (instalaciones.length === 0) {
+        dropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron instalaciones</div>';
+        return;
+    }
+    
+    dropdown.innerHTML = instalaciones.map(instalacion => 
+        `<div class="custom-select-option" data-value="${instalacion.id}" data-name="${escapeHtml(instalacion.nombre)}">
+            <div class="option-content">
+                <div class="option-title">${instalacion.nombre}</div>
+            </div>
+        </div>`
+    ).join('');
+    
+    // Agregar eventos click a las opciones
+    dropdown.querySelectorAll('.custom-select-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const value = this.dataset.value;
+            const name = this.dataset.name;
+            
+            // Actualizar input y valor oculto
+            document.getElementById('activityInstallationSearch').value = name;
+            document.getElementById('activityInstallation').value = value;
+            
+            // Cerrar dropdown
+            const wrapper = document.querySelector('#createActivityModal .form-group:nth-child(2) .custom-select-wrapper');
+            wrapper.classList.remove('open');
+            
+            // Limpiar error si existe
+            clearFieldError('activityInstallation');
+        });
+    });
 }
 
 /**
