@@ -371,6 +371,206 @@ $admin_info = getAdminInfo();
         </div>
     </div>
 
+    <!-- Modal Crear Participante -->
+    <div class="modal-overlay" id="createParticipantModal">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h2 class="modal-title">Añadir Participantes</h2>
+                <button class="modal-close" onclick="closeCreateParticipantModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Pestañas -->
+                <div class="tab-navigation">
+                    <button class="tab-btn active" onclick="switchParticipantTab('manual')">
+                        <i class="fas fa-user-plus"></i> Añadir Manual
+                    </button>
+                    <button class="tab-btn" onclick="switchParticipantTab('csv')">
+                        <i class="fas fa-upload"></i> Subir CSV
+                    </button>
+                </div>
+
+                <!-- Pestaña Manual -->
+                <div class="tab-content active" id="manualTab">
+                    <form id="createParticipantForm">
+                        <!-- Selectores cascada: Centro → Instalación → Actividad -->
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label for="participantCenter">Centro Deportivo *</label>
+                                <div class="custom-select-wrapper">
+                                    <input type="text" id="participantCenterSearch" class="custom-select-input" 
+                                           placeholder="Buscar centro..." autocomplete="off">
+                                    <input type="hidden" id="participantCenter" name="centro_id" required>
+                                    <div class="custom-select-dropdown" id="participantCenterDropdown">
+                                        <div class="custom-select-loading">Cargando centros...</div>
+                                    </div>
+                                    <svg class="custom-select-arrow" width="12" height="12" viewBox="0 0 12 12">
+                                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                    </svg>
+                                </div>
+                                <span class="field-error" id="participantCenter-error"></span>
+                            </div>
+                            
+                            <div class="form-group col-md-4">
+                                <label for="participantInstallation">Instalación *</label>
+                                <div class="custom-select-wrapper">
+                                    <input type="text" id="participantInstallationSearch" class="custom-select-input" 
+                                           placeholder="Selecciona un centro" autocomplete="off" disabled>
+                                    <input type="hidden" id="participantInstallation" name="instalacion_id" required>
+                                    <div class="custom-select-dropdown" id="participantInstallationDropdown">
+                                        <div class="custom-select-loading">Selecciona un centro primero</div>
+                                    </div>
+                                    <svg class="custom-select-arrow" width="12" height="12" viewBox="0 0 12 12">
+                                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                    </svg>
+                                </div>
+                                <span class="field-error" id="participantInstallation-error"></span>
+                            </div>
+
+                            <div class="form-group col-md-4">
+                                <label for="participantActivity">Actividad *</label>
+                                <div class="custom-select-wrapper">
+                                    <input type="text" id="participantActivitySearch" class="custom-select-input" 
+                                           placeholder="Selecciona una instalación" autocomplete="off" disabled>
+                                    <input type="hidden" id="participantActivity" name="actividad_id" required>
+                                    <div class="custom-select-dropdown" id="participantActivityDropdown">
+                                        <div class="custom-select-loading">Selecciona una instalación primero</div>
+                                    </div>
+                                    <svg class="custom-select-arrow" width="12" height="12" viewBox="0 0 12 12">
+                                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                    </svg>
+                                </div>
+                                <span class="field-error" id="participantActivity-error"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Datos del participante -->
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="participantName">Nombre *</label>
+                                <input type="text" id="participantName" name="nombre" required 
+                                       placeholder="Ej: Juan">
+                                <span class="field-error" id="participantName-error"></span>
+                            </div>
+                            
+                            <div class="form-group col-md-6">
+                                <label for="participantLastName">Apellidos *</label>
+                                <input type="text" id="participantLastName" name="apellidos" required 
+                                       placeholder="Ej: Pérez García">
+                                <span class="field-error" id="participantLastName-error"></span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Pestaña CSV -->
+                <div class="tab-content" id="csvTab">
+                    <form id="uploadParticipantCsvForm">
+                        <!-- Selectores cascada para CSV -->
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label for="csvParticipantCenter">Centro Deportivo *</label>
+                                <div class="custom-select-wrapper">
+                                    <input type="text" id="csvParticipantCenterSearch" class="custom-select-input" 
+                                           placeholder="Buscar centro..." autocomplete="off">
+                                    <input type="hidden" id="csvParticipantCenter" name="centro_id" required>
+                                    <div class="custom-select-dropdown" id="csvParticipantCenterDropdown">
+                                        <div class="custom-select-loading">Cargando centros...</div>
+                                    </div>
+                                    <svg class="custom-select-arrow" width="12" height="12" viewBox="0 0 12 12">
+                                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                    </svg>
+                                </div>
+                                <span class="field-error" id="csvParticipantCenter-error"></span>
+                            </div>
+                            
+                            <div class="form-group col-md-4">
+                                <label for="csvParticipantInstallation">Instalación *</label>
+                                <div class="custom-select-wrapper">
+                                    <input type="text" id="csvParticipantInstallationSearch" class="custom-select-input" 
+                                           placeholder="Selecciona un centro" autocomplete="off" disabled>
+                                    <input type="hidden" id="csvParticipantInstallation" name="instalacion_id" required>
+                                    <div class="custom-select-dropdown" id="csvParticipantInstallationDropdown">
+                                        <div class="custom-select-loading">Selecciona un centro primero</div>
+                                    </div>
+                                    <svg class="custom-select-arrow" width="12" height="12" viewBox="0 0 12 12">
+                                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                    </svg>
+                                </div>
+                                <span class="field-error" id="csvParticipantInstallation-error"></span>
+                            </div>
+
+                            <div class="form-group col-md-4">
+                                <label for="csvParticipantActivity">Actividad *</label>
+                                <div class="custom-select-wrapper">
+                                    <input type="text" id="csvParticipantActivitySearch" class="custom-select-input" 
+                                           placeholder="Selecciona una instalación" autocomplete="off" disabled>
+                                    <input type="hidden" id="csvParticipantActivity" name="actividad_id" required>
+                                    <div class="custom-select-dropdown" id="csvParticipantActivityDropdown">
+                                        <div class="custom-select-loading">Selecciona una instalación primero</div>
+                                    </div>
+                                    <svg class="custom-select-arrow" width="12" height="12" viewBox="0 0 12 12">
+                                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                    </svg>
+                                </div>
+                                <span class="field-error" id="csvParticipantActivity-error"></span>
+                            </div>
+                        </div>
+
+                        <!-- Descarga de plantilla y subida de archivo -->
+                        <div class="csv-section">
+                            <div class="csv-info">
+                                <h4><i class="fas fa-info-circle"></i> Instrucciones</h4>
+                                <p>1. Descarga la plantilla CSV</p>
+                                <p>2. Completa con los datos de los participantes</p>
+                                <p>3. Sube el archivo completado</p>
+                            </div>
+                            
+                            <div class="csv-actions">
+                                <a href="../public/assets/plantilla-asistentes.csv" class="btn btn-outline" download>
+                                    <i class="fas fa-download"></i> Descargar Plantilla CSV
+                                </a>
+                                
+                                <label class="btn btn-primary file-upload-btn">
+                                    <i class="fas fa-upload"></i> Seleccionar Archivo CSV
+                                    <input type="file" id="participantCsvFile" accept=".csv" style="display: none;">
+                                </label>
+                            </div>
+                            
+                            <div class="file-info" id="csvFileInfo" style="display: none;">
+                                <i class="fas fa-file-csv"></i>
+                                <span id="csvFileName"></span>
+                                <button type="button" class="btn-remove" onclick="removeCsvFile()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeCreateParticipantModal()">
+                    Cancelar
+                </button>
+                <button type="submit" form="createParticipantForm" class="btn btn-primary" id="createParticipantBtn">
+                    <span class="btn-text">Inscribir Participante</span>
+                    <span class="btn-loading">
+                        <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
+                        </svg>
+                    </span>
+                </button>
+                <button type="submit" form="uploadParticipantCsvForm" class="btn btn-primary" id="uploadCsvBtn" style="display: none;">
+                    <span class="btn-text">Subir CSV</span>
+                    <span class="btn-loading">
+                        <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/dashboard.js"></script>
 </body>
 </html>

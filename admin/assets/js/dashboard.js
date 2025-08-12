@@ -31,6 +31,9 @@ function setupEventListeners() {
     // Configurar modal de actividades
     setupActivityModal();
     
+    // Configurar modal de participantes
+    setupParticipantModal();
+    
     // Búsqueda de centros
     const searchInput = document.getElementById('search-centers');
     if (searchInput) {
@@ -1277,6 +1280,651 @@ async function createActivity() {
     } catch (error) {
         console.error('Error creating activity:', error);
         showNotification('Error al crear la actividad', 'error');
+    } finally {
+        // Ocultar loading
+        btn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+    }
+}
+
+/**
+ * Configurar modal de participantes
+ */
+function setupParticipantModal() {
+    // Configurar pestañas
+    setupParticipantTabs();
+    
+    // Configurar selectores cascada para pestaña manual
+    setupParticipantCenterSelector();
+    
+    // Configurar selectores cascada para pestaña CSV
+    setupCsvParticipantCenterSelector();
+    
+    // Configurar formularios
+    const manualForm = document.getElementById('createParticipantForm');
+    if (manualForm) {
+        manualForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await createParticipant();
+        });
+    }
+    
+    const csvForm = document.getElementById('uploadParticipantCsvForm');
+    if (csvForm) {
+        csvForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await uploadParticipantCsv();
+        });
+    }
+    
+    // Configurar selector de archivo CSV
+    const csvFileInput = document.getElementById('participantCsvFile');
+    if (csvFileInput) {
+        csvFileInput.addEventListener('change', function() {
+            handleCsvFileSelection(this);
+        });
+    }
+}
+
+/**
+ * Configurar pestañas del modal de participantes
+ */
+function setupParticipantTabs() {
+    // No necesita configuración adicional, se maneja con onclick
+}
+
+/**
+ * Cambiar pestaña del modal de participantes
+ */
+function switchParticipantTab(tabType) {
+    // Cambiar botones de pestaña
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Cambiar contenido de pestañas
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    if (tabType === 'manual') {
+        document.getElementById('manualTab').classList.add('active');
+        document.getElementById('createParticipantBtn').style.display = 'inline-flex';
+        document.getElementById('uploadCsvBtn').style.display = 'none';
+    } else if (tabType === 'csv') {
+        document.getElementById('csvTab').classList.add('active');
+        document.getElementById('createParticipantBtn').style.display = 'none';
+        document.getElementById('uploadCsvBtn').style.display = 'inline-flex';
+    }
+}
+
+/**
+ * Configurar selector de centros para participantes (pestaña manual)
+ */
+function setupParticipantCenterSelector() {
+    initParticipantCenterSelector('participantCenter', 'participantInstallation', 'participantActivity');
+}
+
+/**
+ * Configurar selector de centros para CSV
+ */
+function setupCsvParticipantCenterSelector() {
+    initParticipantCenterSelector('csvParticipantCenter', 'csvParticipantInstallation', 'csvParticipantActivity');
+}
+
+/**
+ * Inicializar selector de centros para participantes (genérico)
+ */
+function initParticipantCenterSelector(centerPrefix, installationPrefix, activityPrefix) {
+    const wrapper = document.querySelector(`#${centerPrefix}Search`).closest('.custom-select-wrapper');
+    const input = document.getElementById(`${centerPrefix}Search`);
+    const dropdown = document.getElementById(`${centerPrefix}Dropdown`);
+    const hiddenInput = document.getElementById(centerPrefix);
+    
+    if (!wrapper || !input || !dropdown || !hiddenInput) return;
+    
+    // Evento click en input para abrir/cerrar
+    input.addEventListener('click', function() {
+        wrapper.classList.toggle('open');
+        if (wrapper.classList.contains('open') && !window.participantCenters) {
+            loadParticipantCenters(centerPrefix);
+        }
+    });
+    
+    // Evento input para filtrar
+    input.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        if (window.participantCenters) {
+            const filtered = window.participantCenters.filter(centro => 
+                centro.nombre && centro.nombre.toLowerCase().includes(query)
+            );
+            renderParticipantCenterOptions(filtered, centerPrefix, installationPrefix, activityPrefix);
+        }
+        
+        if (!wrapper.classList.contains('open')) {
+            wrapper.classList.add('open');
+        }
+    });
+    
+    // Cerrar al hacer click fuera
+    document.addEventListener('click', function(e) {
+        if (!wrapper.contains(e.target)) {
+            wrapper.classList.remove('open');
+        }
+    });
+    
+    // Manejar teclas
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            wrapper.classList.remove('open');
+        }
+    });
+}
+
+/**
+ * Cargar centros para participantes
+ */
+async function loadParticipantCenters(centerPrefix) {
+    try {
+        const response = await fetch('api/centros/list_for_selector.php');
+        const data = await response.json();
+        
+        if (data.success) {
+            window.participantCenters = data.centros;
+            renderParticipantCenterOptions(data.centros, centerPrefix);
+        } else {
+            showParticipantCenterSelectorError('Error al cargar centros', centerPrefix);
+        }
+    } catch (error) {
+        console.error('Error loading centers:', error);
+        showParticipantCenterSelectorError('Error de conexión', centerPrefix);
+    }
+}
+
+/**
+ * Renderizar opciones de centros para participantes
+ */
+function renderParticipantCenterOptions(centros, centerPrefix, installationPrefix, activityPrefix) {
+    const dropdown = document.getElementById(`${centerPrefix}Dropdown`);
+    
+    if (centros.length === 0) {
+        dropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron centros</div>';
+        return;
+    }
+    
+    dropdown.innerHTML = centros.map(centro => 
+        `<div class="custom-select-option" data-value="${centro.id}" data-name="${escapeHtml(centro.nombre)}">
+            <div class="option-content">
+                <div class="option-title">${centro.nombre}</div>
+                <div class="option-subtitle">${centro.direccion || ''}</div>
+            </div>
+        </div>`
+    ).join('');
+    
+    // Agregar eventos click a las opciones
+    dropdown.querySelectorAll('.custom-select-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const value = this.dataset.value;
+            const name = this.dataset.name;
+            
+            // Actualizar input y valor oculto
+            document.getElementById(`${centerPrefix}Search`).value = name;
+            document.getElementById(centerPrefix).value = value;
+            
+            // Cerrar dropdown
+            const wrapper = document.querySelector(`#${centerPrefix}Search`).closest('.custom-select-wrapper');
+            wrapper.classList.remove('open');
+            
+            // Cargar instalaciones para este centro
+            loadParticipantInstallations(value, installationPrefix, activityPrefix);
+            
+            // Limpiar error si existe
+            clearFieldError(centerPrefix);
+        });
+    });
+}
+
+/**
+ * Cargar instalaciones para participantes
+ */
+async function loadParticipantInstallations(centroId, installationPrefix, activityPrefix) {
+    const input = document.getElementById(`${installationPrefix}Search`);
+    const dropdown = document.getElementById(`${installationPrefix}Dropdown`);
+    
+    try {
+        // Habilitar selector de instalaciones
+        input.disabled = false;
+        input.placeholder = 'Buscar instalación...';
+        dropdown.innerHTML = '<div class="custom-select-loading">Cargando instalaciones...</div>';
+        
+        const response = await fetch(`api/instalaciones/list_by_center.php?centro_id=${centroId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            setupParticipantInstallationSelector(data.instalaciones, installationPrefix, activityPrefix);
+        } else {
+            dropdown.innerHTML = '<div class="custom-select-no-results">Error cargando instalaciones</div>';
+        }
+    } catch (error) {
+        console.error('Error loading installations:', error);
+        dropdown.innerHTML = '<div class="custom-select-no-results">Error cargando instalaciones</div>';
+    }
+}
+
+/**
+ * Configurar selector de instalaciones para participantes
+ */
+function setupParticipantInstallationSelector(installations, installationPrefix, activityPrefix) {
+    const wrapper = document.querySelector(`#${installationPrefix}Search`).closest('.custom-select-wrapper');
+    const input = document.getElementById(`${installationPrefix}Search`);
+    const dropdown = document.getElementById(`${installationPrefix}Dropdown`);
+    const hiddenInput = document.getElementById(installationPrefix);
+    
+    // Evento click en input para abrir/cerrar
+    input.addEventListener('click', function() {
+        if (!input.disabled) {
+            wrapper.classList.toggle('open');
+        }
+    });
+    
+    // Evento input para filtrar
+    input.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        const filtered = installations.filter(instalacion => 
+            instalacion.nombre && instalacion.nombre.toLowerCase().includes(query)
+        );
+        renderParticipantInstallationOptions(filtered, installationPrefix, activityPrefix);
+        
+        if (!wrapper.classList.contains('open') && !input.disabled) {
+            wrapper.classList.add('open');
+        }
+    });
+    
+    // Renderizar inicialmente
+    renderParticipantInstallationOptions(installations, installationPrefix, activityPrefix);
+}
+
+/**
+ * Renderizar opciones de instalaciones para participantes
+ */
+function renderParticipantInstallationOptions(instalaciones, installationPrefix, activityPrefix) {
+    const dropdown = document.getElementById(`${installationPrefix}Dropdown`);
+    
+    if (instalaciones.length === 0) {
+        dropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron instalaciones</div>';
+        return;
+    }
+    
+    dropdown.innerHTML = instalaciones.map(instalacion => 
+        `<div class="custom-select-option" data-value="${instalacion.id}" data-name="${escapeHtml(instalacion.nombre)}">
+            <div class="option-content">
+                <div class="option-title">${instalacion.nombre}</div>
+            </div>
+        </div>`
+    ).join('');
+    
+    // Agregar eventos click a las opciones
+    dropdown.querySelectorAll('.custom-select-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const value = this.dataset.value;
+            const name = this.dataset.name;
+            
+            // Actualizar input y valor oculto
+            document.getElementById(`${installationPrefix}Search`).value = name;
+            document.getElementById(installationPrefix).value = value;
+            
+            // Cerrar dropdown
+            const wrapper = document.querySelector(`#${installationPrefix}Search`).closest('.custom-select-wrapper');
+            wrapper.classList.remove('open');
+            
+            // Cargar actividades para esta instalación
+            loadParticipantActivities(value, activityPrefix);
+            
+            // Limpiar error si existe
+            clearFieldError(installationPrefix);
+        });
+    });
+}
+
+/**
+ * Cargar actividades para participantes
+ */
+async function loadParticipantActivities(instalacionId, activityPrefix) {
+    const input = document.getElementById(`${activityPrefix}Search`);
+    const dropdown = document.getElementById(`${activityPrefix}Dropdown`);
+    
+    try {
+        // Habilitar selector de actividades
+        input.disabled = false;
+        input.placeholder = 'Buscar actividad...';
+        dropdown.innerHTML = '<div class="custom-select-loading">Cargando actividades...</div>';
+        
+        const response = await fetch(`api/actividades/list_by_installation.php?instalacion_id=${instalacionId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            setupParticipantActivitySelector(data.actividades, activityPrefix);
+        } else {
+            dropdown.innerHTML = '<div class="custom-select-no-results">Error cargando actividades</div>';
+        }
+    } catch (error) {
+        console.error('Error loading activities:', error);
+        dropdown.innerHTML = '<div class="custom-select-no-results">Error cargando actividades</div>';
+    }
+}
+
+/**
+ * Configurar selector de actividades para participantes
+ */
+function setupParticipantActivitySelector(activities, activityPrefix) {
+    const wrapper = document.querySelector(`#${activityPrefix}Search`).closest('.custom-select-wrapper');
+    const input = document.getElementById(`${activityPrefix}Search`);
+    const dropdown = document.getElementById(`${activityPrefix}Dropdown`);
+    const hiddenInput = document.getElementById(activityPrefix);
+    
+    // Evento click en input para abrir/cerrar
+    input.addEventListener('click', function() {
+        if (!input.disabled) {
+            wrapper.classList.toggle('open');
+        }
+    });
+    
+    // Evento input para filtrar
+    input.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        const filtered = activities.filter(actividad => 
+            actividad.nombre && actividad.nombre.toLowerCase().includes(query)
+        );
+        renderParticipantActivityOptions(filtered, activityPrefix);
+        
+        if (!wrapper.classList.contains('open') && !input.disabled) {
+            wrapper.classList.add('open');
+        }
+    });
+    
+    // Renderizar inicialmente
+    renderParticipantActivityOptions(activities, activityPrefix);
+}
+
+/**
+ * Renderizar opciones de actividades para participantes
+ */
+function renderParticipantActivityOptions(actividades, activityPrefix) {
+    const dropdown = document.getElementById(`${activityPrefix}Dropdown`);
+    
+    if (actividades.length === 0) {
+        dropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron actividades</div>';
+        return;
+    }
+    
+    dropdown.innerHTML = actividades.map(actividad => 
+        `<div class="custom-select-option" data-value="${actividad.id}" data-name="${escapeHtml(actividad.nombre)}">
+            <div class="option-content">
+                <div class="option-title">${actividad.nombre}</div>
+                <div class="option-subtitle">${actividad.dias_semana} • ${actividad.hora_inicio}-${actividad.hora_fin}</div>
+            </div>
+        </div>`
+    ).join('');
+    
+    // Agregar eventos click a las opciones
+    dropdown.querySelectorAll('.custom-select-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const value = this.dataset.value;
+            const name = this.dataset.name;
+            
+            // Actualizar input y valor oculto
+            document.getElementById(`${activityPrefix}Search`).value = name;
+            document.getElementById(activityPrefix).value = value;
+            
+            // Cerrar dropdown
+            const wrapper = document.querySelector(`#${activityPrefix}Search`).closest('.custom-select-wrapper');
+            wrapper.classList.remove('open');
+            
+            // Limpiar error si existe
+            clearFieldError(activityPrefix);
+        });
+    });
+}
+
+/**
+ * Mostrar error en selector de centros para participantes
+ */
+function showParticipantCenterSelectorError(message, centerPrefix) {
+    const dropdown = document.getElementById(`${centerPrefix}Dropdown`);
+    dropdown.innerHTML = `<div class="custom-select-no-results">${message}</div>`;
+}
+
+/**
+ * Mostrar modal crear participante
+ */
+function showCreateParticipantModal() {
+    const modal = document.getElementById('createParticipantModal');
+    if (modal) {
+        modal.classList.add('show');
+        
+        // Limpiar formularios
+        const manualForm = document.getElementById('createParticipantForm');
+        const csvForm = document.getElementById('uploadParticipantCsvForm');
+        
+        if (manualForm) {
+            manualForm.reset();
+        }
+        if (csvForm) {
+            csvForm.reset();
+        }
+        
+        clearFormErrors();
+        
+        // Resetear selectores manuales
+        resetParticipantSelectors('participantCenter', 'participantInstallation', 'participantActivity');
+        
+        // Resetear selectores CSV
+        resetParticipantSelectors('csvParticipantCenter', 'csvParticipantInstallation', 'csvParticipantActivity');
+        
+        // Activar pestaña manual por defecto
+        switchParticipantTab('manual');
+        
+        // Ocultar info de archivo CSV
+        document.getElementById('csvFileInfo').style.display = 'none';
+    }
+}
+
+/**
+ * Resetear selectores de participantes
+ */
+function resetParticipantSelectors(centerPrefix, installationPrefix, activityPrefix) {
+    // Resetear centro
+    document.getElementById(`${centerPrefix}Search`).value = '';
+    document.getElementById(centerPrefix).value = '';
+    
+    // Resetear instalación
+    const installationInput = document.getElementById(`${installationPrefix}Search`);
+    installationInput.value = '';
+    installationInput.disabled = true;
+    installationInput.placeholder = 'Selecciona un centro';
+    document.getElementById(installationPrefix).value = '';
+    
+    // Resetear actividad
+    const activityInput = document.getElementById(`${activityPrefix}Search`);
+    activityInput.value = '';
+    activityInput.disabled = true;
+    activityInput.placeholder = 'Selecciona una instalación';
+    document.getElementById(activityPrefix).value = '';
+}
+
+/**
+ * Cerrar modal crear participante
+ */
+function closeCreateParticipantModal() {
+    const modal = document.getElementById('createParticipantModal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+/**
+ * Manejar selección de archivo CSV
+ */
+function handleCsvFileSelection(input) {
+    const fileInfo = document.getElementById('csvFileInfo');
+    const fileName = document.getElementById('csvFileName');
+    
+    if (input.files.length > 0) {
+        const file = input.files[0];
+        
+        // Verificar que sea CSV
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            showNotification('Por favor, selecciona un archivo CSV', 'error');
+            input.value = '';
+            return;
+        }
+        
+        // Mostrar información del archivo
+        fileName.textContent = file.name;
+        fileInfo.style.display = 'flex';
+        
+    } else {
+        fileInfo.style.display = 'none';
+    }
+}
+
+/**
+ * Remover archivo CSV seleccionado
+ */
+function removeCsvFile() {
+    document.getElementById('participantCsvFile').value = '';
+    document.getElementById('csvFileInfo').style.display = 'none';
+}
+
+/**
+ * Crear participante individual
+ */
+async function createParticipant() {
+    const btn = document.getElementById('createParticipantBtn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoading = btn.querySelector('.btn-loading');
+    
+    try {
+        // Mostrar loading
+        btn.disabled = true;
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'inline-flex';
+        
+        // Limpiar errores previos
+        clearFormErrors();
+        
+        // Obtener datos del formulario
+        const form = document.getElementById('createParticipantForm');
+        const formData = new FormData(form);
+        
+        // Preparar datos
+        const data = {
+            nombre: formData.get('nombre'),
+            apellidos: formData.get('apellidos'),
+            actividad_id: formData.get('actividad_id')
+        };
+        
+        // Validaciones básicas
+        if (!data.nombre.trim()) {
+            showFieldError('participantName', 'El nombre es obligatorio');
+            return;
+        }
+        
+        if (!data.apellidos.trim()) {
+            showFieldError('participantLastName', 'Los apellidos son obligatorios');
+            return;
+        }
+        
+        if (!data.actividad_id) {
+            showFieldError('participantActivity', 'Debe seleccionar una actividad');
+            return;
+        }
+        
+        // Enviar datos
+        const response = await fetch('api/participantes/create.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Participante inscrito exitosamente', 'success');
+            closeCreateParticipantModal();
+            
+            // Actualizar estadísticas
+            await loadStats();
+        } else {
+            showNotification('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error creating participant:', error);
+        showNotification('Error al inscribir el participante', 'error');
+    } finally {
+        // Ocultar loading
+        btn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+    }
+}
+
+/**
+ * Subir CSV de participantes
+ */
+async function uploadParticipantCsv() {
+    const btn = document.getElementById('uploadCsvBtn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoading = btn.querySelector('.btn-loading');
+    
+    try {
+        // Mostrar loading
+        btn.disabled = true;
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'inline-flex';
+        
+        // Limpiar errores previos
+        clearFormErrors();
+        
+        // Verificar que se seleccionó archivo
+        const fileInput = document.getElementById('participantCsvFile');
+        if (!fileInput.files.length) {
+            showNotification('Debe seleccionar un archivo CSV', 'error');
+            return;
+        }
+        
+        // Verificar que se seleccionó actividad
+        const activityId = document.getElementById('csvParticipantActivity').value;
+        if (!activityId) {
+            showFieldError('csvParticipantActivity', 'Debe seleccionar una actividad');
+            return;
+        }
+        
+        // Preparar FormData
+        const formData = new FormData();
+        formData.append('csv', fileInput.files[0]);
+        formData.append('actividad_id', activityId);
+        
+        // Enviar archivo
+        const response = await fetch('api/participantes/upload_csv.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            closeCreateParticipantModal();
+            
+            // Actualizar estadísticas
+            await loadStats();
+        } else {
+            showNotification('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error uploading CSV:', error);
+        showNotification('Error al subir el archivo CSV', 'error');
     } finally {
         // Ocultar loading
         btn.disabled = false;

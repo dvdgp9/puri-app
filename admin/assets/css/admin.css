@@ -1008,7 +1008,112 @@ body {
     line-height: 1.4;
 }
 
-/* Responsive para modal de actividades */
+/* Estilos para modal de participantes */
+.col-md-4 {
+    flex: 0 0 33.333%;
+    max-width: 33.333%;
+}
+
+.tab-navigation {
+    display: flex;
+    border-bottom: 2px solid var(--admin-border);
+    margin-bottom: 24px;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-gray-600);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tab-btn:hover {
+    color: var(--primary-color);
+    background: var(--color-gray-50);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.csv-section {
+    background: var(--color-gray-50);
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.csv-info h4 {
+    margin: 0 0 12px 0;
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.csv-info p {
+    margin: 4px 0;
+    color: var(--color-gray-600);
+    font-size: 14px;
+}
+
+.csv-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    align-items: center;
+}
+
+.file-upload-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: var(--color-success-bg);
+    border: 1px solid var(--color-success);
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--color-success-dark);
+}
+
+.btn-remove {
+    background: none;
+    border: none;
+    color: var(--color-danger);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.btn-remove:hover {
+    background: var(--color-danger-bg);
+}
+
+/* Responsive para modal de participantes */
 @media (max-width: 768px) {
     .modal-large {
         max-width: 95%;
@@ -1020,6 +1125,11 @@ body {
         max-width: 100%;
     }
     
+    .col-md-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
     .checkbox-group {
         gap: 10px;
     }
@@ -1027,6 +1137,16 @@ body {
     .checkbox-inline {
         flex: 0 0 calc(50% - 5px);
         font-size: 0.9rem;
+    }
+    
+    .csv-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .tab-btn {
+        font-size: 13px;
+        padding: 10px 16px;
     }
 }
 
