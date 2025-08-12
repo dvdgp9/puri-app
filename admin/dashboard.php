@@ -76,7 +76,7 @@ $admin_info = getAdminInfo();
                         <option value="nombre">Ordenar A-Z</option>
                         <option value="-nombre">Ordenar Z-A</option>
                     </select>
-                    <button class="btn btn-primary" id="addButton">
+                    <button class="btn btn-primary" id="addButton" onclick="showCreateCenterModal()">
                         + Añadir Centro
                     </button>
                 </div>
