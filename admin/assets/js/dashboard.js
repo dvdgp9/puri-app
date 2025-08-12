@@ -1357,92 +1357,49 @@ function switchParticipantTab(tabType) {
 }
 
 /**
- * Configurar selectores para pestaña manual de participantes
+ * Configurar selector de centros para participantes (pestaña manual)
  */
-function setupManualParticipantSelectors() {
-    setupManualParticipantCenterSelector();
+function setupParticipantCenterSelector() {
+    initParticipantCenterSelector('participantCenter', 'participantInstallation', 'participantActivity');
 }
 
 /**
- * Configurar selectores para pestaña CSV de participantes  
- */
-function setupCsvParticipantSelectors() {
-    setupCsvParticipantCenterSelector();
-}
-
-/**
- * Configurar selector de centros para pestaña manual
- */
-function setupManualParticipantCenterSelector() {
-    loadManualParticipantCenters();
-    
-    const input = document.getElementById('participantCenterSearch');
-    const wrapper = input?.closest('.custom-select-wrapper');
-    const dropdown = document.getElementById('participantCenterDropdown');
-    
-    if (!input || !wrapper || !dropdown) return;
-    
-    // Manejar búsqueda
-    input.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const filteredCenters = window.manualParticipantCenters?.filter(centro => 
-            centro.nombre.toLowerCase().includes(searchTerm)
-        ) || [];
-        
-        renderManualParticipantCenterOptions(filteredCenters);
-        wrapper.classList.add('open');
-    });
-    
-    // Manejar focus
-    input.addEventListener('focus', function() {
-        if (window.manualParticipantCenters) {
-            renderManualParticipantCenterOptions(window.manualParticipantCenters);
-            wrapper.classList.add('open');
-        }
-    });
-    
-    // Cerrar al hacer click fuera
-    document.addEventListener('click', function(e) {
-        if (!wrapper.contains(e.target)) {
-            wrapper.classList.remove('open');
-        }
-    });
-    
-    // Manejar teclas
-    input.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            wrapper.classList.remove('open');
-        }
-    });
-}
-
-/**
- * Configurar selector de centros para pestaña CSV
+ * Configurar selector de centros para CSV
  */
 function setupCsvParticipantCenterSelector() {
-    loadCsvParticipantCenters();
+    initParticipantCenterSelector('csvParticipantCenter', 'csvParticipantInstallation', 'csvParticipantActivity');
+}
+
+/**
+ * Inicializar selector de centros para participantes (genérico)
+ */
+function initParticipantCenterSelector(centerPrefix, installationPrefix, activityPrefix) {
+    const wrapper = document.querySelector(`#${centerPrefix}Search`).closest('.custom-select-wrapper');
+    const input = document.getElementById(`${centerPrefix}Search`);
+    const dropdown = document.getElementById(`${centerPrefix}Dropdown`);
+    const hiddenInput = document.getElementById(centerPrefix);
     
-    const input = document.getElementById('csvParticipantCenterSearch');
-    const wrapper = input?.closest('.custom-select-wrapper');
-    const dropdown = document.getElementById('csvParticipantCenterDropdown');
+    if (!wrapper || !input || !dropdown || !hiddenInput) return;
     
-    if (!input || !wrapper || !dropdown) return;
-    
-    // Manejar búsqueda
-    input.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const filteredCenters = window.csvParticipantCenters?.filter(centro => 
-            centro.nombre.toLowerCase().includes(searchTerm)
-        ) || [];
-        
-        renderCsvParticipantCenterOptions(filteredCenters);
-        wrapper.classList.add('open');
+    // Evento click en input para abrir/cerrar
+    input.addEventListener('click', function() {
+        wrapper.classList.toggle('open');
+        if (wrapper.classList.contains('open') && !window.participantCenters) {
+            loadParticipantCenters(centerPrefix);
+        }
     });
     
-    // Manejar focus
-    input.addEventListener('focus', function() {
-        if (window.csvParticipantCenters) {
-            renderCsvParticipantCenterOptions(window.csvParticipantCenters);
+    // Evento input para filtrar
+    input.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        if (window.participantCenters) {
+            const filtered = window.participantCenters.filter(centro => 
+                centro.nombre && centro.nombre.toLowerCase().includes(query)
+            );
+            renderParticipantCenterOptions(filtered, centerPrefix, installationPrefix, activityPrefix);
+        }
+        
+        if (!wrapper.classList.contains('open')) {
             wrapper.classList.add('open');
         }
     });
@@ -1463,50 +1420,30 @@ function setupCsvParticipantCenterSelector() {
 }
 
 /**
- * Cargar centros para pestaña manual
+ * Cargar centros para participantes
  */
-async function loadManualParticipantCenters() {
+async function loadParticipantCenters(centerPrefix) {
     try {
         const response = await fetch('api/centros/list_for_selector.php');
         const data = await response.json();
         
         if (data.success) {
-            window.manualParticipantCenters = data.centros;
-            renderManualParticipantCenterOptions(data.centros);
+            window.participantCenters = data.centros;
+            renderParticipantCenterOptions(data.centros, centerPrefix);
         } else {
-            showManualParticipantCenterSelectorError('Error al cargar centros');
+            showParticipantCenterSelectorError('Error al cargar centros', centerPrefix);
         }
     } catch (error) {
         console.error('Error loading centers:', error);
-        showManualParticipantCenterSelectorError('Error de conexión');
+        showParticipantCenterSelectorError('Error de conexión', centerPrefix);
     }
 }
 
 /**
- * Cargar centros para pestaña CSV
+ * Renderizar opciones de centros para participantes
  */
-async function loadCsvParticipantCenters() {
-    try {
-        const response = await fetch('api/centros/list_for_selector.php');
-        const data = await response.json();
-        
-        if (data.success) {
-            window.csvParticipantCenters = data.centros;
-            renderCsvParticipantCenterOptions(data.centros);
-        } else {
-            showCsvParticipantCenterSelectorError('Error al cargar centros');
-        }
-    } catch (error) {
-        console.error('Error loading centers:', error);
-        showCsvParticipantCenterSelectorError('Error de conexión');
-    }
-}
-
-/**
- * Renderizar opciones de centros para pestaña manual
- */
-function renderManualParticipantCenterOptions(centros) {
-    const dropdown = document.getElementById('participantCenterDropdown');
+function renderParticipantCenterOptions(centros, centerPrefix, installationPrefix, activityPrefix) {
+    const dropdown = document.getElementById(`${centerPrefix}Dropdown`);
     
     if (centros.length === 0) {
         dropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron centros</div>';
@@ -1529,77 +1466,28 @@ function renderManualParticipantCenterOptions(centros) {
             const name = this.dataset.name;
             
             // Actualizar input y valor oculto
-            document.getElementById('participantCenterSearch').value = name;
-            document.getElementById('participantCenter').value = value;
+            document.getElementById(`${centerPrefix}Search`).value = name;
+            document.getElementById(centerPrefix).value = value;
             
             // Cerrar dropdown
-            const wrapper = document.querySelector('#participantCenterSearch').closest('.custom-select-wrapper');
+            const wrapper = document.querySelector(`#${centerPrefix}Search`).closest('.custom-select-wrapper');
             wrapper.classList.remove('open');
             
             // Cargar instalaciones para este centro
-            loadManualParticipantInstallations(value);
+            loadParticipantInstallations(value, installationPrefix, activityPrefix);
             
             // Limpiar error si existe
-            clearFieldError('participantCenter');
+            clearFieldError(centerPrefix);
         });
     });
 }
 
 /**
- * Renderizar opciones de centros para pestaña CSV
+ * Cargar instalaciones para participantes
  */
-function renderCsvParticipantCenterOptions(centros) {
-    const dropdown = document.getElementById('csvParticipantCenterDropdown');
-    
-    if (centros.length === 0) {
-        dropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron centros</div>';
-        return;
-    }
-    
-    dropdown.innerHTML = centros.map(centro => 
-        `<div class="custom-select-option" data-value="${centro.id}" data-name="${escapeHtml(centro.nombre)}">
-            <div class="option-content">
-                <div class="option-title">${centro.nombre}</div>
-                <div class="option-subtitle">${centro.direccion || ''}</div>
-            </div>
-        </div>`
-    ).join('');
-    
-    // Agregar eventos click a las opciones
-    dropdown.querySelectorAll('.custom-select-option').forEach(option => {
-        option.addEventListener('click', function() {
-            const value = this.dataset.value;
-            const name = this.dataset.name;
-            
-            // Actualizar input y valor oculto
-            document.getElementById('csvParticipantCenterSearch').value = name;
-            document.getElementById('csvParticipantCenter').value = value;
-            
-            // Cerrar dropdown
-            const wrapper = document.querySelector('#csvParticipantCenterSearch').closest('.custom-select-wrapper');
-            wrapper.classList.remove('open');
-            
-            // Cargar instalaciones para este centro
-            loadCsvParticipantInstallations(value);
-            
-            // Limpiar error si existe
-            clearFieldError('csvParticipantCenter');
-        });
-    });
-}
-
-/**
- * Cargar instalaciones para pestaña manual
- */
-async function loadManualParticipantInstallations(centroId) {
-    const input = document.getElementById('participantInstallationSearch');
-    const dropdown = document.getElementById('participantInstallationDropdown');
-    const hidden = document.getElementById('participantInstallation');
-    
-    if (!input || !dropdown || !hidden) {
-        console.error('Elementos del selector de instalaciones no encontrados');
-        return;
-    }
+async function loadParticipantInstallations(centroId, installationPrefix, activityPrefix) {
+    const input = document.getElementById(`${installationPrefix}Search`);
+    const dropdown = document.getElementById(`${installationPrefix}Dropdown`);
     
     try {
         // Habilitar selector de instalaciones
@@ -1611,40 +1499,7 @@ async function loadManualParticipantInstallations(centroId) {
         const data = await response.json();
         
         if (data.success) {
-            renderManualParticipantInstallationOptions(data.instalaciones);
-        } else {
-            dropdown.innerHTML = '<div class="custom-select-no-results">Error cargando instalaciones</div>';
-        }
-    } catch (error) {
-        console.error('Error loading installations:', error);
-        dropdown.innerHTML = '<div class="custom-select-no-results">Error cargando instalaciones</div>';
-    }
-}
-
-/**
- * Cargar instalaciones para pestaña CSV
- */
-async function loadCsvParticipantInstallations(centroId) {
-    const input = document.getElementById('csvParticipantInstallationSearch');
-    const dropdown = document.getElementById('csvParticipantInstallationDropdown');
-    const hidden = document.getElementById('csvParticipantInstallation');
-    
-    if (!input || !dropdown || !hidden) {
-        console.error('Elementos del selector de instalaciones no encontrados');
-        return;
-    }
-    
-    try {
-        // Habilitar selector de instalaciones
-        input.disabled = false;
-        input.placeholder = 'Buscar instalación...';
-        dropdown.innerHTML = '<div class="custom-select-loading">Cargando instalaciones...</div>';
-        
-        const response = await fetch(`api/instalaciones/list_by_center.php?centro_id=${centroId}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            renderCsvParticipantInstallationOptions(data.instalaciones);
+            setupParticipantInstallationSelector(data.instalaciones, installationPrefix, activityPrefix);
         } else {
             dropdown.innerHTML = '<div class="custom-select-no-results">Error cargando instalaciones</div>';
         }
@@ -1735,18 +1590,6 @@ function renderParticipantInstallationOptions(instalaciones, installationPrefix,
 async function loadParticipantActivities(instalacionId, activityPrefix) {
     const input = document.getElementById(`${activityPrefix}Search`);
     const dropdown = document.getElementById(`${activityPrefix}Dropdown`);
-    const hidden = document.getElementById(activityPrefix);
-    
-    // Validación de elementos (como en el modal de actividades)
-    if (!input || !dropdown || !hidden) {
-        console.error('Elementos del selector de actividades no encontrados:', {
-            input: !!input,
-            dropdown: !!dropdown,
-            hidden: !!hidden,
-            activityPrefix
-        });
-        return;
-    }
     
     try {
         // Habilitar selector de actividades
@@ -1876,17 +1719,14 @@ function showCreateParticipantModal() {
         // Resetear selectores CSV
         resetParticipantSelectors('csvParticipantCenter', 'csvParticipantInstallation', 'csvParticipantActivity');
         
-        // Inicializar selectores cascada para pestaña manual
-        setupManualParticipantSelectors();
-        
-        // Inicializar selectores cascada para pestaña CSV
-        setupCsvParticipantSelectors();
-        
         // Activar pestaña manual por defecto
         switchParticipantTab('manual');
         
         // Ocultar info de archivo CSV
         document.getElementById('csvFileInfo').style.display = 'none';
+        
+        // Configurar modal (event listeners y selectores)
+        setupParticipantModal();
     }
 }
 
