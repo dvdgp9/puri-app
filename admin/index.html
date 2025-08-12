@@ -27,5 +27,24 @@
     <script src="assets/js/router.js"></script>
     <script src="assets/js/components.js"></script>
     <script src="assets/js/app.js"></script>
+    
+    <script>
+        // Inicializar la aplicación cuando se carga la página
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Crear instancias globales
+                window.AdminApp = new AdminApp();
+                window.AdminRouter = new AdminRouter();
+                
+                // Inicializar la aplicación
+                await window.AdminApp.init();
+                
+            } catch (error) {
+                console.error('Error inicializando la aplicación:', error);
+                // Si hay error de autenticación, redirigir al login
+                window.location.href = 'login.php';
+            }
+        });
+    </script>
 </body>
 </html>

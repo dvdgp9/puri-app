@@ -137,11 +137,17 @@ class AdminApp {
      * Mostrar la aplicación
      */
     showApp() {
-        const loadingSpinner = document.getElementById('loading-spinner');
         const adminApp = document.getElementById('admin-app');
-
-        loadingSpinner.style.display = 'none';
-        adminApp.style.display = 'flex';
+        
+        // Mostrar la aplicación
+        if (adminApp) {
+            adminApp.style.display = 'block';
+            
+            // Inicializar el router para cargar la ruta inicial
+            if (window.AdminRouter) {
+                window.AdminRouter.handleRouteChange();
+            }
+        }
     }
 }
 
