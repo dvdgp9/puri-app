@@ -31,7 +31,7 @@ $admin_info = getAdminInfo();
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
-                + Añadir
+                Añadir
             </button>
             <div class="dropdown">
                 <button class="btn btn-secondary" id="profile-dropdown-btn">
@@ -77,7 +77,7 @@ $admin_info = getAdminInfo();
                         <option value="-nombre">Ordenar Z-A</option>
                     </select>
                     <button class="btn btn-primary" id="addButton">
-                        + Añadir
+                        + Añadir Centro
                     </button>
                 </div>
             </div>

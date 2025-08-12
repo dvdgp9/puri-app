@@ -924,6 +924,25 @@ body {
     font-size: 14px;
 }
 
+.custom-select-option .option-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.custom-select-option .option-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color);
+    line-height: 1.3;
+}
+
+.custom-select-option .option-subtitle {
+    font-size: 12px;
+    color: var(--color-gray-600);
+    line-height: 1.2;
+}
+
 .custom-select-option:last-child {
     border-bottom: none;
 }
