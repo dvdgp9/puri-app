@@ -145,7 +145,34 @@ $admin_info = getAdminInfo();
     <!-- Modal Container -->
     <div id="modal-container"></div>
 
-    <!-- Scripts -->
+    <!-- Modal Crear Centro -->
+    <div class="modal-overlay" id="createCenterModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Crear Nuevo Centro</h2>
+                <button class="modal-close" onclick="closeCreateCenterModal()">&times;</button>
+            </div>
+            <form id="createCenterForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="centerName">Nombre del Centro</label>
+                        <input type="text" id="centerName" name="nombre" class="form-input" placeholder="Ej: Centro Deportivo Municipal" required>
+                        <div class="form-error" id="centerNameError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="centerAddress">Dirección</label>
+                        <input type="text" id="centerAddress" name="direccion" class="form-input" placeholder="Ej: Calle Principal 123">
+                        <div class="form-error" id="centerAddressError"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateCenterModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="createCenterBtn">Crear Centro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="assets/js/dashboard.js"></script>
 </body>
 </html>

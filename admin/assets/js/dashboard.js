@@ -43,6 +43,40 @@ function setupEventListeners() {
             sortCenters(e.target.value);
         });
     }
+    
+    // Formulario crear centro
+    const createCenterForm = document.getElementById('createCenterForm');
+    if (createCenterForm) {
+        createCenterForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Limpiar errores previos
+            clearFormErrors();
+            
+            // Obtener datos del formulario
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Validación básica
+            if (!data.nombre.trim()) {
+                showFieldError('centerName', 'El nombre del centro es obligatorio');
+                return;
+            }
+            
+            // Mostrar loading
+            const submitBtn = document.getElementById('createCenterBtn');
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            
+            try {
+                await createCenter(data);
+            } finally {
+                // Quitar loading
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            }
+        });
+    }
 }
 
 /**
@@ -432,11 +466,114 @@ function deactivateCenter(centerId) {
 }
 
 /**
- * Función placeholder para crear centro
+ * Mostrar modal de crear centro
  */
 function showCreateCenterModal() {
-    console.log('Crear nuevo centro');
-    // TODO: Implementar modal de creación
+    const modal = document.getElementById('createCenterModal');
+    modal.classList.add('show');
+    
+    // Focus en el primer campo
+    setTimeout(() => {
+        document.getElementById('centerName').focus();
+    }, 300);
+}
+
+/**
+ * Cerrar modal de crear centro
+ */
+function closeCreateCenterModal() {
+    const modal = document.getElementById('createCenterModal');
+    modal.classList.remove('show');
+    
+    // Limpiar formulario
+    document.getElementById('createCenterForm').reset();
+    clearFormErrors();
+}
+
+/**
+ * Limpiar errores del formulario
+ */
+function clearFormErrors() {
+    document.querySelectorAll('.form-error').forEach(error => {
+        error.textContent = '';
+    });
+    document.querySelectorAll('.form-input').forEach(input => {
+        input.classList.remove('error');
+    });
+}
+
+/**
+ * Mostrar error en campo específico
+ */
+function showFieldError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    const errorDiv = document.getElementById(fieldId + 'Error');
+    
+    field.classList.add('error');
+    errorDiv.textContent = message;
+}
+
+/**
+ * Crear nuevo centro
+ */
+async function createCenter(formData) {
+    try {
+        const response = await fetch('api/centros/create.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Añadir el nuevo centro a la lista
+            Dashboard.centers.push(data.data);
+            renderCenters();
+            
+            // Cerrar modal
+            closeCreateCenterModal();
+            
+            // Mostrar mensaje de éxito
+            showNotification('Centro creado exitosamente', 'success');
+            
+        } else {
+            throw new Error(data.error || 'Error al crear el centro');
+        }
+        
+    } catch (error) {
+        console.error('Error creando centro:', error);
+        showNotification(error.message, 'error');
+    }
+}
+
+/**
+ * Mostrar notificación
+ */
+function showNotification(message, type = 'info') {
+    // Crear elemento de notificación
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-message">${message}</span>
+            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+        </div>
+    `;
+    
+    // Añadir al DOM
+    document.body.appendChild(notification);
+    
+    // Mostrar con animación
+    setTimeout(() => notification.classList.add('show'), 100);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 5000);
 }
 
 /**
