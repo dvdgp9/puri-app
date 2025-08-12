@@ -1,17 +1,18 @@
 <?php
-session_start();
-require_once '../../../config/config.php';
-
-// Verificar autenticación de admin
-if (!isset($_SESSION['admin_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'No autorizado']);
-    exit;
-}
+header('Content-Type: application/json');
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
 
 try {
-    $admin_id = $_SESSION['admin_id'];
-    $is_superadmin = $_SESSION['is_superadmin'] ?? false;
+    // Cargar configuración y autenticación
+    require_once '../../../config/config.php';
+    require_once '../../auth_middleware.php';
+    
+    // Verificar autenticación de admin
+    $admin_info = getAdminInfo();
+    
+    $admin_id = $admin_info['id'];
+    $is_superadmin = $admin_info['is_superadmin'];
     
     if ($is_superadmin) {
         // Superadmin ve todos los centros
@@ -30,9 +31,13 @@ try {
         'centros' => $centros
     ]);
     
-} catch (PDOException $e) {
-    error_log("Error fetching centros for selector: " . $e->getMessage());
+} catch (Exception $e) {
+    error_log("Error in list_for_selector.php: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Error interno del servidor',
+        'debug' => $e->getMessage()
+    ]);
 }
 ?>
