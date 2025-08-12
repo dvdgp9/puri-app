@@ -579,7 +579,7 @@ function selectCreateOption(type) {
             showCreateActivityModal();
             break;
         case 'participante':
-            showAddParticipantModal();
+            showCreateParticipantModal();
             break;
         default:
             showNotification('Funcionalidad en desarrollo', 'info');
