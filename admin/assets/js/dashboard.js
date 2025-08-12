@@ -222,41 +222,52 @@ function renderStats() {
  * Renderizar centros
  */
 function renderCenters() {
-    const centersGrid = document.getElementById('centers-grid');
-    if (!centersGrid) return;
+    const container = document.getElementById('centers-list');
     
     if (!Dashboard.centers || Dashboard.centers.length === 0) {
-        centersGrid.innerHTML = `
+        container.innerHTML = `
             <div class="empty-state">
-                <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
+                <div class="empty-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                </div>
                 <h3>No hay centros disponibles</h3>
                 <p>Comienza creando tu primer centro deportivo</p>
-                <button class="btn btn-primary" onclick="openModal('centro')">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    Crear primer centro
+                <button class="btn btn-primary" onclick="showCreateCenterModal()">
+                    + Crear primer centro
                 </button>
             </div>
         `;
         return;
     }
-    
+
     const centersHTML = Dashboard.centers.map(center => `
-        <div class="center-card" data-center-id="${center.id}">
-            <div class="center-header">
-                <div class="center-name">${escapeHtml(center.nombre)}</div>
-                <div class="center-actions">
-                    <button class="btn-icon" onclick="showCenterMenu(${center.id}, event)" title="Más opciones">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
-                        </svg>
-                    </button>
+        <div class="center-item">
+            <div class="center-main">
+                <div class="center-header">
+                    <h3 class="center-name">${escapeHtml(center.nombre)}</h3>
+                    <span class="center-status active">Activo</span>
+                </div>
+                <div class="center-details">
+                    <span class="center-address">${escapeHtml(center.direccion || 'Sin dirección')}</span>
+                    <span class="center-stat">4 instalaciones</span>
+                    <span class="center-stat">12 actividades</span>
                 </div>
             </div>
-            <div class="center-info">
+            <div class="center-actions">
+                <div class="dropdown">
+                    <button class="more-btn" onclick="toggleDropdown(${center.id})">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu" id="dropdown-${center.id}">
+                        <a href="#" onclick="viewActivities(${center.id})">Ver actividades</a>
+                        <a href="#" onclick="editCenter(${center.id})">Editar centro</a>
+                        <a href="#" onclick="deactivateCenter(${center.id})">Desactivar</a>
+                    </div>
+                </div>
                 <div class="center-address">${escapeHtml(center.direccion || 'Sin dirección')}</div>
             </div>
             <div class="center-footer">
@@ -364,12 +375,72 @@ function showError(message) {
 }
 
 /**
- * Escapar HTML para prevenir XSS
+ * Función auxiliar para escapar HTML
  */
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text ? text.replace(/[&<>"']/g, function(m) { return map[m]; }) : '';
+}
+
+/**
+ * Toggle dropdown menu
+ */
+function toggleDropdown(centerId) {
+    const dropdown = document.getElementById(`dropdown-${centerId}`);
+    const isVisible = dropdown.classList.contains('show');
+    
+    // Cerrar todos los dropdowns
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.classList.remove('show');
+    });
+    
+    // Toggle el dropdown actual
+    if (!isVisible) {
+        dropdown.classList.add('show');
+    }
+}
+
+/**
+ * Cerrar dropdowns al hacer click fuera
+ */
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.dropdown')) {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+});
+
+/**
+ * Funciones del dropdown
+ */
+function viewActivities(centerId) {
+    console.log('Ver actividades del centro:', centerId);
+    // TODO: Implementar navegación a actividades
+}
+
+function editCenter(centerId) {
+    console.log('Editar centro:', centerId);
+    // TODO: Implementar modal de edición
+}
+
+function deactivateCenter(centerId) {
+    console.log('Desactivar centro:', centerId);
+    // TODO: Implementar confirmación y desactivación
+}
+
+/**
+ * Función placeholder para crear centro
+ */
+function showCreateCenterModal() {
+    console.log('Crear nuevo centro');
+    // TODO: Implementar modal de creación
 }
 
 // Hacer funciones globales para uso en HTML

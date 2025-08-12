@@ -17,7 +17,7 @@ $admin_info = getAdminInfo();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Admin Puri</title>
     <link rel="stylesheet" href="assets/css/admin.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Header -->
@@ -88,30 +88,25 @@ $admin_info = getAdminInfo();
             <div class="loading-card">Cargando estadísticas...</div>
         </div>
 
-        <!-- Main Panel -->
-        <div class="main-panel">
-            <div class="panel-header">
-                <div class="panel-title">Centros Deportivos</div>
-                <div class="panel-actions">
-                    <div class="search-bar">
-                        <input type="text" class="search-input" placeholder="Buscar centros..." id="search-centers">
-                        <select class="btn btn-secondary" id="sort-centers">
-                            <option value="name">Ordenar A-Z</option>
-                            <option value="activities">Por actividades</option>
-                            <option value="installations">Por instalaciones</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" onclick="openModal('centro')">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                        </svg>
-                        Añadir centro
+        <!-- Panel de Centros -->
+        <div class="centers-panel">
+            <div class="centers-header">
+                <h2 class="centers-title">Centros Deportivos</h2>
+                <div class="centers-actions">
+                    <input type="text" id="search-centers" class="search-input" placeholder="Buscar centros...">
+                    <select id="sort-centers" class="sort-select">
+                        <option value="nombre">Ordenar A-Z</option>
+                        <option value="-nombre">Ordenar Z-A</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="showCreateCenterModal()">
+                        + Añadir centro
                     </button>
+                    <button class="btn btn-outline">Ver Todos</button>
                 </div>
             </div>
-            <div class="panel-content">
-                <div class="centers-grid" id="centers-grid">
-                    <div class="loading-card">Cargando centros...</div>
+            <div class="centers-content">
+                <div id="centers-list" class="centers-list">
+                    <!-- Los centros se cargarán aquí dinámicamente -->
                 </div>
             </div>
         </div>
