@@ -31,16 +31,23 @@
     <script>
         // Inicializar la aplicación cuando se carga la página
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Iniciando aplicación SPA...');
+            
             try {
                 // Crear instancias globales
+                console.log('📦 Creando instancias...');
                 window.AdminApp = new AdminApp();
                 window.AdminRouter = new AdminRouter();
                 
                 // Inicializar la aplicación
+                console.log('🔐 Verificando autenticación...');
                 await window.AdminApp.init();
                 
+                console.log('✅ Aplicación inicializada correctamente');
+                
             } catch (error) {
-                console.error('Error inicializando la aplicación:', error);
+                console.error('❌ Error inicializando la aplicación:', error);
+                console.log('🔄 Redirigiendo al login...');
                 // Si hay error de autenticación, redirigir al login
                 window.location.href = 'login.php';
             }

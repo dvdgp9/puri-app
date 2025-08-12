@@ -15,22 +15,28 @@ class AdminApp {
         if (this.isInitialized) return;
 
         try {
+            console.log('🔍 Verificando autenticación...');
             // Verificar autenticación
             await this.checkAuthentication();
+            console.log('✅ Autenticación verificada');
             
+            console.log('🎧 Configurando event listeners...');
             // Configurar event listeners
             this.setupEventListeners();
             
+            console.log('🛠️ Inicializando utilidades...');
             // Inicializar utilidades
             this.initUtils();
             
+            console.log('🎨 Mostrando aplicación...');
             // Mostrar la aplicación
             this.showApp();
             
             this.isInitialized = true;
+            console.log('🎉 Aplicación inicializada completamente');
             
         } catch (error) {
-            console.error('Error inicializando la aplicación:', error);
+            console.error('❌ Error inicializando la aplicación:', error);
             this.redirectToLogin();
         }
     }
@@ -40,10 +46,15 @@ class AdminApp {
      */
     async checkAuthentication() {
         try {
+            console.log('📡 Haciendo fetch a check_session.php...');
             const response = await fetch('check_session.php');
+            console.log('📡 Response recibida:', response.status, response.statusText);
+            
             const data = await response.json();
+            console.log('📄 Datos de sesión:', data);
             
             if (data.authenticated && data.user) {
+                console.log('✅ Usuario autenticado:', data.user.username, data.user.role);
                 this.currentUser = data.user;
                 window.AdminApp.currentUser = data.user;
                 
@@ -52,12 +63,13 @@ class AdminApp {
                 
                 return true;
             } else {
+                console.log('❌ Usuario no autenticado, redirigiendo...');
                 // Redirigir al login si no está autenticado
                 window.location.href = data.redirect || 'login.php';
                 throw new Error('Usuario no autenticado');
             }
         } catch (error) {
-            console.error('Error verificando autenticación:', error);
+            console.error('❌ Error verificando autenticación:', error);
             // En caso de error, redirigir al login
             window.location.href = 'login.php';
             throw error;
