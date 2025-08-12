@@ -4,7 +4,6 @@
  * Arquitectura simple: PHP + AJAX básico
  */
 
-session_start();
 require_once '../config/config.php';
 require_once 'auth_middleware.php';
 
