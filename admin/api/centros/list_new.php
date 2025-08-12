@@ -15,24 +15,34 @@ try {
     // Verificar autenticación
     $admin_info = getAdminInfo();
     
-    // Consulta ultra-simple - solo los campos que existen
-    $query = "SELECT id, nombre, direccion FROM centros ORDER BY nombre ASC";
+    // Consulta con conteos de instalaciones y actividades
+    $query = "
+        SELECT 
+            c.id, 
+            c.nombre, 
+            c.direccion,
+            COUNT(DISTINCT i.id) as total_instalaciones,
+            COUNT(DISTINCT a.id) as total_actividades
+        FROM centros c
+        LEFT JOIN instalaciones i ON c.id = i.centro_id
+        LEFT JOIN actividades a ON c.id = a.centro_id
+    ";
     
     // Si no es superadmin, filtrar por centros asignados
     if ($admin_info['role'] !== 'superadmin') {
-        $query = "
-            SELECT c.id, c.nombre, c.direccion 
-            FROM centros c
+        $query .= "
             INNER JOIN admin_asignaciones aa ON c.id = aa.centro_id
             WHERE aa.admin_id = ?
-            ORDER BY c.nombre ASC
         ";
-        $stmt = $pdo->prepare($query);
-        $stmt->execute([$admin_info['id']]);
+        $params = [$admin_info['id']];
     } else {
-        $stmt = $pdo->prepare($query);
-        $stmt->execute();
+        $params = [];
     }
+    
+    $query .= " GROUP BY c.id, c.nombre, c.direccion ORDER BY c.nombre ASC";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
     
     $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
     

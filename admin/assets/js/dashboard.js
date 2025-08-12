@@ -251,8 +251,8 @@ function renderCenters() {
                 </div>
                 <div class="center-details">
                     <span class="center-address">${escapeHtml(center.direccion || 'Sin dirección')}</span>
-                    <span class="center-stat">4 instalaciones</span>
-                    <span class="center-stat">12 actividades</span>
+                    <span class="center-stat">${center.total_instalaciones || 0} instalaciones</span>
+                    <span class="center-stat">${center.total_actividades || 0} actividades</span>
                 </div>
             </div>
             <div class="center-actions">
@@ -503,8 +503,8 @@ function renderFilteredCenters(centers) {
                 </div>
                 <div class="center-details">
                     <span class="center-address">${escapeHtml(center.direccion || 'Sin dirección')}</span>
-                    <span class="center-stat">4 instalaciones</span>
-                    <span class="center-stat">12 actividades</span>
+                    <span class="center-stat">${center.total_instalaciones || 0} instalaciones</span>
+                    <span class="center-stat">${center.total_actividades || 0} actividades</span>
                 </div>
             </div>
             <div class="center-actions">
