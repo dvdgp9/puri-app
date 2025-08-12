@@ -832,7 +832,7 @@ async function createCenter(data) {
             await loadCenters();
             
             // Actualizar estadísticas
-            await loadDashboardStats();
+            await loadStats();
         } else {
             showNotification('Error: ' + result.message, 'error');
         }
@@ -865,7 +865,7 @@ async function createInstallation(data) {
             await loadCenters();
             
             // Actualizar estadísticas
-            await loadDashboardStats();
+            await loadStats();
         } else {
             showNotification('Error: ' + result.message, 'error');
         }
