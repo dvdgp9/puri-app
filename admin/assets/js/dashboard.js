@@ -1098,7 +1098,7 @@ function setupActivityInstallationSelector(installations) {
 function showCreateActivityModal() {
     const modal = document.getElementById('createActivityModal');
     if (modal) {
-        modal.style.display = 'flex';
+        modal.classList.add('show');
         
         // Limpiar formulario
         const form = document.getElementById('createActivityForm');
@@ -1127,7 +1127,7 @@ function showCreateActivityModal() {
 function closeCreateActivityModal() {
     const modal = document.getElementById('createActivityModal');
     if (modal) {
-        modal.style.display = 'none';
+        modal.classList.remove('show');
     }
 }
 
