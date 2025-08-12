@@ -439,6 +439,94 @@ function showCreateCenterModal() {
     // TODO: Implementar modal de creación
 }
 
+/**
+ * Filtrar centros por búsqueda
+ */
+function filterCenters(searchTerm) {
+    const filteredCenters = Dashboard.centers.filter(center => {
+        const searchLower = searchTerm.toLowerCase();
+        return center.nombre.toLowerCase().includes(searchLower) ||
+               (center.direccion && center.direccion.toLowerCase().includes(searchLower));
+    });
+    
+    renderFilteredCenters(filteredCenters);
+}
+
+/**
+ * Ordenar centros
+ */
+function sortCenters(sortBy) {
+    let sortedCenters = [...Dashboard.centers];
+    
+    switch(sortBy) {
+        case 'nombre':
+            sortedCenters.sort((a, b) => a.nombre.localeCompare(b.nombre));
+            break;
+        case '-nombre':
+            sortedCenters.sort((a, b) => b.nombre.localeCompare(a.nombre));
+            break;
+        default:
+            // No sorting
+            break;
+    }
+    
+    renderFilteredCenters(sortedCenters);
+}
+
+/**
+ * Renderizar centros filtrados
+ */
+function renderFilteredCenters(centers) {
+    const container = document.getElementById('centers-list');
+    
+    if (!centers || centers.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+                <h3>No se encontraron centros</h3>
+                <p>Intenta con otros términos de búsqueda</p>
+            </div>
+        `;
+        return;
+    }
+
+    const centersHTML = centers.map(center => `
+        <div class="center-item">
+            <div class="center-main">
+                <div class="center-header">
+                    <h3 class="center-name">${escapeHtml(center.nombre)}</h3>
+                    <span class="center-status active">Activo</span>
+                </div>
+                <div class="center-details">
+                    <span class="center-address">${escapeHtml(center.direccion || 'Sin dirección')}</span>
+                    <span class="center-stat">4 instalaciones</span>
+                    <span class="center-stat">12 actividades</span>
+                </div>
+            </div>
+            <div class="center-actions">
+                <div class="dropdown">
+                    <button class="more-btn" onclick="toggleDropdown(${center.id})">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu" id="dropdown-${center.id}">
+                        <a href="#" onclick="viewActivities(${center.id})">Ver actividades</a>
+                        <a href="#" onclick="editCenter(${center.id})">Editar centro</a>
+                        <a href="#" onclick="deactivateCenter(${center.id})">Desactivar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    container.innerHTML = centersHTML;
+}
+
 // Hacer funciones globales para uso en HTML
 window.openModal = openModal;
 window.viewCenter = viewCenter;

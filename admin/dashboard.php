@@ -101,7 +101,6 @@ $admin_info = getAdminInfo();
                     <button class="btn btn-primary" onclick="showCreateCenterModal()">
                         + Añadir centro
                     </button>
-                    <button class="btn btn-outline">Ver Todos</button>
                 </div>
             </div>
             <div class="centers-content">
