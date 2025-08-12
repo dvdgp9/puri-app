@@ -28,6 +28,9 @@ function setupEventListeners() {
     // Dropdowns
     setupDropdowns();
     
+    // Configurar modal de actividades
+    setupActivityModal();
+    
     // Búsqueda de centros
     const searchInput = document.getElementById('search-centers');
     if (searchInput) {
@@ -872,6 +875,354 @@ async function createInstallation(data) {
     } catch (error) {
         console.error('Error creating installation:', error);
         showNotification('Error al crear la instalación', 'error');
+    }
+}
+
+/**
+ * Configurar modal de actividades
+ */
+function setupActivityModal() {
+    // Configurar selectores cascada
+    setupActivityCenterSelector();
+    
+    // Configurar formulario de actividades
+    const activityForm = document.getElementById('createActivityForm');
+    if (activityForm) {
+        activityForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await createActivity();
+        });
+    }
+}
+
+/**
+ * Configurar selector de centros para actividades
+ */
+function setupActivityCenterSelector() {
+    const centerInput = document.getElementById('activityCenterSearch');
+    const centerDropdown = document.getElementById('activityCenterDropdown');
+    const centerHidden = document.getElementById('activityCenter');
+    
+    if (!centerInput || !centerDropdown || !centerHidden) return;
+    
+    let centers = [];
+    
+    // Cargar centros al hacer foco
+    centerInput.addEventListener('focus', async function() {
+        if (centers.length === 0) {
+            await loadActivityCenters();
+        }
+    });
+    
+    // Búsqueda en tiempo real
+    centerInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        filterActivityCenters(searchTerm);
+    });
+    
+    // Cargar centros
+    async function loadActivityCenters() {
+        try {
+            centerDropdown.innerHTML = '<div class="custom-select-loading">Cargando centros...</div>';
+            
+            const response = await fetch('api/centros/list_for_selector.php');
+            const data = await response.json();
+            
+            if (data.success) {
+                centers = data.centros;
+                renderActivityCenters(centers);
+            } else {
+                centerDropdown.innerHTML = '<div class="custom-select-no-results">Error cargando centros</div>';
+            }
+        } catch (error) {
+            console.error('Error loading centers:', error);
+            centerDropdown.innerHTML = '<div class="custom-select-no-results">Error cargando centros</div>';
+        }
+    }
+    
+    // Renderizar centros
+    function renderActivityCenters(centersToShow) {
+        if (centersToShow.length === 0) {
+            centerDropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron centros</div>';
+            return;
+        }
+        
+        const html = centersToShow.map(center => `
+            <div class="custom-select-option" data-value="${center.id}" data-text="${center.nombre}">
+                <div class="option-content">
+                    <div class="option-title">${center.nombre}</div>
+                    <div class="option-subtitle">${center.direccion}</div>
+                </div>
+            </div>
+        `).join('');
+        
+        centerDropdown.innerHTML = html;
+        
+        // Agregar eventos a opciones
+        centerDropdown.querySelectorAll('.custom-select-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const value = this.dataset.value;
+                const text = this.dataset.text;
+                
+                centerInput.value = text;
+                centerHidden.value = value;
+                centerDropdown.style.display = 'none';
+                
+                // Limpiar y cargar instalaciones
+                loadActivityInstallations(value);
+                
+                clearFieldError('activityCenter');
+            });
+        });
+    }
+    
+    // Filtrar centros
+    function filterActivityCenters(searchTerm) {
+        const filtered = centers.filter(center => 
+            center.nombre.toLowerCase().includes(searchTerm) ||
+            center.direccion.toLowerCase().includes(searchTerm)
+        );
+        renderActivityCenters(filtered);
+        centerDropdown.style.display = 'block';
+    }
+    
+    // Ocultar dropdown al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!centerInput.contains(e.target) && !centerDropdown.contains(e.target)) {
+            centerDropdown.style.display = 'none';
+        }
+    });
+}
+
+/**
+ * Cargar instalaciones por centro
+ */
+async function loadActivityInstallations(centroId) {
+    const installationInput = document.getElementById('activityInstallationSearch');
+    const installationDropdown = document.getElementById('activityInstallationDropdown');
+    const installationHidden = document.getElementById('activityInstallation');
+    
+    if (!installationInput || !installationDropdown || !installationHidden) return;
+    
+    try {
+        // Habilitar selector de instalaciones
+        installationInput.disabled = false;
+        installationInput.placeholder = 'Buscar instalación...';
+        installationDropdown.innerHTML = '<div class="custom-select-loading">Cargando instalaciones...</div>';
+        
+        const response = await fetch(`api/instalaciones/list_by_center.php?centro_id=${centroId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const installations = data.instalaciones;
+            setupActivityInstallationSelector(installations);
+        } else {
+            installationDropdown.innerHTML = '<div class="custom-select-no-results">Error cargando instalaciones</div>';
+        }
+    } catch (error) {
+        console.error('Error loading installations:', error);
+        installationDropdown.innerHTML = '<div class="custom-select-no-results">Error cargando instalaciones</div>';
+    }
+}
+
+/**
+ * Configurar selector de instalaciones
+ */
+function setupActivityInstallationSelector(installations) {
+    const installationInput = document.getElementById('activityInstallationSearch');
+    const installationDropdown = document.getElementById('activityInstallationDropdown');
+    const installationHidden = document.getElementById('activityInstallation');
+    
+    // Renderizar instalaciones
+    function renderInstallations(installationsToShow) {
+        if (installationsToShow.length === 0) {
+            installationDropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron instalaciones</div>';
+            return;
+        }
+        
+        const html = installationsToShow.map(installation => `
+            <div class="custom-select-option" data-value="${installation.id}" data-text="${installation.nombre}">
+                <div class="option-content">
+                    <div class="option-title">${installation.nombre}</div>
+                </div>
+            </div>
+        `).join('');
+        
+        installationDropdown.innerHTML = html;
+        
+        // Agregar eventos a opciones
+        installationDropdown.querySelectorAll('.custom-select-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const value = this.dataset.value;
+                const text = this.dataset.text;
+                
+                installationInput.value = text;
+                installationHidden.value = value;
+                installationDropdown.style.display = 'none';
+                
+                clearFieldError('activityInstallation');
+            });
+        });
+    }
+    
+    // Búsqueda en tiempo real
+    installationInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const filtered = installations.filter(installation => 
+            installation.nombre.toLowerCase().includes(searchTerm)
+        );
+        renderInstallations(filtered);
+        installationDropdown.style.display = 'block';
+    });
+    
+    // Mostrar todas al hacer foco
+    installationInput.addEventListener('focus', function() {
+        renderInstallations(installations);
+        installationDropdown.style.display = 'block';
+    });
+    
+    // Ocultar dropdown al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!installationInput.contains(e.target) && !installationDropdown.contains(e.target)) {
+            installationDropdown.style.display = 'none';
+        }
+    });
+    
+    // Renderizar inicialmente
+    renderInstallations(installations);
+}
+
+/**
+ * Mostrar modal crear actividad
+ */
+function showCreateActivityModal() {
+    const modal = document.getElementById('createActivityModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        
+        // Limpiar formulario
+        const form = document.getElementById('createActivityForm');
+        if (form) {
+            form.reset();
+            clearFormErrors();
+        }
+        
+        // Resetear selectores
+        document.getElementById('activityCenterSearch').value = '';
+        document.getElementById('activityCenter').value = '';
+        document.getElementById('activityInstallationSearch').value = '';
+        document.getElementById('activityInstallationSearch').disabled = true;
+        document.getElementById('activityInstallationSearch').placeholder = 'Primero selecciona un centro';
+        document.getElementById('activityInstallation').value = '';
+        
+        // Establecer fecha de inicio por defecto
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('activityStartDate').value = today;
+    }
+}
+
+/**
+ * Cerrar modal crear actividad
+ */
+function closeCreateActivityModal() {
+    const modal = document.getElementById('createActivityModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * Crear actividad
+ */
+async function createActivity() {
+    const btn = document.getElementById('createActivityBtn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoading = btn.querySelector('.btn-loading');
+    
+    try {
+        // Mostrar loading
+        btn.disabled = true;
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'inline-flex';
+        
+        // Limpiar errores previos
+        clearFormErrors();
+        
+        // Obtener datos del formulario
+        const form = document.getElementById('createActivityForm');
+        const formData = new FormData(form);
+        
+        // Obtener días seleccionados
+        const diasSemana = [];
+        form.querySelectorAll('input[name="dias_semana[]"]:checked').forEach(checkbox => {
+            diasSemana.push(checkbox.value);
+        });
+        
+        // Preparar datos
+        const data = {
+            nombre: formData.get('nombre'),
+            instalacion_id: formData.get('instalacion_id'),
+            dias_semana: diasSemana,
+            hora_inicio: formData.get('hora_inicio'),
+            hora_fin: formData.get('hora_fin'),
+            fecha_inicio: formData.get('fecha_inicio'),
+            fecha_fin: formData.get('fecha_fin') || null
+        };
+        
+        // Validaciones básicas
+        if (!data.nombre.trim()) {
+            showFieldError('activityName', 'El nombre es obligatorio');
+            return;
+        }
+        
+        if (!data.instalacion_id) {
+            showFieldError('activityInstallation', 'Debe seleccionar una instalación');
+            return;
+        }
+        
+        if (diasSemana.length === 0) {
+            showFieldError('dias_semana', 'Debe seleccionar al menos un día');
+            return;
+        }
+        
+        if (!data.hora_inicio || !data.hora_fin) {
+            showFieldError('activityStartTime', 'Las horas son obligatorias');
+            return;
+        }
+        
+        if (!data.fecha_inicio) {
+            showFieldError('activityStartDate', 'La fecha de inicio es obligatoria');
+            return;
+        }
+        
+        // Enviar datos
+        const response = await fetch('api/actividades/create.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Actividad creada exitosamente', 'success');
+            closeCreateActivityModal();
+            
+            // Actualizar estadísticas
+            await loadStats();
+        } else {
+            showNotification('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error creating activity:', error);
+        showNotification('Error al crear la actividad', 'error');
+    } finally {
+        // Ocultar loading
+        btn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
     }
 }
 

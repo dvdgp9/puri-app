@@ -953,6 +953,83 @@ body {
     font-style: italic;
 }
 
+/* Estilos para modal de actividades */
+.modal-large {
+    max-width: 800px;
+    width: 95%;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -10px;
+}
+
+.form-row .form-group {
+    padding: 0 10px;
+}
+
+.col-md-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 8px;
+}
+
+.checkbox-inline {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-weight: normal;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.checkbox-inline:hover {
+    color: var(--primary-color);
+}
+
+.checkbox-inline input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.form-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.875rem;
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+/* Responsive para modal de actividades */
+@media (max-width: 768px) {
+    .modal-large {
+        max-width: 95%;
+        margin: 20px auto;
+    }
+    
+    .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .checkbox-group {
+        gap: 10px;
+    }
+    
+    .checkbox-inline {
+        flex: 0 0 calc(50% - 5px);
+        font-size: 0.9rem;
+    }
+}
+
 /* Panel inferior de acciones rápidas */
 .quick-actions {
     background: var(--admin-card-bg);

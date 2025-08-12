@@ -76,8 +76,8 @@ $admin_info = getAdminInfo();
                         <option value="nombre">Ordenar A-Z</option>
                         <option value="-nombre">Ordenar Z-A</option>
                     </select>
-                    <button class="btn btn-primary" onclick="showCreateCenterModal()">
-                        + Añadir centro
+                    <button class="btn btn-primary" id="addButton">
+                        + Añadir
                     </button>
                 </div>
             </div>
@@ -232,6 +232,135 @@ $admin_info = getAdminInfo();
                 </button>
                 <button type="submit" form="createInstallationForm" class="btn btn-primary" id="createInstallationBtn">
                     <span class="btn-text">Crear Instalación</span>
+                    <span class="btn-loading">
+                        <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Crear Actividad -->
+    <div class="modal-overlay" id="createActivityModal">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h2 class="modal-title">Crear Nueva Actividad</h2>
+                <button class="modal-close" onclick="closeCreateActivityModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createActivityForm">
+                    <!-- Selectores cascada: Centro → Instalación -->
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="activityCenter">Centro Deportivo *</label>
+                            <div class="custom-select-wrapper">
+                                <input type="text" id="activityCenterSearch" class="custom-select-input" 
+                                       placeholder="Buscar centro..." autocomplete="off">
+                                <input type="hidden" id="activityCenter" name="centro_id" required>
+                                <div class="custom-select-dropdown" id="activityCenterDropdown">
+                                    <div class="custom-select-loading">Cargando centros...</div>
+                                </div>
+                                <svg class="custom-select-arrow" width="12" height="12" viewBox="0 0 12 12">
+                                    <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                </svg>
+                            </div>
+                            <span class="field-error" id="activityCenter-error"></span>
+                        </div>
+                        
+                        <div class="form-group col-md-6">
+                            <label for="activityInstallation">Instalación *</label>
+                            <div class="custom-select-wrapper">
+                                <input type="text" id="activityInstallationSearch" class="custom-select-input" 
+                                       placeholder="Primero selecciona un centro" autocomplete="off" disabled>
+                                <input type="hidden" id="activityInstallation" name="instalacion_id" required>
+                                <div class="custom-select-dropdown" id="activityInstallationDropdown">
+                                    <div class="custom-select-loading">Selecciona un centro primero</div>
+                                </div>
+                                <svg class="custom-select-arrow" width="12" height="12" viewBox="0 0 12 12">
+                                    <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                </svg>
+                            </div>
+                            <span class="field-error" id="activityInstallation-error"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Nombre de la actividad -->
+                    <div class="form-group">
+                        <label for="activityName">Nombre de la Actividad *</label>
+                        <input type="text" id="activityName" name="nombre" required 
+                               placeholder="Ejemplo: Taller de Pintura, Natación Avanzada">
+                        <span class="field-error" id="activityName-error"></span>
+                    </div>
+
+                    <!-- Días de la semana -->
+                    <div class="form-group">
+                        <label>Días de la semana *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Lunes"> Lunes
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Martes"> Martes
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Miércoles"> Miércoles
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Jueves"> Jueves
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Viernes"> Viernes
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Sábado"> Sábado
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Domingo"> Domingo
+                            </label>
+                        </div>
+                        <span class="field-error" id="dias_semana-error"></span>
+                    </div>
+
+                    <!-- Horarios -->
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="activityStartTime">Hora de inicio *</label>
+                            <input type="time" id="activityStartTime" name="hora_inicio" required>
+                            <span class="field-error" id="activityStartTime-error"></span>
+                        </div>
+                        
+                        <div class="form-group col-md-6">
+                            <label for="activityEndTime">Hora de finalización *</label>
+                            <input type="time" id="activityEndTime" name="hora_fin" required>
+                            <span class="field-error" id="activityEndTime-error"></span>
+                        </div>
+                    </div>
+
+                    <!-- Fechas -->
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="activityStartDate">Fecha de inicio *</label>
+                            <input type="date" id="activityStartDate" name="fecha_inicio" required>
+                            <span class="field-error" id="activityStartDate-error"></span>
+                        </div>
+                        
+                        <div class="form-group col-md-6">
+                            <label for="activityEndDate">Fecha de finalización</label>
+                            <input type="date" id="activityEndDate" name="fecha_fin">
+                            <small class="form-text">Opcional. Dejar en blanco si no tiene fecha de finalización definida.</small>
+                            <span class="field-error" id="activityEndDate-error"></span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeCreateActivityModal()">
+                    Cancelar
+                </button>
+                <button type="submit" form="createActivityForm" class="btn btn-primary" id="createActivityBtn">
+                    <span class="btn-text">Crear Actividad</span>
                     <span class="btn-loading">
                         <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
