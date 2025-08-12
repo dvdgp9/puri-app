@@ -98,8 +98,8 @@ $admin_info = getAdminInfo();
                         <option value="nombre">Ordenar A-Z</option>
                         <option value="-nombre">Ordenar Z-A</option>
                     </select>
-                    <button class="btn btn-primary" onclick="showCreateCenterModal()">
-                        + Añadir centro
+                    <button class="btn btn-primary" onclick="showAddOptionsModal()">
+                        + Añadir
                     </button>
                 </div>
             </div>
@@ -114,27 +114,27 @@ $admin_info = getAdminInfo();
         <div class="quick-actions">
             <h3>Acciones Rápidas</h3>
             <div class="actions-grid">
-                <a href="#" class="action-btn" onclick="openModal('centro')">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                <a href="#" class="action-btn" onclick="showCreateCenterModal()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                     </svg>
                     Crear nuevo centro
                 </a>
-                <a href="#" class="action-btn" onclick="openModal('instalacion')">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                <a href="#" class="action-btn" onclick="showCreateInstallationModal()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M10.5 3L12 2l1.5 1H21v4H3V3h7.5z"/>
                     </svg>
                     Crear nueva instalación
                 </a>
-                <a href="#" class="action-btn" onclick="openModal('actividad')">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                <a href="#" class="action-btn" onclick="showCreateActivityModal()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     Crear nueva actividad
                 </a>
-                <a href="#" class="action-btn" onclick="alert('Funcionalidad en desarrollo')">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                <a href="#" class="action-btn" onclick="showAddParticipantModal()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
                     </svg>
                     Añadir participantes
                 </a>
@@ -170,6 +170,48 @@ $admin_info = getAdminInfo();
                     <button type="submit" class="btn btn-primary" id="createCenterBtn">Crear Centro</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Opciones de Añadir -->
+    <div class="modal-overlay" id="addOptionsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">¿Qué quieres crear?</h2>
+                <button class="modal-close" onclick="closeAddOptionsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="options-grid">
+                    <button class="option-btn" onclick="selectCreateOption('centro')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        <span class="option-title">Centro Deportivo</span>
+                        <span class="option-desc">Crear un nuevo centro deportivo</span>
+                    </button>
+                    <button class="option-btn" onclick="selectCreateOption('instalacion')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M10.5 3L12 2l1.5 1H21v4H3V3h7.5z"/>
+                        </svg>
+                        <span class="option-title">Instalación</span>
+                        <span class="option-desc">Añadir instalación a un centro</span>
+                    </button>
+                    <button class="option-btn" onclick="selectCreateOption('actividad')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="option-title">Actividad</span>
+                        <span class="option-desc">Crear actividad en una instalación</span>
+                    </button>
+                    <button class="option-btn" onclick="selectCreateOption('participante')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+                        </svg>
+                        <span class="option-title">Participante</span>
+                        <span class="option-desc">Añadir participante a una actividad</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
