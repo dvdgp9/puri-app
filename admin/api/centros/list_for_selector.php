@@ -12,7 +12,7 @@ try {
     $admin_info = getAdminInfo();
     
     $admin_id = $admin_info['id'];
-    $is_superadmin = $admin_info['is_superadmin'];
+    $is_superadmin = ($admin_info['role'] === 'superadmin');
     
     if ($is_superadmin) {
         // Superadmin ve todos los centros
