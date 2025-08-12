@@ -193,6 +193,47 @@ $admin_info = getAdminInfo();
         </div>
     </div>
 
+    <!-- Modal Crear Instalación -->
+    <div class="modal-overlay" id="createInstallationModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Crear Nueva Instalación</h2>
+                <button class="modal-close" onclick="closeCreateInstallationModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createInstallationForm">
+                    <div class="form-group">
+                        <label for="installationCenter">Centro Deportivo *</label>
+                        <select id="installationCenter" name="centro_id" required>
+                            <option value="">Seleccionar centro...</option>
+                        </select>
+                        <span class="field-error" id="installationCenter-error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="installationName">Nombre de la Instalación *</label>
+                        <input type="text" id="installationName" name="nombre" required 
+                               placeholder="Ej: Piscina Olímpica, Cancha de Tenis 1">
+                        <span class="field-error" id="installationName-error"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeCreateInstallationModal()">
+                    Cancelar
+                </button>
+                <button type="submit" form="createInstallationForm" class="btn btn-primary" id="createInstallationBtn">
+                    <span class="btn-text">Crear Instalación</span>
+                    <span class="btn-loading">
+                        <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/dashboard.js"></script>
 </body>
 </html>

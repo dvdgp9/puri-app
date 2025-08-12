@@ -77,6 +77,45 @@ function setupEventListeners() {
             }
         });
     }
+    
+    // Formulario crear instalación
+    const createInstallationForm = document.getElementById('createInstallationForm');
+    if (createInstallationForm) {
+        createInstallationForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Limpiar errores previos
+            clearFormErrors();
+            
+            // Obtener datos del formulario
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Validación básica
+            if (!data.centro_id) {
+                showFieldError('installationCenter', 'Debe seleccionar un centro');
+                return;
+            }
+            
+            if (!data.nombre.trim()) {
+                showFieldError('installationName', 'El nombre de la instalación es obligatorio');
+                return;
+            }
+            
+            // Mostrar loading
+            const submitBtn = document.getElementById('createInstallationBtn');
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            
+            try {
+                await createInstallation(data);
+            } finally {
+                // Quitar loading
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            }
+        });
+    }
 }
 
 /**
@@ -542,6 +581,68 @@ function selectCreateOption(type) {
 }
 
 /**
+ * Mostrar modal de crear instalación
+ */
+async function showCreateInstallationModal() {
+    const modal = document.getElementById('createInstallationModal');
+    if (modal) {
+        // Cargar centros en el selector
+        await loadCentersForSelector();
+        
+        modal.classList.add('show');
+        // Focus en el selector de centro
+        setTimeout(() => {
+            const centerSelect = document.getElementById('installationCenter');
+            if (centerSelect) centerSelect.focus();
+        }, 100);
+    }
+}
+
+/**
+ * Cerrar modal de crear instalación
+ */
+function closeCreateInstallationModal() {
+    const modal = document.getElementById('createInstallationModal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+    
+    // Limpiar formulario
+    document.getElementById('createInstallationForm').reset();
+    clearFormErrors();
+}
+
+/**
+ * Cargar centros para el selector
+ */
+async function loadCentersForSelector() {
+    try {
+        const response = await fetch('api/centros/list_for_selector.php');
+        const data = await response.json();
+        
+        if (data.success) {
+            const select = document.getElementById('installationCenter');
+            
+            // Limpiar opciones existentes excepto la primera
+            select.innerHTML = '<option value="">Seleccionar centro...</option>';
+            
+            // Añadir centros
+            data.centros.forEach(centro => {
+                const option = document.createElement('option');
+                option.value = centro.id;
+                option.textContent = centro.nombre;
+                select.appendChild(option);
+            });
+        } else {
+            showNotification('Error al cargar centros: ' + data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error loading centers:', error);
+        showNotification('Error al cargar centros', 'error');
+    }
+}
+
+/**
  * Cerrar modal de crear centro
  */
 function closeCreateCenterModal() {
@@ -579,38 +680,68 @@ function showFieldError(fieldId, message) {
 }
 
 /**
- * Crear nuevo centro
+ * Crear centro
  */
-async function createCenter(formData) {
+async function createCenter(data) {
     try {
         const response = await fetch('api/centros/create.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(data)
         });
         
-        const data = await response.json();
+        const result = await response.json();
         
-        if (data.success) {
-            // Añadir el nuevo centro a la lista
-            Dashboard.centers.push(data.data);
-            renderCenters();
-            
-            // Cerrar modal
+        if (result.success) {
+            showNotification('Centro creado exitosamente', 'success');
             closeCreateCenterModal();
             
-            // Mostrar mensaje de éxito
-            showNotification('Centro creado exitosamente', 'success');
+            // Recargar la lista de centros
+            await loadCenters();
             
+            // Actualizar estadísticas
+            await loadDashboardStats();
         } else {
-            throw new Error(data.error || 'Error al crear el centro');
+            showNotification('Error: ' + result.message, 'error');
         }
-        
     } catch (error) {
-        console.error('Error creando centro:', error);
-        showNotification(error.message, 'error');
+        console.error('Error creating center:', error);
+        showNotification('Error al crear el centro', 'error');
+    }
+}
+
+/**
+ * Crear instalación
+ */
+async function createInstallation(data) {
+    try {
+        const response = await fetch('api/instalaciones/create.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Instalación creada exitosamente', 'success');
+            closeCreateInstallationModal();
+            
+            // Recargar la lista de centros para actualizar contadores
+            await loadCenters();
+            
+            // Actualizar estadísticas
+            await loadDashboardStats();
+        } else {
+            showNotification('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error creating installation:', error);
+        showNotification('Error al crear la instalación', 'error');
     }
 }
 
