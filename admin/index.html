@@ -29,27 +29,71 @@
     <script src="assets/js/app.js"></script>
     
     <script>
+        // Función para logs persistentes
+        function debugLog(message, data = null) {
+            console.log(message, data || '');
+            const logs = JSON.parse(localStorage.getItem('adminDebugLogs') || '[]');
+            logs.push({
+                timestamp: new Date().toISOString(),
+                message: message,
+                data: data
+            });
+            // Mantener solo los últimos 20 logs
+            if (logs.length > 20) logs.shift();
+            localStorage.setItem('adminDebugLogs', JSON.stringify(logs));
+        }
+
+        // Función global para limpiar logs (para debugging)
+        window.clearDebugLogs = function() {
+            localStorage.removeItem('adminDebugLogs');
+            console.log('🧹 Logs de debug limpiados');
+        };
+
+        // Función global para mostrar logs (para debugging)
+        window.showDebugLogs = function() {
+            const logs = JSON.parse(localStorage.getItem('adminDebugLogs') || '[]');
+            console.log('📋 Logs de debug actuales:');
+            logs.forEach(log => {
+                console.log(`${log.timestamp}: ${log.message}`, log.data || '');
+            });
+            return logs;
+        };
+
+        // Hacer debugLog global
+        window.debugLog = debugLog;
+
+        // Mostrar logs anteriores si existen
+        const previousLogs = JSON.parse(localStorage.getItem('adminDebugLogs') || '[]');
+        if (previousLogs.length > 0) {
+            console.log('📋 Logs anteriores:');
+            previousLogs.forEach(log => {
+                console.log(`${log.timestamp}: ${log.message}`, log.data || '');
+            });
+        }
+
         // Inicializar la aplicación cuando se carga la página
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🚀 Iniciando aplicación SPA...');
+            debugLog('🚀 Iniciando aplicación SPA...');
             
             try {
                 // Crear instancias globales
-                console.log('📦 Creando instancias...');
+                debugLog('📦 Creando instancias...');
                 window.AdminApp = new AdminApp();
                 window.AdminRouter = new AdminRouter();
                 
                 // Inicializar la aplicación
-                console.log('🔐 Verificando autenticación...');
+                debugLog('🔐 Verificando autenticación...');
                 await window.AdminApp.init();
                 
-                console.log('✅ Aplicación inicializada correctamente');
+                debugLog('✅ Aplicación inicializada correctamente');
                 
             } catch (error) {
-                console.error('❌ Error inicializando la aplicación:', error);
-                console.log('🔄 Redirigiendo al login...');
+                debugLog('❌ Error inicializando la aplicación:', error.message);
+                debugLog('🔄 Redirigiendo al login...');
                 // Si hay error de autenticación, redirigir al login
-                window.location.href = 'login.php';
+                setTimeout(() => {
+                    window.location.href = 'login.php';
+                }, 1000); // Delay para ver los logs
             }
         });
     </script>

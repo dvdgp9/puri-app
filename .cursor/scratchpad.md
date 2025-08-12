@@ -149,3 +149,74 @@ Implementar un dashboard Single Page Application (SPA) con:
 1. **Complejidad del Modal**: Puede ser abrumador para usuarios no técnicos
 2. **Performance**: Operaciones masivas pueden causar timeouts
 3. **Memoria**: Múltiples CSVs grandes pueden exceder límites PHP
+
+## Background and Motivation (Login Admin roto)
+
+El acceso al panel admin no está funcionando actualmente. El objetivo inmediato es restaurar el login y la persistencia de sesión para que `index.html` cargue la SPA y no redirija de vuelta a `login.php`.
+
+## Key Challenges and Analysis
+
+- Flujo actual de autenticación:
+  - Formulario en `admin/login.php` POST → `admin/process_login.php` valida contra tabla `admins` y setea `$_SESSION['admin_*']`, luego `Location: index.html`.
+  - La SPA (`admin/index.html`) inicializa `AdminApp` y llama `fetch('check_session.php')` para verificar sesión. Si no hay sesión válida, redirige a `login.php`.
+  - Endpoints API bajo `admin/api/**` usan `auth_middleware.php` para forzar autenticación.
+
+- Puntos delicados detectados:
+  - Doble bootstrap de la SPA: tanto `admin/index.html` como `admin/assets/js/app.js` inicializan la app; puede generar condiciones de carrera y redirecciones dobles.
+  - Sesión PHP: posible no persistencia del cookie de sesión por cambio de host (`localhost` vs `127.0.0.1`) o por abrir `index.html` sin pasar por `login.php`.
+  - BD: si la tabla `admins` no existe o no hay registros válidos, `password_verify` siempre falla y se vuelve a `login.php` con `$_SESSION['admin_error']`.
+  - Middleware: `auth_middleware.php` hace redirect en endpoints (ok), pero la verificación de la SPA se hace por `check_session.php` (sin middleware), correcto.
+
+- Hipótesis de causa raíz (ordenadas por probabilidad):
+  1) Cookie de sesión no llega a `check_session.php` tras el redirect (host/origen distinto o servidor/proxy). 2) Credenciales/tabla `admins` no inicializadas. 3) Condición de carrera por doble init de SPA que provoca redirecciones prematuras. 4) Avisos/errores rompen el JSON de `check_session.php` y el fetch falla.
+
+## High-level Task Breakdown (fix login)
+
+1. Diagnóstico rápido en navegador
+   - Éxito: En `Network` ver `check_session.php` con 200 y body `{"authenticated":true,...}` tras login.
+   - Si 401/JSON `authenticated:false`: verificar cookie y sesión.
+
+2. Verificar tabla y usuario admin
+   - Correr `admin/create_admin.php` para crear `superadmin/admin123` si no existe.
+   - Éxito: Usuario creado o detectado existente.
+
+3. Endurecer sesión en login
+   - Añadir `session_regenerate_id(true)` al hacer login exitoso.
+   - Éxito: Cookie nueva y válida, `check_session.php` devuelve `authenticated:true`.
+
+4. Unificar bootstrap SPA
+   - Elegir un único punto de inicialización (sugerido: inline script de `index.html`) y remover el `DOMContentLoaded` duplicado de `app.js`.
+   - Éxito: Solo un `init()` en logs, sin redirecciones dobles.
+
+5. Robustecer `check_session.php`
+   - Asegurar headers JSON siempre válidos y manejo de errores silencioso (sin HTML/echo antes del JSON).
+   - Éxito: `response.json()` no falla aunque haya notices.
+
+6. Pruebas manuales end-to-end
+   - Login → Dashboard con stats cargando (`api/stats/dashboard.php` 200, `success:true`).
+   - Logout → vuelve a `login.php` y `check_session.php` pasa a `authenticated:false`.
+
+## Project Status Board
+
+- [ ] Diagnóstico en navegador de `check_session.php` tras login
+- [ ] Crear/verificar `superadmin` con `create_admin.php`
+- [x] Agregar `session_regenerate_id(true)` en `process_login.php`
+- [x] Quitar doble inicialización en `app.js`
+- [ ] Validar `check_session.php` sin ruidos en JSON
+- [ ] Probar login/logout end-to-end
+
+## Success Criteria
+
+- Tras credenciales válidas, `admin/index.html` muestra SPA sin redirigir, y `check_session.php` devuelve `authenticated:true` consistentemente.
+- Logout destruye la sesión y redirige a `login.php`. Ningún endpoint protegido responde 200 sin sesión.
+
+## Executor's Feedback or Assistance Requests (para el usuario)
+
+- Confirma por favor el dominio/puerto con el que accedes (p. ej. `http://localhost:8080` o `http://127.0.0.1`), y si usas exactamente el mismo host para `login.php` y `index.html`.
+- ¿Puedes confirmar si ves mensaje de error en `login.php` después de enviar? Si no aparece, ¿la redirección sucede pero vuelve a `login.php` sola?
+- Si quieres que proceda ya con los cambios, indícame si continuamos en modo Executor.
+
+## Lessons
+
+- Preferir un único bootstrap de SPA para evitar condiciones de carrera en autenticación.
+- Al autenticar, regenerar el ID de sesión para mitigar fijación de sesión y estabilizar el cookie.

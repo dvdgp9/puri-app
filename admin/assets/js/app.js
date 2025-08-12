@@ -45,16 +45,29 @@ class AdminApp {
      * Verificar autenticación del usuario
      */
     async checkAuthentication() {
+        // Función para logs persistentes (definida también aquí por si acaso)
+        const debugLog = window.debugLog || function(message, data = null) {
+            console.log(message, data || '');
+            const logs = JSON.parse(localStorage.getItem('adminDebugLogs') || '[]');
+            logs.push({
+                timestamp: new Date().toISOString(),
+                message: message,
+                data: data
+            });
+            if (logs.length > 20) logs.shift();
+            localStorage.setItem('adminDebugLogs', JSON.stringify(logs));
+        };
+
         try {
-            console.log('📡 Haciendo fetch a check_session.php...');
+            debugLog('📡 Haciendo fetch a check_session.php...');
             const response = await fetch('check_session.php');
-            console.log('📡 Response recibida:', response.status, response.statusText);
+            debugLog('📡 Response recibida:', `${response.status} ${response.statusText}`);
             
             const data = await response.json();
-            console.log('📄 Datos de sesión:', data);
+            debugLog('📄 Datos de sesión:', JSON.stringify(data));
             
             if (data.authenticated && data.user) {
-                console.log('✅ Usuario autenticado:', data.user.username, data.user.role);
+                debugLog('✅ Usuario autenticado:', `${data.user.username} (${data.user.role})`);
                 this.currentUser = data.user;
                 window.AdminApp.currentUser = data.user;
                 
@@ -63,15 +76,19 @@ class AdminApp {
                 
                 return true;
             } else {
-                console.log('❌ Usuario no autenticado, redirigiendo...');
+                debugLog('❌ Usuario no autenticado, redirigiendo...', JSON.stringify(data));
                 // Redirigir al login si no está autenticado
-                window.location.href = data.redirect || 'login.php';
+                setTimeout(() => {
+                    window.location.href = data.redirect || 'login.php';
+                }, 500);
                 throw new Error('Usuario no autenticado');
             }
         } catch (error) {
-            console.error('❌ Error verificando autenticación:', error);
+            debugLog('❌ Error verificando autenticación:', error.message);
             // En caso de error, redirigir al login
-            window.location.href = 'login.php';
+            setTimeout(() => {
+                window.location.href = 'login.php';
+            }, 500);
             throw error;
         }
     }
@@ -350,8 +367,4 @@ class Utils {
 // Hacer Utils global
 window.Utils = Utils;
 
-// Inicializar la aplicación cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', async () => {
-    const app = new AdminApp();
-    await app.init();
-});
+// La inicialización se realiza desde admin/index.html para evitar doble bootstrap

@@ -29,6 +29,8 @@ try {
     $admin = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($admin && password_verify($password, $admin['password_hash'])) {
+        // Regenerar el ID de sesión para evitar fijación y asegurar persistencia
+        session_regenerate_id(true);
         // Login exitoso
         $_SESSION['admin_id'] = $admin['id'];
         $_SESSION['admin_username'] = $admin['username'];
