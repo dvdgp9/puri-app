@@ -204,9 +204,17 @@ $admin_info = getAdminInfo();
                 <form id="createInstallationForm">
                     <div class="form-group">
                         <label for="installationCenter">Centro Deportivo *</label>
-                        <select id="installationCenter" name="centro_id" required>
-                            <option value="">Seleccionar centro...</option>
-                        </select>
+                        <div class="custom-select-wrapper">
+                            <input type="text" id="installationCenterSearch" class="custom-select-input" 
+                                   placeholder="Buscar centro..." autocomplete="off">
+                            <input type="hidden" id="installationCenter" name="centro_id" required>
+                            <div class="custom-select-dropdown" id="installationCenterDropdown">
+                                <div class="custom-select-loading">Cargando centros...</div>
+                            </div>
+                            <svg class="custom-select-arrow" width="12" height="12" viewBox="0 0 12 12">
+                                <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                            </svg>
+                        </div>
                         <span class="field-error" id="installationCenter-error"></span>
                     </div>
                     

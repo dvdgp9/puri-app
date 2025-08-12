@@ -610,6 +610,23 @@ function closeCreateInstallationModal() {
     // Limpiar formulario
     document.getElementById('createInstallationForm').reset();
     clearFormErrors();
+    
+    // Limpiar selector personalizado
+    const wrapper = document.querySelector('.custom-select-wrapper');
+    const input = document.getElementById('installationCenterSearch');
+    const hiddenInput = document.getElementById('installationCenter');
+    
+    if (wrapper && input && hiddenInput) {
+        wrapper.classList.remove('open');
+        input.value = '';
+        input.classList.remove('has-value');
+        hiddenInput.value = '';
+        
+        // Limpiar selecciones
+        document.querySelectorAll('.custom-select-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+    }
 }
 
 /**
@@ -621,25 +638,127 @@ async function loadCentersForSelector() {
         const data = await response.json();
         
         if (data.success) {
-            const select = document.getElementById('installationCenter');
+            // Guardar centros globalmente para filtrado
+            window.availableCenters = data.centros;
             
-            // Limpiar opciones existentes excepto la primera
-            select.innerHTML = '<option value="">Seleccionar centro...</option>';
+            // Inicializar selector personalizado
+            initCustomCenterSelector();
             
-            // Añadir centros
-            data.centros.forEach(centro => {
-                const option = document.createElement('option');
-                option.value = centro.id;
-                option.textContent = centro.nombre;
-                select.appendChild(option);
-            });
+            // Mostrar todos los centros inicialmente
+            renderCenterOptions(data.centros);
+            
         } else {
             showNotification('Error al cargar centros: ' + data.message, 'error');
+            showCenterSelectorError('Error al cargar centros');
         }
     } catch (error) {
         console.error('Error loading centers:', error);
         showNotification('Error al cargar centros', 'error');
+        showCenterSelectorError('Error de conexión');
     }
+}
+
+/**
+ * Inicializar selector personalizado de centros
+ */
+function initCustomCenterSelector() {
+    const wrapper = document.querySelector('.custom-select-wrapper');
+    const input = document.getElementById('installationCenterSearch');
+    const dropdown = document.getElementById('installationCenterDropdown');
+    const hiddenInput = document.getElementById('installationCenter');
+    
+    if (!wrapper || !input || !dropdown || !hiddenInput) return;
+    
+    // Evento click en input para abrir/cerrar
+    input.addEventListener('click', function() {
+        wrapper.classList.toggle('open');
+    });
+    
+    // Evento input para filtrar
+    input.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        const filtered = window.availableCenters.filter(centro => 
+            centro.nombre.toLowerCase().includes(query)
+        );
+        renderCenterOptions(filtered);
+        
+        if (!wrapper.classList.contains('open')) {
+            wrapper.classList.add('open');
+        }
+    });
+    
+    // Cerrar al hacer click fuera
+    document.addEventListener('click', function(e) {
+        if (!wrapper.contains(e.target)) {
+            wrapper.classList.remove('open');
+        }
+    });
+    
+    // Manejar teclas
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            wrapper.classList.remove('open');
+        }
+    });
+}
+
+/**
+ * Renderizar opciones de centros
+ */
+function renderCenterOptions(centros) {
+    const dropdown = document.getElementById('installationCenterDropdown');
+    
+    if (centros.length === 0) {
+        dropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron centros</div>';
+        return;
+    }
+    
+    dropdown.innerHTML = centros.map(centro => 
+        `<div class="custom-select-option" data-value="${centro.id}" data-name="${escapeHtml(centro.nombre)}">
+            ${escapeHtml(centro.nombre)}
+        </div>`
+    ).join('');
+    
+    // Añadir eventos click a las opciones
+    dropdown.querySelectorAll('.custom-select-option').forEach(option => {
+        option.addEventListener('click', function() {
+            selectCenterOption(this.dataset.value, this.dataset.name);
+        });
+    });
+}
+
+/**
+ * Seleccionar opción de centro
+ */
+function selectCenterOption(value, name) {
+    const wrapper = document.querySelector('.custom-select-wrapper');
+    const input = document.getElementById('installationCenterSearch');
+    const hiddenInput = document.getElementById('installationCenter');
+    
+    // Actualizar valores
+    input.value = name;
+    input.classList.add('has-value');
+    hiddenInput.value = value;
+    
+    // Cerrar dropdown
+    wrapper.classList.remove('open');
+    
+    // Limpiar error si existe
+    clearFieldError('installationCenter');
+    
+    // Marcar opción como seleccionada
+    document.querySelectorAll('.custom-select-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+    document.querySelector(`[data-value="${value}"]`)?.classList.add('selected');
+}
+
+/**
+ * Mostrar error en selector de centros
+ */
+function showCenterSelectorError(message) {
+    const dropdown = document.getElementById('installationCenterDropdown');
+    dropdown.innerHTML = `<div class="custom-select-loading" style="color: var(--color-red-500);">${message}</div>`;
 }
 
 /**

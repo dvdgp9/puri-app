@@ -854,6 +854,105 @@ body {
     line-height: 1.4;
 }
 
+/* Selector personalizado con búsqueda */
+.custom-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select-input {
+    width: 100%;
+    padding: 12px 40px 12px 16px;
+    border: 2px solid var(--color-gray-200);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--color-white);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.custom-select-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.custom-select-input.has-value {
+    color: var(--color-black);
+    font-weight: 500;
+}
+
+.custom-select-arrow {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-gray-400);
+    pointer-events: none;
+    transition: transform 0.2s ease;
+}
+
+.custom-select-wrapper.open .custom-select-arrow {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.custom-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--color-white);
+    border: 2px solid var(--color-gray-200);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.custom-select-wrapper.open .custom-select-dropdown {
+    display: block;
+}
+
+.custom-select-option {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid var(--color-gray-100);
+    font-size: 14px;
+}
+
+.custom-select-option:last-child {
+    border-bottom: none;
+}
+
+.custom-select-option:hover {
+    background: var(--color-gray-50);
+}
+
+.custom-select-option.selected {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.custom-select-loading {
+    padding: 12px 16px;
+    color: var(--color-gray-500);
+    font-size: 14px;
+    text-align: center;
+}
+
+.custom-select-no-results {
+    padding: 12px 16px;
+    color: var(--color-gray-500);
+    font-size: 14px;
+    text-align: center;
+    font-style: italic;
+}
+
 /* Panel inferior de acciones rápidas */
 .quick-actions {
     background: var(--admin-card-bg);
