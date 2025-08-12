@@ -27,7 +27,7 @@ try {
     
     // Filtro de búsqueda
     if (!empty($search)) {
-        $where_conditions[] = "(c.nombre LIKE ? OR c.descripcion LIKE ?)";
+        $where_conditions[] = "(c.nombre LIKE ? OR c.direccion LIKE ?)";
         $params[] = "%$search%";
         $params[] = "%$search%";
     }
