@@ -1488,6 +1488,18 @@ function renderParticipantCenterOptions(centros, centerPrefix, installationPrefi
 async function loadParticipantInstallations(centroId, installationPrefix, activityPrefix) {
     const input = document.getElementById(`${installationPrefix}Search`);
     const dropdown = document.getElementById(`${installationPrefix}Dropdown`);
+    const hidden = document.getElementById(installationPrefix);
+    
+    // Validación de elementos (como en el modal de actividades)
+    if (!input || !dropdown || !hidden) {
+        console.error('Elementos del selector de instalaciones no encontrados:', {
+            input: !!input,
+            dropdown: !!dropdown,
+            hidden: !!hidden,
+            installationPrefix
+        });
+        return;
+    }
     
     try {
         // Habilitar selector de instalaciones
@@ -1590,6 +1602,18 @@ function renderParticipantInstallationOptions(instalaciones, installationPrefix,
 async function loadParticipantActivities(instalacionId, activityPrefix) {
     const input = document.getElementById(`${activityPrefix}Search`);
     const dropdown = document.getElementById(`${activityPrefix}Dropdown`);
+    const hidden = document.getElementById(activityPrefix);
+    
+    // Validación de elementos (como en el modal de actividades)
+    if (!input || !dropdown || !hidden) {
+        console.error('Elementos del selector de actividades no encontrados:', {
+            input: !!input,
+            dropdown: !!dropdown,
+            hidden: !!hidden,
+            activityPrefix
+        });
+        return;
+    }
     
     try {
         // Habilitar selector de actividades
