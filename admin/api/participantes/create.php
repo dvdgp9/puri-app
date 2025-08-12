@@ -84,9 +84,11 @@ try {
             'message' => 'Participante inscrito exitosamente',
             'participante_id' => $participante_id
         ]);
+        exit;
     } else {
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Error al inscribir el participante']);
+        exit;
     }
     
 } catch (Exception $e) {
