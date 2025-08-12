@@ -112,15 +112,15 @@ Implementar un dashboard Single Page Application (SPA) con:
 
 **Estado**: ✅ SOLUCIONADO - Login funciona correctamente.
 
-### 🔧 PROBLEMA ACTUAL: Dashboard falló tras limpieza de endpoints
+### ✅ PROBLEMA SOLUCIONADO: Dashboard falló tras limpieza de endpoints
 
 **Problema**: Tras eliminar `test_stats.php` y cambiar al endpoint oficial, el dashboard volvió a fallar
-**Causa**: El endpoint oficial `/admin/api/stats/dashboard.php` tenía problemas de conexión a BD
+**Causa raíz**: El endpoint oficial usaba `ORDER BY a.created_at DESC` pero la tabla `actividades` no tiene campo `created_at`
 **Solución implementada**:
-1. ✅ Agregada conexión PDO directa al endpoint oficial
-2. ✅ Copiada configuración de BD que funcionaba en el test
-3. ✅ Mejorado manejo de errores con mensajes específicos
-4. 🔄 **Pendiente**: Confirmar que funciona correctamente
+1. ✅ Creado endpoint temporal para comparar diferencias exactas
+2. ✅ Identificado error en consulta SQL: `created_at` → `id` 
+3. ✅ Corregido endpoint oficial `/admin/api/stats/dashboard.php`
+4. ✅ **CONFIRMADO POR USUARIO**: Dashboard funciona perfectamente con endpoint oficial
 
 ### ✅ PROBLEMAS SOLUCIONADOS PREVIAMENTE:
 

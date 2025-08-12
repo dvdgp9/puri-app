@@ -51,13 +51,13 @@ try {
     // Estadísticas básicas
     $stats = [];
     
-    // Total de centros
+    // Total de centros (todos considerados activos)
     $query = "SELECT COUNT(*) as total FROM centros c WHERE 1=1 $centro_filter";
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);
     $stats['total_centros'] = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Total de instalaciones
+    // Total de instalaciones (todas consideradas activas)
     $query = "
         SELECT COUNT(*) as total 
         FROM instalaciones i 
@@ -68,17 +68,31 @@ try {
     $stmt->execute($params);
     $stats['total_instalaciones'] = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Total de actividades
+    // Total de actividades activas (entre fecha_inicio y fecha_fin o sin fecha_fin)
     $query = "
         SELECT COUNT(*) as total 
         FROM actividades a 
         INNER JOIN instalaciones i ON a.instalacion_id = i.id 
         INNER JOIN centros c ON i.centro_id = c.id 
-        WHERE 1=1 $centro_filter
+        WHERE (a.fecha_inicio <= CURDATE() AND (a.fecha_fin IS NULL OR a.fecha_fin >= CURDATE()))
+        $centro_filter
     ";
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);
-    $stats['total_actividades'] = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $stats['total_actividades_activas'] = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Total de actividades programadas (fecha_inicio > hoy)
+    $query = "
+        SELECT COUNT(*) as total 
+        FROM actividades a 
+        INNER JOIN instalaciones i ON a.instalacion_id = i.id 
+        INNER JOIN centros c ON i.centro_id = c.id 
+        WHERE a.fecha_inicio > CURDATE()
+        $centro_filter
+    ";
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+    $stats['total_actividades_programadas'] = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
     // Actividades por estado
     $query = "
@@ -149,6 +163,32 @@ try {
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);
     $stats['actividades_recientes'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Calcular porcentaje de asistencia (solo actividades activas)
+    $query = "
+        SELECT 
+            COUNT(*) as total_registros,
+            SUM(CASE WHEN asist.asistio = 1 THEN 1 ELSE 0 END) as total_asistencias
+        FROM asistencias asist
+        INNER JOIN actividades a ON asist.actividad_id = a.id
+        INNER JOIN instalaciones i ON a.instalacion_id = i.id
+        INNER JOIN centros c ON i.centro_id = c.id
+        WHERE (a.fecha_inicio <= CURDATE() AND (a.fecha_fin IS NULL OR a.fecha_fin >= CURDATE()))
+        $centro_filter
+    ";
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+    $asistencia_data = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    $stats['porcentaje_asistencia'] = 0;
+    $stats['total_asistencias'] = (int)$asistencia_data['total_asistencias'];
+    
+    if ($asistencia_data['total_registros'] > 0) {
+        $stats['porcentaje_asistencia'] = round(
+            ($asistencia_data['total_asistencias'] / $asistencia_data['total_registros']) * 100, 
+            1
+        );
+    }
     
     echo json_encode([
         'success' => true,

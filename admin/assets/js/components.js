@@ -1,83 +1,89 @@
 /**
- * Componentes de la SPA Admin
+ * Componentes SPA para el panel de administración
  */
 
-/**
- * Componente base para todos los componentes
- */
+// Componente base
 class BaseComponent {
-    constructor() {
-        this.container = null;
-        this.data = null;
-        this.isLoading = false;
-    }
-
-    async render(container) {
+    constructor(container) {
         this.container = container;
-        await this.load();
-        this.renderHTML();
-        this.bindEvents();
-    }
-
-    async load() {
-        // Override en componentes hijos para cargar datos
-    }
-
-    renderHTML() {
-        // Override en componentes hijos para renderizar HTML
-        this.container.innerHTML = '<p>Componente base</p>';
-    }
-
-    bindEvents() {
-        // Override en componentes hijos para bind de eventos
+        this.data = null;
     }
 
     showLoading() {
-        this.isLoading = true;
-        if (this.container) {
-            this.container.innerHTML = `
-                <div class="loading-state">
-                    <div class="spinner"></div>
-                    <p>Cargando...</p>
-                </div>
-            `;
-        }
+        this.container.innerHTML = `
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Cargando...</p>
+            </div>
+        `;
     }
 
     showError(message) {
-        if (this.container) {
-            this.container.innerHTML = `
-                <div class="error-message">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>Error</h3>
-                    <p>${message}</p>
-                    <button onclick="location.reload()" class="btn btn-primary">
-                        <i class="fas fa-refresh"></i> Recargar
-                    </button>
-                </div>
-            `;
-        }
+        this.container.innerHTML = `
+            <div class="error-message">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <h3>Error</h3>
+                <p>${message}</p>
+                <button class="btn btn-primary" onclick="location.reload()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Recargar
+                </button>
+            </div>
+        `;
+    }
+
+    async load() {
+        // Implementar en subclases
+    }
+
+    render() {
+        // Implementar en subclases
     }
 }
 
-/**
- * Componente Dashboard
- */
+// Componente Dashboard
 class DashboardComponent extends BaseComponent {
+    constructor(container) {
+        super(container);
+        this.centers = [];
+    }
+
     async load() {
         this.showLoading();
         try {
-            // Usar endpoint oficial de estadísticas
+            // Cargar estadísticas
             const response = await fetch('api/stats/dashboard.php');
             this.data = await response.json();
             
             if (!this.data.success) {
                 throw new Error(this.data.error || 'Error desconocido');
             }
+
+            // Cargar centros
+            await this.loadCenters();
+            
         } catch (error) {
             console.error('Error cargando dashboard:', error);
             this.showError('Error al cargar las estadísticas del dashboard: ' + error.message);
             return;
+        }
+    }
+
+    async loadCenters() {
+        try {
+            const response = await fetch('api/centros/list.php');
+            const centersData = await response.json();
+            
+            if (centersData.success) {
+                this.centers = centersData.data || [];
+            }
+        } catch (error) {
+            console.error('Error cargando centros:', error);
+            this.centers = [];
         }
     }
 
@@ -90,287 +96,311 @@ class DashboardComponent extends BaseComponent {
         const stats = this.data.data;
         
         this.container.innerHTML = `
-            <div class="dashboard-container">
-                <div class="dashboard-header">
-                    <h2>Dashboard de Administración</h2>
-                    <p>Resumen general del sistema</p>
+            <!-- Barra superior -->
+            <div class="admin-header">
+                <div class="logo-section">
+                    <div class="logo">P</div>
+                    <div class="title">Puri: Gestión de centros deportivos</div>
+                </div>
+                <div class="actions">
+                    <div class="dropdown">
+                        <button class="btn btn-primary" onclick="toggleDropdown(this)">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Añadir
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="#" class="dropdown-item" onclick="openModal('centro')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                </svg>
+                                Nuevo centro
+                            </a>
+                            <a href="#" class="dropdown-item" onclick="openModal('instalacion')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                                </svg>
+                                Nueva instalación
+                            </a>
+                            <a href="#" class="dropdown-item" onclick="openModal('actividad')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Nueva actividad
+                            </a>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="showProfile()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        Mi cuenta
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contenido principal -->
+            <div class="admin-content">
+                <!-- Tarjetas de estadísticas -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">Centros</div>
+                            <svg class="stat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                        </div>
+                        <div class="stat-value">${stats.total_centros || 0}</div>
+                        <div class="stat-change">Total activos</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">Instalaciones</div>
+                            <svg class="stat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-value">${stats.total_instalaciones || 0}</div>
+                        <div class="stat-change">Total disponibles</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">Actividades</div>
+                            <svg class="stat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-value">${stats.total_actividades_activas || 0}</div>
+                        <div class="stat-change">Activas • ${stats.total_actividades_programadas || 0} programadas</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">% Asistencia</div>
+                            <svg class="stat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-value">${stats.porcentaje_asistencia || 0}%</div>
+                        <div class="stat-change">${stats.total_asistencias || 0} asistencias totales</div>
+                    </div>
                 </div>
 
-                <!-- Métricas principales -->
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-icon">
-                            <i class="fas fa-building"></i>
-                        </div>
-                        <div class="metric-content">
-                            <h3>${stats.total_centros || 0}</h3>
-                            <p>Centros</p>
-                        </div>
-                    </div>
-
-                    <div class="metric-card">
-                        <div class="metric-icon">
-                            <i class="fas fa-map-marker-alt"></i>
-                        </div>
-                        <div class="metric-content">
-                            <h3>${stats.total_instalaciones || 0}</h3>
-                            <p>Instalaciones</p>
-                        </div>
-                    </div>
-
-                    <div class="metric-card">
-                        <div class="metric-icon">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                        <div class="metric-content">
-                            <h3>${stats.total_actividades || 0}</h3>
-                            <p>Actividades</p>
-                        </div>
-                    </div>
-
-                    <div class="metric-card">
-                        <div class="metric-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="metric-content">
-                            <h3>${stats.actividades_por_estado?.Activa || 0}</h3>
-                            <p>Activas</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Actividades por estado -->
-                <div class="dashboard-row">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Actividades por Estado</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="status-grid">
-                                <div class="status-item status-programada">
-                                    <span class="status-count">${stats.actividades_por_estado?.Programada || 0}</span>
-                                    <span class="status-label">Programadas</span>
-                                </div>
-                                <div class="status-item status-activa">
-                                    <span class="status-count">${stats.actividades_por_estado?.Activa || 0}</span>
-                                    <span class="status-label">Activas</span>
-                                </div>
-                                <div class="status-item status-finalizada">
-                                    <span class="status-count">${stats.actividades_por_estado?.Finalizada || 0}</span>
-                                    <span class="status-label">Finalizadas</span>
-                                </div>
+                <!-- Panel principal de centros -->
+                <div class="main-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Centros Deportivos</div>
+                        <div class="panel-actions">
+                            <div class="search-bar">
+                                <input type="text" class="search-input" placeholder="Buscar centros..." id="searchCenters">
+                                <select class="btn btn-secondary" id="sortCenters">
+                                    <option value="name">Ordenar A-Z</option>
+                                    <option value="activities">Por actividades</option>
+                                    <option value="installations">Por instalaciones</option>
+                                </select>
                             </div>
+                            <button class="btn btn-primary" onclick="openModal('centro')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                Añadir centro
+                            </button>
                         </div>
                     </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Centros con más Actividades</h3>
-                        </div>
-                        <div class="card-body">
-                            ${this.renderTopCentros(stats.top_centros || [])}
+                    <div class="panel-content">
+                        <div class="centers-grid" id="centersGrid">
+                            ${this.renderCenters()}
                         </div>
                     </div>
                 </div>
 
-                <!-- Actividades recientes -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Actividades Recientes</h3>
-                    </div>
-                    <div class="card-body">
-                        ${this.renderActividadesRecientes(stats.actividades_recientes || [])}
+                <!-- Panel de acciones rápidas -->
+                <div class="quick-actions">
+                    <h3>Acciones Rápidas</h3>
+                    <div class="actions-grid">
+                        <a href="#" class="action-btn" onclick="openModal('centro')">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                            Crear nuevo centro
+                        </a>
+                        <a href="#" class="action-btn" onclick="openModal('instalacion')">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                            </svg>
+                            Nueva instalación
+                        </a>
+                        <a href="#" class="action-btn" onclick="openModal('actividad')">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Nueva actividad
+                        </a>
+                        <a href="#" class="action-btn" onclick="openModal('participante')">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                            </svg>
+                            Añadir participantes
+                        </a>
                     </div>
                 </div>
             </div>
         `;
+
+        // Configurar eventos después de renderizar
+        this.setupEvents();
     }
 
-    renderTopCentros(centros) {
-        if (!centros.length) {
-            return '<p class="empty-state">No hay datos disponibles</p>';
+    renderCenters() {
+        if (!this.centers || this.centers.length === 0) {
+            return `
+                <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-bottom: 16px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    <h3>No hay centros disponibles</h3>
+                    <p>Comienza creando tu primer centro deportivo</p>
+                    <button class="btn btn-primary" onclick="openModal('centro')" style="margin-top: 16px;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Crear primer centro
+                    </button>
+                </div>
+            `;
         }
 
-        return `
-            <div class="top-centros-list">
-                ${centros.map(centro => `
-                    <div class="top-centro-item">
-                        <span class="centro-name">${centro.nombre}</span>
-                        <span class="centro-count">${centro.total_actividades} actividades</span>
+        return this.centers.map(center => `
+            <div class="center-card" onclick="viewCenter(${center.id})" data-center-id="${center.id}">
+                <div class="card-header">
+                    <div>
+                        <div class="center-name">${center.nombre}</div>
+                        <span class="center-status active">Activo</span>
                     </div>
-                `).join('')}
+                </div>
+                <div class="center-address">${center.direccion || 'Sin dirección especificada'}</div>
+                <div class="center-stats">
+                    <span>${center.total_instalaciones || 0} instalaciones</span>
+                    <span>${center.total_actividades || 0} actividades</span>
+                </div>
+                <button class="more-options" onclick="event.stopPropagation(); showCenterOptions(${center.id})" title="Más opciones">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                    </svg>
+                </button>
             </div>
-        `;
+        `).join('');
     }
 
-    renderActividadesRecientes(actividades) {
-        if (!actividades.length) {
-            return '<p class="empty-state">No hay actividades recientes</p>';
+    setupEvents() {
+        // Configurar búsqueda de centros
+        const searchInput = document.getElementById('searchCenters');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.filterCenters(e.target.value);
+            });
         }
 
-        return `
-            <div class="actividades-recientes-list">
-                ${actividades.map(actividad => `
-                    <div class="actividad-reciente-item">
-                        <div class="actividad-info">
-                            <h4>${actividad.nombre}</h4>
-                            <p>${actividad.centro_nombre} - ${actividad.instalacion_nombre}</p>
-                            <small>${Utils.formatDate(actividad.fecha_inicio)} - ${Utils.formatDate(actividad.fecha_fin)}</small>
-                        </div>
-                        <div class="actividad-estado">
-                            <span class="badge badge-${actividad.estado.toLowerCase()}">${actividad.estado}</span>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
+        // Configurar ordenación
+        const sortSelect = document.getElementById('sortCenters');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', (e) => {
+                this.sortCenters(e.target.value);
+            });
+        }
     }
 
-    bindEvents() {
-        // Eventos específicos del dashboard si son necesarios
+    filterCenters(searchTerm) {
+        const cards = document.querySelectorAll('.center-card');
+        cards.forEach(card => {
+            const centerName = card.querySelector('.center-name').textContent.toLowerCase();
+            const centerAddress = card.querySelector('.center-address').textContent.toLowerCase();
+            
+            if (centerName.includes(searchTerm.toLowerCase()) || 
+                centerAddress.includes(searchTerm.toLowerCase())) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    sortCenters(sortBy) {
+        // Implementar ordenación de centros
+        console.log('Ordenar por:', sortBy);
     }
 }
 
-/**
- * Componente Centros (placeholder)
- */
+// Placeholders para otros componentes
 class CentrosComponent extends BaseComponent {
-    async load() {
-        this.showLoading();
-        try {
-            this.data = await api.getCentros();
-        } catch (error) {
-            console.error('Error cargando centros:', error);
-            this.showError('Error al cargar los centros');
-            return;
-        }
-    }
-
-    renderHTML() {
-        this.container.innerHTML = `
-            <div class="centros-container">
-                <div class="page-header">
-                    <h2>Gestión de Centros</h2>
-                    <button class="btn btn-admin-primary">
-                        <i class="fas fa-plus"></i> Nuevo Centro
-                    </button>
-                </div>
-                
-                <div class="card">
-                    <div class="card-body">
-                        <p>Componente de centros en desarrollo...</p>
-                        <p>Aquí se mostrará la lista de centros con funcionalidades CRUD.</p>
-                    </div>
-                </div>
-            </div>
-        `;
+    render() {
+        return '<div class="placeholder">Vista de Centros - En desarrollo</div>';
     }
 }
 
-/**
- * Componente Instalaciones (placeholder)
- */
 class InstalacionesComponent extends BaseComponent {
-    renderHTML() {
-        this.container.innerHTML = `
-            <div class="instalaciones-container">
-                <div class="page-header">
-                    <h2>Gestión de Instalaciones</h2>
-                    <button class="btn btn-admin-primary">
-                        <i class="fas fa-plus"></i> Nueva Instalación
-                    </button>
-                </div>
-                
-                <div class="card">
-                    <div class="card-body">
-                        <p>Componente de instalaciones en desarrollo...</p>
-                        <p>Aquí se mostrará la lista de instalaciones con funcionalidades CRUD.</p>
-                    </div>
-                </div>
-            </div>
-        `;
+    render() {
+        return '<div class="placeholder">Vista de Instalaciones - En desarrollo</div>';
     }
 }
 
-/**
- * Componente Actividades (placeholder)
- */
 class ActividadesComponent extends BaseComponent {
-    renderHTML() {
-        this.container.innerHTML = `
-            <div class="actividades-container">
-                <div class="page-header">
-                    <h2>Gestión de Actividades</h2>
-                    <button class="btn btn-admin-primary">
-                        <i class="fas fa-plus"></i> Nueva Actividad
-                    </button>
-                </div>
-                
-                <div class="card">
-                    <div class="card-body">
-                        <p>Componente de actividades en desarrollo...</p>
-                        <p>Aquí se mostrará la lista de actividades con funcionalidades CRUD.</p>
-                    </div>
-                </div>
-            </div>
-        `;
+    render() {
+        return '<div class="placeholder">Vista de Actividades - En desarrollo</div>';
     }
 }
 
-/**
- * Componente Estadísticas (placeholder)
- */
 class EstadisticasComponent extends BaseComponent {
-    renderHTML() {
-        this.container.innerHTML = `
-            <div class="estadisticas-container">
-                <div class="page-header">
-                    <h2>Estadísticas</h2>
-                    <button class="btn btn-admin-primary">
-                        <i class="fas fa-download"></i> Exportar Datos
-                    </button>
-                </div>
-                
-                <div class="card">
-                    <div class="card-body">
-                        <p>Componente de estadísticas en desarrollo...</p>
-                        <p>Aquí se mostrarán gráficos y reportes detallados.</p>
-                    </div>
-                </div>
-            </div>
-        `;
+    render() {
+        return '<div class="placeholder">Vista de Estadísticas - En desarrollo</div>';
     }
 }
 
-/**
- * Componente Superadmin (placeholder)
- */
 class SuperadminComponent extends BaseComponent {
-    renderHTML() {
-        this.container.innerHTML = `
-            <div class="superadmin-container">
-                <div class="page-header">
-                    <h2>Panel de Superadministrador</h2>
-                    <button class="btn btn-admin-primary">
-                        <i class="fas fa-user-plus"></i> Nuevo Admin
-                    </button>
-                </div>
-                
-                <div class="card">
-                    <div class="card-body">
-                        <p>Componente de superadmin en desarrollo...</p>
-                        <p>Aquí se gestionarán administradores y asignaciones.</p>
-                    </div>
-                </div>
-            </div>
-        `;
+    render() {
+        return '<div class="placeholder">Vista de Superadmin - En desarrollo</div>';
     }
 }
 
-// Hacer los componentes globales
-window.DashboardComponent = DashboardComponent;
-window.CentrosComponent = CentrosComponent;
-window.InstalacionesComponent = InstalacionesComponent;
-window.ActividadesComponent = ActividadesComponent;
-window.EstadisticasComponent = EstadisticasComponent;
-window.SuperadminComponent = SuperadminComponent;
+// Funciones globales para interacciones
+window.toggleDropdown = function(button) {
+    const dropdown = button.closest('.dropdown');
+    dropdown.classList.toggle('active');
+    
+    // Cerrar otros dropdowns
+    document.querySelectorAll('.dropdown').forEach(d => {
+        if (d !== dropdown) d.classList.remove('active');
+    });
+};
+
+window.openModal = function(type) {
+    console.log('Abrir modal para:', type);
+    // TODO: Implementar modales
+};
+
+window.showProfile = function() {
+    console.log('Mostrar perfil');
+    // TODO: Implementar perfil
+};
+
+window.viewCenter = function(centerId) {
+    console.log('Ver centro:', centerId);
+    // TODO: Navegar a vista de centro
+};
+
+window.showCenterOptions = function(centerId) {
+    console.log('Opciones para centro:', centerId);
+    // TODO: Mostrar menú contextual
+};
+
+// Cerrar dropdowns al hacer click fuera
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown')) {
+        document.querySelectorAll('.dropdown').forEach(d => {
+            d.classList.remove('active');
+        });
+    }
+});

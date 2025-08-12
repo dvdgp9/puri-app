@@ -52,12 +52,13 @@
 |-------|------|-------|-------------|
 | `id` | INT | PK | Identificador único del centro |
 | `nombre` | VARCHAR | | Nombre del centro deportivo |
+| `direccion` | VARCHAR | | Dirección del centro |
 | `password` | VARCHAR | | Contraseña de acceso al centro |
 
 **Ejemplos de datos**:
-- ID 1: "Centro prueba 1", Password: "CONTRACENTRO"
-- ID 2: "Centro Deportivo Municipal", Password: "CONTRACENTRO"
-- ID 3: "Polideportivo El Parque", Password: "$2y$10$bcdefghijklmnopqrstuvw"
+- ID 1: "Centro prueba 1", Dirección: "Calle de la Prueba 1", Password: "CONTRACENTRO"
+- ID 2: "Centro Deportivo Municipal", Dirección: "Calle de la Prueba 2", Password: "CONTRACENTRO"
+- ID 3: "Polideportivo El Parque", Dirección: "Calle de la Prueba 3", Password: "$2y$10$bcdefghijklmnopqrstuvw"
 
 ### 4. Tabla: `inscritos`
 **Total de registros**: 24
