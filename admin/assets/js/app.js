@@ -37,7 +37,23 @@ class AdminApp {
             
         } catch (error) {
             console.error('❌ Error inicializando la aplicación:', error);
-            this.redirectToLogin();
+            // Mostrar error en la UI en lugar de redirigir automáticamente
+            const adminApp = document.getElementById('admin-app');
+            if (adminApp) {
+                adminApp.style.display = 'block';
+                adminApp.innerHTML = `
+                    <div class="error-message" style="padding: 40px; text-align: center;">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-bottom: 16px; color: var(--error-color);">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <h3>Error al inicializar</h3>
+                        <p>Ha ocurrido un error al inicializar la aplicación. Revisa la consola para más detalles.</p>
+                        <div style="margin-top: 16px;">
+                            <a href="login.php" class="btn btn-secondary">Ir al login</a>
+                        </div>
+                    </div>
+                `;
+            }
         }
     }
 
@@ -76,19 +92,13 @@ class AdminApp {
                 
                 return true;
             } else {
-                debugLog('❌ Usuario no autenticado, redirigiendo...', JSON.stringify(data));
-                // Redirigir al login si no está autenticado
-                setTimeout(() => {
-                    window.location.href = data.redirect || 'login.php';
-                }, 500);
+                debugLog('❌ Usuario no autenticado', JSON.stringify(data));
+                Utils.showNotification('No autenticado. Ve al login.', 'warning');
                 throw new Error('Usuario no autenticado');
             }
         } catch (error) {
             debugLog('❌ Error verificando autenticación:', error.message);
-            // En caso de error, redirigir al login
-            setTimeout(() => {
-                window.location.href = 'login.php';
-            }, 500);
+            Utils.showNotification('Error verificando autenticación', 'error');
             throw error;
         }
     }

@@ -199,5 +199,4 @@ class AdminRouter {
     }
 }
 
-// Instancia global del router
-window.router = new AdminRouter();
+// La instancia global del router la crea index.html para evitar doble inicialización

@@ -89,11 +89,7 @@
                 
             } catch (error) {
                 debugLog('❌ Error inicializando la aplicación:', error.message);
-                debugLog('🔄 Redirigiendo al login...');
-                // Si hay error de autenticación, redirigir al login
-                setTimeout(() => {
-                    window.location.href = 'login.php';
-                }, 1000); // Delay para ver los logs
+                // No redirigir automáticamente para permitir ver errores
             }
         });
     </script>
