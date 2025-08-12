@@ -27,34 +27,12 @@ $admin_info = getAdminInfo();
             <div class="title">Puri: Gestión de centros deportivos</div>
         </div>
         <div class="actions">
-            <div class="dropdown">
-                <button class="btn btn-primary" id="add-dropdown-btn">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    Añadir
-                </button>
-                <div class="dropdown-content" id="add-dropdown">
-                    <a href="#" class="dropdown-item" onclick="openModal('centro')">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                        </svg>
-                        Nuevo centro
-                    </a>
-                    <a href="#" class="dropdown-item" onclick="openModal('instalacion')">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
-                        </svg>
-                        Nueva instalación
-                    </a>
-                    <a href="#" class="dropdown-item" onclick="openModal('actividad')">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        Nueva actividad
-                    </a>
-                </div>
-            </div>
+            <button class="btn btn-primary" onclick="showAddOptionsModal()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                + Añadir
+            </button>
             <div class="dropdown">
                 <button class="btn btn-secondary" id="profile-dropdown-btn">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
@@ -98,8 +76,8 @@ $admin_info = getAdminInfo();
                         <option value="nombre">Ordenar A-Z</option>
                         <option value="-nombre">Ordenar Z-A</option>
                     </select>
-                    <button class="btn btn-primary" onclick="showAddOptionsModal()">
-                        + Añadir
+                    <button class="btn btn-primary" onclick="showCreateCenterModal()">
+                        + Añadir centro
                     </button>
                 </div>
             </div>
