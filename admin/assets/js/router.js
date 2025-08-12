@@ -121,36 +121,17 @@ class AdminRouter {
      */
     updateUI(route, config) {
         // Actualizar el título de la página
-        document.getElementById('page-title').textContent = config.title;
         document.title = `${config.title} - Admin Panel`;
-
-        // Actualizar breadcrumb
-        const breadcrumbEl = document.getElementById('breadcrumb');
-        breadcrumbEl.innerHTML = config.breadcrumb
-            .map((item, index) => {
-                if (index === config.breadcrumb.length - 1) {
-                    return `<span class="breadcrumb-current">${item}</span>`;
-                }
-                return `<span class="breadcrumb-item">${item}</span>`;
-            })
-            .join(' <i class="fas fa-chevron-right"></i> ');
-
-        // Actualizar navegación activa
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-        });
         
-        const activeLink = document.querySelector(`[data-route="${route}"]`);
-        if (activeLink) {
-            activeLink.classList.add('active');
-        }
+        // En la nueva estructura, no hay elementos fijos de UI para actualizar
+        // El componente se encarga de renderizar todo su contenido
     }
 
     /**
      * Cargar componente dinámicamente
      */
     async loadComponent(componentName) {
-        const contentArea = document.getElementById('content-area');
+        const contentArea = document.getElementById('admin-app');
         
         // Mostrar loading
         Utils.showLoading();
@@ -158,20 +139,26 @@ class AdminRouter {
         try {
             // Verificar si el componente existe
             if (typeof window[componentName] === 'function') {
-                const component = new window[componentName]();
-                await component.render(contentArea);
+                const component = new window[componentName](contentArea);
+                await component.load();
+                component.renderHTML();
             } else {
                 throw new Error(`Componente ${componentName} no encontrado`);
             }
         } catch (error) {
             console.error('Error cargando componente:', error);
             contentArea.innerHTML = `
-                <div class="error-message">
-                    <i class="fas fa-exclamation-triangle"></i>
+                <div class="error-message" style="padding: 40px; text-align: center;">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-bottom: 16px; color: var(--error-color);">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
                     <h3>Error al cargar la página</h3>
                     <p>Ha ocurrido un error al cargar el contenido. Por favor, inténtalo de nuevo.</p>
-                    <button onclick="location.reload()" class="btn btn-primary">
-                        <i class="fas fa-refresh"></i> Recargar
+                    <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 16px;">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Recargar
                     </button>
                 </div>
             `;
