@@ -792,10 +792,21 @@ function clearFormErrors() {
  */
 function showFieldError(fieldId, message) {
     const field = document.getElementById(fieldId);
-    const errorDiv = document.getElementById(fieldId + 'Error');
+    const errorDiv = document.getElementById(fieldId + '-error');
     
-    field.classList.add('error');
-    errorDiv.textContent = message;
+    if (field) field.classList.add('error');
+    if (errorDiv) errorDiv.textContent = message;
+}
+
+/**
+ * Limpiar error en campo específico
+ */
+function clearFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const errorDiv = document.getElementById(fieldId + '-error');
+    
+    if (field) field.classList.remove('error');
+    if (errorDiv) errorDiv.textContent = '';
 }
 
 /**
