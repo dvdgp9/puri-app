@@ -145,7 +145,7 @@ async function loadStats() {
  */
 async function loadCenters() {
     try {
-        const response = await fetch('api/centros/list.php');
+        const response = await fetch('api/centros/simple.php');
         const data = await response.json();
         
         if (data.success) {
