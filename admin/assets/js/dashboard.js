@@ -1859,6 +1859,15 @@ async function createParticipant() {
             // Actualizar estadísticas
             await loadStats();
         } else {
+            // Mostrar información de debug si está disponible
+            if (result.debug) {
+                console.log('DEBUG INFO:', result.debug);
+                console.log('Input nombre:', result.debug.input_nombre);
+                console.log('Input apellidos:', result.debug.input_apellidos);
+                console.log('Existing nombre:', result.debug.existing_nombre);
+                console.log('Existing apellidos:', result.debug.existing_apellidos);
+                console.log('Actividad ID:', result.debug.actividad_id);
+            }
             showNotification('Error: ' + result.message, 'error');
         }
     } catch (error) {
