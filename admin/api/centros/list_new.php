@@ -15,7 +15,7 @@ try {
     // Verificar autenticación
     $admin_info = getAdminInfo();
     
-    // Consulta con conteos de instalaciones y actividades
+    // Consulta con conteos reales: centros → instalaciones → actividades
     $query = "
         SELECT 
             c.id, 
@@ -25,8 +25,10 @@ try {
             COUNT(DISTINCT a.id) as total_actividades
         FROM centros c
         LEFT JOIN instalaciones i ON c.id = i.centro_id
-        LEFT JOIN actividades a ON c.id = a.centro_id
+        LEFT JOIN actividades a ON i.id = a.instalacion_id
     ";
+    
+    $params = [];
     
     // Si no es superadmin, filtrar por centros asignados
     if ($admin_info['role'] !== 'superadmin') {
@@ -35,8 +37,6 @@ try {
             WHERE aa.admin_id = ?
         ";
         $params = [$admin_info['id']];
-    } else {
-        $params = [];
     }
     
     $query .= " GROUP BY c.id, c.nombre, c.direccion ORDER BY c.nombre ASC";

@@ -145,29 +145,9 @@ async function loadStats() {
  */
 async function loadCenters() {
     try {
-        // Usar endpoint de debug para diagnosticar
-        const response = await fetch('api/centros/debug_counts.php');
+        // Usar el endpoint corregido
+        const response = await fetch('api/centros/list_new.php');
         const data = await response.json();
-        
-        console.log('Debug response:', data);
-        
-        if (data.success && data.debug) {
-            // Mostrar info de debug
-            console.log('Debug info:', data.debug);
-            
-            // Si hay centros en el debug, usarlos temporalmente
-            const centrosDebug = data.debug.find(d => d.step === 3);
-            if (centrosDebug && centrosDebug.data) {
-                // Usar datos simples del debug
-                Dashboard.centers = centrosDebug.data.map(c => ({
-                    ...c,
-                    total_instalaciones: 0,
-                    total_actividades: 0
-                }));
-                renderCenters();
-                return;
-            }
-        }
         
         if (data.success) {
             Dashboard.centers = data.data || [];
