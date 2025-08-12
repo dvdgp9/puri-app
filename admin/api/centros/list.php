@@ -40,22 +40,15 @@ try {
     $stmt->execute($params);
     $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Obtener registros con paginación
+    // Obtener registros con paginación - consulta simplificada
     $query = "
         SELECT 
             c.id,
             c.nombre,
             c.descripcion,
-            c.direccion,
-            c.created_at,
-            COUNT(i.id) as total_instalaciones,
-            (SELECT COUNT(*) FROM actividades a 
-             INNER JOIN instalaciones i2 ON a.instalacion_id = i2.id 
-             WHERE i2.centro_id = c.id) as total_actividades
+            c.direccion
         FROM centros c
-        LEFT JOIN instalaciones i ON c.id = i.centro_id
         $where_clause
-        GROUP BY c.id, c.nombre, c.descripcion, c.direccion, c.created_at
         ORDER BY c.nombre ASC
         LIMIT ? OFFSET ?
     ";
