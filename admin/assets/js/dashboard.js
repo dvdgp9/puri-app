@@ -257,7 +257,6 @@ function renderCenters() {
             </div>
             <div class="center-info">
                 <div class="center-address">${escapeHtml(center.direccion || 'Sin dirección')}</div>
-                <div class="center-description">${escapeHtml(center.descripcion || 'Sin descripción')}</div>
             </div>
             <div class="center-footer">
                 <button class="btn btn-outline" onclick="viewCenter(${center.id})">Ver detalles</button>

@@ -45,7 +45,6 @@ try {
         SELECT 
             c.id,
             c.nombre,
-            c.descripcion,
             c.direccion
         FROM centros c
         $where_clause
