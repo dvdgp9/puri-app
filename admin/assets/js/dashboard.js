@@ -1805,7 +1805,15 @@ async function createParticipant() {
     const btnText = btn.querySelector('.btn-text');
     const btnLoading = btn.querySelector('.btn-loading');
     
+    // Prevenir doble submit
+    if (btn.dataset.submitting === 'true') {
+        return;
+    }
+    
     try {
+        // Marcar como enviando
+        btn.dataset.submitting = 'true';
+        
         // Mostrar loading
         btn.disabled = true;
         btnText.style.display = 'none';
@@ -1874,6 +1882,9 @@ async function createParticipant() {
         console.error('Error creating participant:', error);
         showNotification('Error al inscribir el participante', 'error');
     } finally {
+        // Limpiar flag de envío
+        btn.dataset.submitting = 'false';
+        
         // Ocultar loading
         btn.disabled = false;
         btnText.style.display = 'inline';
