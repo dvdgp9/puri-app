@@ -1,18 +1,22 @@
 <?php
+session_start();
 header('Content-Type: application/json');
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
 try {
-    // Cargar configuración y autenticación
+    // Cargar configuración
     require_once '../../../config/config.php';
-    require_once '../../auth_middleware.php';
     
-    // Verificar autenticación de admin
-    $admin_info = getAdminInfo();
+    // Verificar autenticación de admin (simplificado)
+    if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'No autorizado']);
+        exit;
+    }
     
-    $admin_id = $admin_info['id'];
-    $is_superadmin = ($admin_info['role'] === 'superadmin');
+    $admin_id = $_SESSION['admin_id'];
+    $is_superadmin = ($_SESSION['admin_role'] === 'superadmin');
     
     if ($is_superadmin) {
         // Superadmin ve todos los centros
