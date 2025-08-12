@@ -145,15 +145,9 @@ async function loadStats() {
  */
 async function loadCenters() {
     try {
-        // Usar endpoint simple para diagnosticar
-        const response = await fetch('api/centros/simple.php');
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-        
-        const responseText = await response.text();
-        console.log('Raw response:', responseText);
-        
-        const data = JSON.parse(responseText);
+        // Usar el nuevo endpoint limpio
+        const response = await fetch('api/centros/list_new.php');
+        const data = await response.json();
         
         if (data.success) {
             Dashboard.centers = data.data || [];
