@@ -1719,6 +1719,12 @@ function showCreateParticipantModal() {
         // Resetear selectores CSV
         resetParticipantSelectors('csvParticipantCenter', 'csvParticipantInstallation', 'csvParticipantActivity');
         
+        // Inicializar selectores cascada para pestaña manual
+        setupParticipantCenterSelector('participantCenter', 'participantInstallation', 'participantActivity');
+        
+        // Inicializar selectores cascada para pestaña CSV
+        setupParticipantCenterSelector('csvParticipantCenter', 'csvParticipantInstallation', 'csvParticipantActivity');
+        
         // Activar pestaña manual por defecto
         switchParticipantTab('manual');
         
