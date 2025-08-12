@@ -268,15 +268,11 @@ function renderCenters() {
                         <a href="#" onclick="deactivateCenter(${center.id})">Desactivar</a>
                     </div>
                 </div>
-                <div class="center-address">${escapeHtml(center.direccion || 'Sin dirección')}</div>
-            </div>
-            <div class="center-footer">
-                <button class="btn btn-outline" onclick="viewCenter(${center.id})">Ver detalles</button>
             </div>
         </div>
     `).join('');
-    
-    centersGrid.innerHTML = centersHTML;
+
+    container.innerHTML = centersHTML;
 }
 
 /**
