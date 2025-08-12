@@ -68,18 +68,10 @@ class AdminApp {
      * Actualizar información del usuario en la interfaz
      */
     updateUserInfo() {
-        const usernameEl = document.getElementById('admin-username');
-        const roleEl = document.getElementById('admin-role');
-        const superadminMenu = document.getElementById('superadmin-menu');
-
+        // En la nueva estructura, la información del usuario se maneja en el componente
+        // No hay elementos fijos en el DOM para actualizar
         if (this.currentUser) {
-            usernameEl.textContent = this.currentUser.username;
-            roleEl.textContent = this.currentUser.role === 'superadmin' ? 'Superadministrador' : 'Administrador';
-            
-            // Mostrar menú de superadmin si corresponde
-            if (this.currentUser.role === 'superadmin') {
-                superadminMenu.style.display = 'block';
-            }
+            console.log('Usuario autenticado:', this.currentUser.username, this.currentUser.role);
         }
     }
 
@@ -87,52 +79,23 @@ class AdminApp {
      * Configurar event listeners
      */
     setupEventListeners() {
-        // Toggle sidebar
-        const sidebarToggle = document.getElementById('sidebar-toggle');
-        sidebarToggle.addEventListener('click', this.toggleSidebar);
-
-        // Logout
-        const logoutBtn = document.getElementById('logout-btn');
-        logoutBtn.addEventListener('click', this.logout.bind(this));
-
-        // Navigation links
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const route = link.getAttribute('data-route');
-                router.navigate(route);
-            });
-        });
-
-        // Responsive sidebar
-        this.setupResponsiveSidebar();
+        // En la nueva estructura, los event listeners se manejan en los componentes
+        // No hay elementos fijos para configurar aquí
+        console.log('Event listeners configurados para la nueva estructura SPA');
     }
 
     /**
-     * Configurar sidebar responsivo
+     * Configurar sidebar responsivo - OBSOLETO en nueva estructura
      */
     setupResponsiveSidebar() {
-        const mediaQuery = window.matchMedia('(max-width: 768px)');
-        
-        const handleMediaChange = (e) => {
-            const sidebar = document.getElementById('sidebar');
-            if (e.matches) {
-                sidebar.classList.add('mobile');
-            } else {
-                sidebar.classList.remove('mobile', 'collapsed');
-            }
-        };
-
-        mediaQuery.addListener(handleMediaChange);
-        handleMediaChange(mediaQuery);
+        // Ya no hay sidebar en la nueva estructura
     }
 
     /**
-     * Toggle sidebar
+     * Toggle sidebar - OBSOLETO en nueva estructura
      */
     toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('collapsed');
+        // Ya no hay sidebar en la nueva estructura
     }
 
     /**

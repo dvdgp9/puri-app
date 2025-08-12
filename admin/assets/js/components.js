@@ -80,6 +80,8 @@ class DashboardComponent extends BaseComponent {
             
             if (centersData.success) {
                 this.centers = centersData.data || [];
+            } else {
+                this.centers = [];
             }
         } catch (error) {
             console.error('Error cargando centros:', error);
