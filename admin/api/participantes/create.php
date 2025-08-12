@@ -62,12 +62,27 @@ try {
     }
     
     // Verificar que no existe ya este participante en la actividad
-    $stmt = $pdo->prepare("SELECT id FROM inscritos WHERE actividad_id = ? AND nombre = ? AND apellidos = ?");
+    $stmt = $pdo->prepare("SELECT id, nombre, apellidos FROM inscritos WHERE actividad_id = ? AND nombre = ? AND apellidos = ?");
     $stmt->execute([$actividad_id, $nombre, $apellidos]);
     
-    if ($stmt->fetch()) {
+    $existing = $stmt->fetch();
+    if ($existing) {
+        // Debug: Log para investigar el problema
+        error_log("DUPLICATE CHECK: Actividad ID: $actividad_id, Nombre: '$nombre', Apellidos: '$apellidos'");
+        error_log("EXISTING RECORD: ID: {$existing['id']}, Nombre: '{$existing['nombre']}', Apellidos: '{$existing['apellidos']}'");
+        
         http_response_code(409);
-        echo json_encode(['success' => false, 'message' => 'Este participante ya está inscrito en la actividad']);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Este participante ya está inscrito en la actividad',
+            'debug' => [
+                'input_nombre' => $nombre,
+                'input_apellidos' => $apellidos,
+                'existing_nombre' => $existing['nombre'],
+                'existing_apellidos' => $existing['apellidos'],
+                'actividad_id' => $actividad_id
+            ]
+        ]);
         exit;
     }
     
