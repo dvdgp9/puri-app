@@ -439,10 +439,11 @@ function openModal(type) {
 }
 
 /**
- * Ver centro - navegar a página de detalle
+ * Ver centro (placeholder)
  */
 function viewCenter(centerId) {
-    window.location.href = `centro.php?id=${centerId}`;
+    console.log('Ver centro:', centerId);
+    alert(`Ver detalles del centro ${centerId} - En desarrollo`);
 }
 
 /**
