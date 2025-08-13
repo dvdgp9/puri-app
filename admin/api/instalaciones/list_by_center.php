@@ -41,9 +41,42 @@ try {
         }
     }
     
-    // Obtener instalaciones del centro
-    $stmt = $pdo->prepare("SELECT id, nombre FROM instalaciones WHERE centro_id = ? ORDER BY nombre");
-    $stmt->execute([$centro_id]);
+    // Parámetros de búsqueda y ordenación
+    $search = $_GET['search'] ?? '';
+    $sort = $_GET['sort'] ?? 'nombre';
+    
+    // Construir WHERE clause para búsqueda
+    $where_conditions = ["i.centro_id = ?"];
+    $params = [$centro_id];
+    
+    if (!empty($search)) {
+        $where_conditions[] = "i.nombre LIKE ?";
+        $params[] = "%$search%";
+    }
+    
+    $where_clause = implode(' AND ', $where_conditions);
+    
+    // Determinar ORDER BY
+    $order_by = "i.nombre ASC";
+    if ($sort === '-nombre') {
+        $order_by = "i.nombre DESC";
+    }
+    
+    // Obtener instalaciones del centro con estadísticas de actividades
+    $stmt = $pdo->prepare("
+        SELECT 
+            i.id,
+            i.nombre,
+            COUNT(CASE WHEN a.fecha_inicio <= CURDATE() AND (a.fecha_fin IS NULL OR a.fecha_fin >= CURDATE()) THEN 1 END) as total_actividades_activas,
+            COUNT(CASE WHEN a.fecha_inicio > CURDATE() THEN 1 END) as total_actividades_programadas,
+            COUNT(CASE WHEN a.fecha_fin < CURDATE() THEN 1 END) as total_actividades_finalizadas
+        FROM instalaciones i
+        LEFT JOIN actividades a ON i.id = a.instalacion_id
+        WHERE $where_clause
+        GROUP BY i.id, i.nombre
+        ORDER BY $order_by
+    ");
+    $stmt->execute($params);
     
     $instalaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
     

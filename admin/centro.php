@@ -1,50 +1,47 @@
 <?php
 /**
- * Detalle de Centro - Panel de Administración
+ * Vista detalle de centro
+ * Reutiliza estilos y estructura del dashboard principal
  */
 
-// Incluir middleware de autenticación
+require_once '../config/config.php';
 require_once 'auth_middleware.php';
-requireAdminAuth();
 
-// Obtener ID del centro desde la URL
-$centro_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+// Verificar autenticación
+$admin_info = getAdminInfo();
+
+// Obtener ID del centro desde URL
+$centro_id = intval($_GET['id'] ?? 0);
 
 if ($centro_id <= 0) {
-    header('Location: dashboard.php?error=invalid_center');
+    header("Location: dashboard.php");
     exit;
 }
 
-// Cargar configuración de la base de datos
-require_once '../config/config.php';
-
+// Verificar que el centro existe y el admin tiene acceso
 try {
-    // Verificar que el centro existe y obtener sus datos
-    $stmt = $pdo->prepare("SELECT id, nombre, direccion FROM centros WHERE id = ?");
-    $stmt->execute([$centro_id]);
+    if ($admin_info['role'] === 'superadmin') {
+        $stmt = $pdo->prepare("SELECT id, nombre, direccion FROM centros WHERE id = ?");
+        $stmt->execute([$centro_id]);
+    } else {
+        $stmt = $pdo->prepare("
+            SELECT c.id, c.nombre, c.direccion 
+            FROM centros c 
+            INNER JOIN admin_asignaciones aa ON c.id = aa.centro_id 
+            WHERE c.id = ? AND aa.admin_id = ?
+        ");
+        $stmt->execute([$centro_id, $admin_info['id']]);
+    }
+    
     $centro = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$centro) {
-        header('Location: dashboard.php?error=center_not_found');
+        header("Location: dashboard.php");
         exit;
     }
-    
-    // Verificar permisos del administrador
-    $admin_info = getAdminInfo();
-    
-    if ($admin_info['role'] !== 'superadmin') {
-        $stmt = $pdo->prepare("SELECT 1 FROM admin_asignaciones WHERE admin_id = ? AND centro_id = ?");
-        $stmt->execute([$admin_info['id'], $centro_id]);
-        
-        if (!$stmt->fetch()) {
-            header('Location: dashboard.php?error=access_denied');
-            exit;
-        }
-    }
-    
 } catch (Exception $e) {
-    error_log("Error loading center details: " . $e->getMessage());
-    header('Location: dashboard.php?error=system_error');
+    error_log("Error al obtener centro: " . $e->getMessage());
+    header("Location: dashboard.php");
     exit;
 }
 ?>
@@ -53,525 +50,285 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($centro['nombre']) ?> - Panel de Administración</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
-    
-    <!-- CSS -->
+    <title><?php echo htmlspecialchars($centro['nombre']); ?> - Admin Puri</title>
     <link rel="stylesheet" href="assets/css/admin.css">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="logo-section">
+            <div class="logo">P</div>
+            <div class="title">Puri: Gestión de centros deportivos</div>
+        </div>
+        <div class="actions">
+            <button class="btn btn-primary" onclick="showAddOptionsModal()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                Añadir
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-secondary" id="profile-dropdown-btn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <?php echo htmlspecialchars($admin_info['username']); ?>
+                </button>
+                <div class="dropdown-content" id="profile-dropdown">
+                    <a href="#" class="dropdown-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        Configuración
+                    </a>
+                    <a href="logout.php" class="dropdown-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        Cerrar sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
     <div class="admin-container">
-        <!-- Sidebar -->
-        <?php include 'sidebar.php'; ?>
-        
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Header -->
-            <header class="admin-header">
-                <div class="header-left">
-                    <button class="menu-toggle" id="menuToggle">
-                        <i class="fas fa-bars"></i>
+        <!-- Breadcrumbs -->
+        <div class="breadcrumbs">
+            <a href="dashboard.php" class="breadcrumb-item">Escritorio</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current"><?php echo htmlspecialchars($centro['nombre']); ?></span>
+        </div>
+
+        <!-- Header del centro -->
+        <div class="center-header">
+            <button class="btn btn-secondary" onclick="window.location.href='dashboard.php'">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Volver
+            </button>
+            <div class="center-info">
+                <h1 class="center-title"><?php echo htmlspecialchars($centro['nombre']); ?></h1>
+                <p class="center-address"><?php echo htmlspecialchars($centro['direccion']); ?></p>
+            </div>
+            <button class="btn btn-primary" onclick="showEditCenterModal(<?php echo $centro_id; ?>)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                Editar
+            </button>
+        </div>
+
+        <!-- Estadísticas del centro -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="total-instalaciones">-</div>
+                    <div class="stat-label">Instalaciones</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="total-actividades-activas">-</div>
+                    <div class="stat-label">Actividades Activas</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="total-actividades-programadas">-</div>
+                    <div class="stat-label">Actividades Programadas</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="total-participantes">-</div>
+                    <div class="stat-label">Participantes</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de instalaciones -->
+        <div class="installations-panel">
+            <div class="installations-header">
+                <h2 class="installations-title">Instalaciones</h2>
+                <div class="installations-actions">
+                    <input type="text" id="search-installations" class="search-input" placeholder="Buscar instalaciones...">
+                    <select id="sort-installations" class="sort-select">
+                        <option value="nombre">Ordenar A-Z</option>
+                        <option value="-nombre">Ordenar Z-A</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="showCreateInstallationModal(<?php echo $centro_id; ?>)">
+                        + Nueva Instalación
                     </button>
-                    <nav class="breadcrumb">
-                        <a href="dashboard.php">Escritorio</a>
-                        <span>/</span>
-                        <span><?= htmlspecialchars($centro['nombre']) ?></span>
-                    </nav>
                 </div>
-                
-                <div class="header-right">
-                    <button class="btn btn-secondary" onclick="goBack()">
-                        <i class="fas fa-arrow-left"></i> Volver
-                    </button>
-                    <h1 class="page-title"><?= htmlspecialchars($centro['nombre']) ?></h1>
-                    <p class="page-subtitle"><?= htmlspecialchars($centro['direccion']) ?></p>
-                    <button class="btn btn-primary" onclick="showEditCenterModal(<?= $centro_id ?>)">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                </div>
-            </header>
-            
-            <!-- Stats Cards -->
-            <div class="stats-grid" id="statsContainer">
-                <!-- Stats will be loaded via JS -->
             </div>
-            
-            <!-- Installations Section -->
-            <div class="installations-panel">
-                <div class="installations-header">
-                    <h2 class="installations-title">Instalaciones</h2>
-                    <div class="installations-actions">
-                        <input type="text" id="search-installations" class="search-input" placeholder="Buscar instalaciones...">
-                        <select id="sort-installations" class="sort-select">
-                            <option value="nombre">Ordenar A-Z</option>
-                            <option value="-nombre">Ordenar Z-A</option>
-                        </select>
-                        <button class="btn btn-primary" onclick="showCreateInstallationModal(<?= $centro_id ?>)">
-                            <i class="fas fa-plus"></i> Nueva Instalación
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="installations-content">
-                    <div id="installations-list" class="installations-list">
-                        <!-- Installations will be loaded via JS -->
-                    </div>
+            <div class="installations-content">
+                <div id="installations-list" class="installations-list">
+                    <!-- Las instalaciones se cargarán aquí dinámicamente -->
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Edit Center Modal -->
-    <div id="editCenterModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Editar Centro</h2>
-                <span class="close" onclick="closeEditCenterModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="editCenterForm">
-                    <input type="hidden" id="editCenterId" value="<?= $centro_id ?>">
-                    <div class="form-group">
-                        <label for="editCenterName">Nombre del Centro:</label>
-                        <input type="text" id="editCenterName" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="editCenterAddress">Dirección:</label>
-                        <input type="text" id="editCenterAddress" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="editCenterPassword">Contraseña de Acceso:</label>
-                        <input type="password" id="editCenterPassword" class="form-input" placeholder="Dejar en blanco para no cambiar">
-                        <small class="form-text">Deje en blanco si no desea cambiar la contraseña</small>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeEditCenterModal()">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Create Installation Modal -->
-    <div id="createInstallationModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Crear Nueva Instalación</h2>
-                <span class="close" onclick="closeCreateInstallationModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="createInstallationForm">
-                    <input type="hidden" id="centerId" value="<?= $centro_id ?>">
-                    <div class="form-group">
-                        <label for="installationName">Nombre de la Instalación:</label>
-                        <input type="text" id="installationName" class="form-input" required>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeCreateInstallationModal()">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Crear Instalación</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Installation Options Modal -->
-    <div id="installationOptionsModal" class="modal">
-        <div class="modal-content small">
-            <div class="modal-header">
-                <h3>Opciones de Instalación</h3>
-                <span class="close" onclick="closeInstallationOptionsModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="selectedInstallationId">
-                <ul class="modal-options-list">
-                    <li onclick="viewActivities()">
-                        <i class="fas fa-calendar-alt"></i>
-                        <span>Ver actividades</span>
-                    </li>
-                    <li onclick="editInstallation()">
-                        <i class="fas fa-edit"></i>
-                        <span>Editar instalación</span>
-                    </li>
-                    <li onclick="deactivateInstallation()" class="danger">
-                        <i class="fas fa-times-circle"></i>
-                        <span>Desactivar</span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Edit Installation Modal -->
-    <div id="editInstallationModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Editar Instalación</h2>
-                <span class="close" onclick="closeEditInstallationModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="editInstallationForm">
-                    <input type="hidden" id="editInstallationId">
-                    <div class="form-group">
-                        <label for="editInstallationName">Nombre de la Instalación:</label>
-                        <input type="text" id="editInstallationName" class="form-input" required>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeEditInstallationModal()">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Toast Container -->
-    <div id="toastContainer" class="toast-container"></div>
-    
-    <!-- JavaScript -->
+
+    <!-- Incluir modales del dashboard -->
+    <?php include 'modals/add_options.php'; ?>
+    <?php include 'modals/create_center.php'; ?>
+    <?php include 'modals/create_installation.php'; ?>
+    <?php include 'modals/create_activity.php'; ?>
+    <?php include 'modals/create_participant.php'; ?>
+
+    <!-- Scripts -->
     <script src="assets/js/dashboard.js"></script>
     <script>
-        // Initialize page with center data
-        document.addEventListener('DOMContentLoaded', function() {
-            loadCenterStats(<?= $centro_id ?>);
-            loadInstallations(<?= $centro_id ?>);
-            
-            // Set up search and sort listeners
-            document.getElementById('search-installations').addEventListener('input', function() {
-                loadInstallations(<?= $centro_id ?>);
-            });
-            
-            document.getElementById('sort-installations').addEventListener('change', function() {
-                loadInstallations(<?= $centro_id ?>);
-            });
-            
-            // Set up form submission handlers
-            document.getElementById('editCenterForm').addEventListener('submit', handleEditCenter);
-            document.getElementById('createInstallationForm').addEventListener('submit', handleCreateInstallation);
-            document.getElementById('editInstallationForm').addEventListener('submit', handleEditInstallation);
-        });
+        // Configuración específica del centro
+        const CURRENT_CENTER_ID = <?php echo $centro_id; ?>;
         
-        // Load center statistics
-        function loadCenterStats(centerId) {
-            fetch(`api/stats/center.php?id=${centerId}`)
+        // Inicializar página del centro
+        document.addEventListener('DOMContentLoaded', function() {
+            initCenterPage();
+        });
+
+        function initCenterPage() {
+            loadCenterStats();
+            loadInstallations();
+            setupInstallationSearch();
+            setupDropdowns();
+        }
+
+        function loadCenterStats() {
+            fetch(`api/stats/center.php?centro_id=${CURRENT_CENTER_ID}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        renderStats(data.data);
-                    } else {
-                        showToast('Error al cargar estadísticas', 'error');
+                        document.getElementById('total-instalaciones').textContent = data.data.total_instalaciones || 0;
+                        document.getElementById('total-actividades-activas').textContent = data.data.total_actividades_activas || 0;
+                        document.getElementById('total-actividades-programadas').textContent = data.data.total_actividades_programadas || 0;
+                        document.getElementById('total-participantes').textContent = data.data.total_participantes || 0;
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    showToast('Error de conexión', 'error');
+                    console.error('Error loading center stats:', error);
                 });
         }
-        
-        // Render statistics cards
-        function renderStats(stats) {
-            const container = document.getElementById('statsContainer');
-            
-            container.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-icon bg-blue">
-                        <i class="fas fa-building"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>${stats.total_instalaciones}</h3>
-                        <p>Instalaciones</p>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon bg-green">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>${stats.total_actividades_activas}</h3>
-                        <p>Actividades Activas</p>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon bg-orange">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>${stats.total_actividades_programadas}</h3>
-                        <p>Actividades Programadas</p>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon bg-purple">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>${stats.porcentaje_asistencia}%</h3>
-                        <p>Asistencia Promedio</p>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Load installations for this center
-        function loadInstallations(centerId) {
+
+        function loadInstallations() {
             const search = document.getElementById('search-installations').value;
             const sort = document.getElementById('sort-installations').value;
             
-            fetch(`api/instalaciones/list_by_center.php?centro_id=${centerId}&search=${encodeURIComponent(search)}&sort=${encodeURIComponent(sort)}`)
+            fetch(`api/instalaciones/list_by_center.php?centro_id=${CURRENT_CENTER_ID}&search=${encodeURIComponent(search)}&sort=${sort}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        renderInstallations(data.data);
+                        renderInstallations(data.instalaciones || []);
                     } else {
-                        showToast('Error al cargar instalaciones', 'error');
+                        console.error('Error loading installations:', data.message);
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    showToast('Error de conexión', 'error');
+                    console.error('Error loading installations:', error);
                 });
         }
-        
-        // Render installations list
+
         function renderInstallations(installations) {
             const container = document.getElementById('installations-list');
             
             if (installations.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-warehouse fa-3x"></i>
-                        <h3>No hay instalaciones</h3>
-                        <p>Cree su primera instalación para comenzar</p>
-                    </div>
-                `;
+                container.innerHTML = '<div class="empty-state">No hay instalaciones en este centro</div>';
                 return;
             }
-            
-            let html = '<div class="installations-grid">';
-            
-            installations.forEach(installation => {
-                html += `
-                    <div class="installation-card" onclick="viewInstallationActivities(${installation.id})">
-                        <div class="installation-header">
-                            <h3>${htmlspecialchars(installation.nombre)}</h3>
-                            <button class="btn-icon" onclick="showInstallationOptions(event, ${installation.id})">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                        </div>
+
+            container.innerHTML = installations.map(installation => `
+                <div class="installation-card" onclick="goToInstallation(${installation.id})">
+                    <div class="installation-info">
+                        <h3 class="installation-name">${escapeHtml(installation.nombre)}</h3>
                         <div class="installation-stats">
-                            <div class="stat-item">
-                                <span class="stat-value">${installation.actividades_activas}</span>
+                            <span class="stat-item">
+                                <span class="stat-value">${installation.total_actividades_activas || 0}</span>
                                 <span class="stat-label">Activas</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-value">${installation.actividades_programadas}</span>
+                            </span>
+                            <span class="stat-item">
+                                <span class="stat-value">${installation.total_actividades_programadas || 0}</span>
                                 <span class="stat-label">Programadas</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-value">${installation.actividades_finalizadas}</span>
+                            </span>
+                            <span class="stat-item">
+                                <span class="stat-value">${installation.total_actividades_finalizadas || 0}</span>
                                 <span class="stat-label">Finalizadas</span>
-                            </div>
+                            </span>
                         </div>
                     </div>
-                `;
+                    <div class="installation-actions">
+                        <button class="btn-options" onclick="event.stopPropagation(); showInstallationOptions(${installation.id}, '${escapeHtml(installation.nombre)}')">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setupInstallationSearch() {
+            const searchInput = document.getElementById('search-installations');
+            const sortSelect = document.getElementById('sort-installations');
+            
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(loadInstallations, 300);
             });
             
-            html += '</div>';
-            container.innerHTML = html;
+            sortSelect.addEventListener('change', loadInstallations);
         }
-        
-        // View activities for an installation
-        function viewInstallationActivities(installationId) {
+
+        function goToInstallation(installationId) {
             window.location.href = `instalacion.php?id=${installationId}`;
         }
-        
-        // Show installation options menu
-        function showInstallationOptions(event, installationId) {
-            event.stopPropagation();
-            document.getElementById('selectedInstallationId').value = installationId;
-            document.getElementById('installationOptionsModal').style.display = 'block';
+
+        function showInstallationOptions(installationId, installationName) {
+            // Implementar menú contextual
+            console.log('Show options for installation:', installationId, installationName);
         }
-        
-        // View activities option
-        function viewActivities() {
-            const installationId = document.getElementById('selectedInstallationId').value;
-            closeInstallationOptionsModal();
-            viewInstallationActivities(installationId);
+
+        function showCreateInstallationModal(centroId) {
+            // Reutilizar modal existente pero preseleccionar el centro
+            showCreateInstallationModalForCenter(centroId);
         }
-        
-        // Edit installation option
-        function editInstallation() {
-            const installationId = document.getElementById('selectedInstallationId').value;
-            closeInstallationOptionsModal();
-            
-            // Load installation data and show edit modal
-            fetch(`api/instalaciones/get.php?id=${installationId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('editInstallationId').value = data.data.id;
-                        document.getElementById('editInstallationName').value = data.data.nombre;
-                        document.getElementById('editInstallationModal').style.display = 'block';
-                    } else {
-                        showToast('Error al cargar datos de la instalación', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showToast('Error de conexión', 'error');
-                });
+
+        function showEditCenterModal(centroId) {
+            // Implementar modal de edición de centro
+            console.log('Edit center:', centroId);
         }
-        
-        // Deactivate installation option
-        function deactivateInstallation() {
-            const installationId = document.getElementById('selectedInstallationId').value;
-            closeInstallationOptionsModal();
-            
-            if (confirm('¿Está seguro de que desea desactivar esta instalación?')) {
-                fetch('api/instalaciones/deactivate.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ id: installationId })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showToast('Instalación desactivada correctamente', 'success');
-                        loadInstallations(<?= $centro_id ?>);
-                    } else {
-                        showToast(data.message || 'Error al desactivar instalación', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showToast('Error de conexión', 'error');
-                });
-            }
-        }
-        
-        // Handle edit center form submission
-        function handleEditCenter(event) {
-            event.preventDefault();
-            
-            const formData = {
-                id: document.getElementById('editCenterId').value,
-                nombre: document.getElementById('editCenterName').value,
-                direccion: document.getElementById('editCenterAddress').value,
-                password: document.getElementById('editCenterPassword').value
-            };
-            
-            fetch('api/centros/update.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('Centro actualizado correctamente', 'success');
-                    closeEditCenterModal();
-                    // Reload page to show updated data
-                    location.reload();
-                } else {
-                    showToast(data.message || 'Error al actualizar centro', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Error de conexión', 'error');
-            });
-        }
-        
-        // Handle create installation form submission
-        function handleCreateInstallation(event) {
-            event.preventDefault();
-            
-            const formData = {
-                centro_id: document.getElementById('centerId').value,
-                nombre: document.getElementById('installationName').value
-            };
-            
-            fetch('api/instalaciones/create.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('Instalación creada correctamente', 'success');
-                    closeCreateInstallationModal();
-                    document.getElementById('installationName').value = '';
-                    loadInstallations(<?= $centro_id ?>);
-                } else {
-                    showToast(data.message || 'Error al crear instalación', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Error de conexión', 'error');
-            });
-        }
-        
-        // Handle edit installation form submission
-        function handleEditInstallation(event) {
-            event.preventDefault();
-            
-            const formData = {
-                id: document.getElementById('editInstallationId').value,
-                nombre: document.getElementById('editInstallationName').value
-            };
-            
-            fetch('api/instalaciones/update.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('Instalación actualizada correctamente', 'success');
-                    closeEditInstallationModal();
-                    loadInstallations(<?= $centro_id ?>);
-                } else {
-                    showToast(data.message || 'Error al actualizar instalación', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Error de conexión', 'error');
-            });
-        }
-        
-        // Utility function for HTML escaping
-        function htmlspecialchars(str) {
-            return str.replace(/&/g, "&amp;")
-                     .replace(/</g, "&lt;")
-                     .replace(/>/g, "&gt;")
-                     .replace(/"/g, "&quot;")
-                     .replace(/'/g, "&#039;");
-        }
-        
-        // Go back to previous page
-        function goBack() {
-            window.history.back();
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
     </script>
 </body>
