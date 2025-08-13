@@ -480,6 +480,8 @@ function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.textContent = message;
+    // Asegurar color de texto negro para contraste
+    notification.style.color = 'var(--color-black)';
     
     // Añadir al DOM
     document.body.appendChild(notification);
