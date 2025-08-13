@@ -49,6 +49,7 @@ try {
         SELECT 
             i.id,
             i.nombre,
+            COALESCE(i.activo, 1) AS activo,
             COALESCE(SUM(CASE 
                 WHEN a.id IS NOT NULL 
                  AND a.fecha_inicio <= CURDATE() 
@@ -66,7 +67,7 @@ try {
         FROM instalaciones i
         LEFT JOIN actividades a ON a.instalacion_id = i.id
         WHERE i.centro_id = ?
-        GROUP BY i.id, i.nombre
+        GROUP BY i.id, i.nombre, i.activo
         ORDER BY i.nombre
     ";
     $stmt = $pdo->prepare($sql);

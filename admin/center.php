@@ -178,7 +178,30 @@ try {
         </div>
     </div>
 
-    
+    <!-- Modal para editar instalación -->
+    <div id="editInstallationModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editInstallationTitle">
+            <div class="modal-header">
+                <h3 class="modal-title" id="editInstallationTitle">Editar Instalación</h3>
+                <button class="modal-close" onclick="closeModal('editInstallationModal')" aria-label="Cerrar modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editInstallationForm">
+                    <input type="hidden" id="editInstallationId" name="id" />
+                    <div class="form-group">
+                        <label for="editInstallationName">Nombre de la Instalación *</label>
+                        <input type="text" id="editInstallationName" name="nombre" required placeholder="Nombre de la instalación">
+                        <span class="field-error" id="editInstallationName-error"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editInstallationModal')">Cancelar</button>
+                <button type="submit" form="editInstallationForm" class="btn btn-primary">Guardar cambios</button>
+            </div>
+        </div>
+    </div>
+
 
     <script src="assets/js/center.js"></script>
 </body>

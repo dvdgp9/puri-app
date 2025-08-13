@@ -145,7 +145,7 @@ function renderInstallations() {
             <div class="center-main">
                 <div class="center-header">
                     <h3 class="center-name">${escapeHtml(decodeHtml(installation.nombre || ''))}</h3>
-                    <span class="center-status active">Activa</span>
+                    <span class="center-status ${installation.activo ? 'active' : 'inactive'}">${installation.activo ? 'Activa' : 'Inactiva'}</span>
                 </div>
                 <div class="center-details">
                     <span class="center-stat">
@@ -157,16 +157,15 @@ function renderInstallations() {
                 </div>
             </div>
             <div class="center-actions">
-                <div class="dropdown">
-                    <button class="more-btn" onclick="toggleInstallationDropdown(event, ${installation.id})">
+                <div class="dropdown" onclick="event.stopPropagation();">
+                    <button class="more-btn" onclick="toggleInstallationDropdown(event, ${installation.id}); return false;">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 1 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 1 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 1 1 0 3z"/>
                         </svg>
                     </button>
-                    <div class="dropdown-menu" id="installation-dropdown-${installation.id}">
-                        <a href="#" onclick="viewActivities(${installation.id})">Ver actividades</a>
-                        <a href="#" onclick="editInstallation(${installation.id})">Editar instalación</a>
-                        <a href="#" onclick="deactivateInstallation(${installation.id})">Desactivar</a>
+                    <div class="dropdown-menu" id="installation-dropdown-${installation.id}" onclick="event.stopPropagation();">
+                        <a href="#" onclick="event.preventDefault(); editInstallation(${installation.id});">Editar</a>
+                        <a href="#" onclick="event.preventDefault(); toggleActiveInstallation(${installation.id}, ${installation.activo ? 1 : 0});">${installation.activo ? 'Desactivar' : 'Activar'}</a>
                     </div>
                 </div>
             </div>
@@ -337,13 +336,33 @@ function viewActivities(installationId) {
 }
 
 function editInstallation(installationId) {
-    // TODO: Implementar modal de edición de instalación
-    console.log('Editar instalación:', installationId);
+    const inst = (Center.installations || []).find(i => i.id === installationId);
+    if (!inst) return;
+    document.getElementById('editInstallationId').value = installationId;
+    document.getElementById('editInstallationName').value = decodeHtml(inst.nombre || '');
+    openModal('editInstallationModal');
 }
 
-function deactivateInstallation(installationId) {
-    // TODO: Implementar desactivación de instalación
-    console.log('Desactivar instalación:', installationId);
+async function toggleActiveInstallation(installationId, currentActive) {
+    try {
+        const next = currentActive ? 0 : 1;
+        const resp = await fetch('api/instalaciones/set_active.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: installationId, activo: next })
+        });
+        const result = await resp.json();
+        if (result.success) {
+            showNotification(next ? 'Instalación activada' : 'Instalación desactivada', 'success');
+            await loadInstallations();
+            await loadCenterStats();
+        } else {
+            showNotification(result.message || 'No se pudo actualizar el estado', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        showNotification('Error actualizando el estado', 'error');
+    }
 }
 
 /**
@@ -457,5 +476,5 @@ window.editCenter = editCenter;
 window.toggleInstallationDropdown = toggleInstallationDropdown;
 window.viewActivities = viewActivities;
 window.editInstallation = editInstallation;
-window.deactivateInstallation = deactivateInstallation;
+window.toggleActiveInstallation = toggleActiveInstallation;
 window.closeModal = closeModal;
