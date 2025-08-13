@@ -443,7 +443,7 @@ function openModal(type) {
  */
 function viewCenter(centerId) {
     console.log('Ver centro:', centerId);
-    alert(`Ver detalles del centro ${centerId} - En desarrollo`);
+    window.location.href = `centro.php?id=${centerId}`;
 }
 
 /**
