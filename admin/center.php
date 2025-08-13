@@ -217,6 +217,159 @@ try {
         </div>
     </div>
 
+    <!-- Modal Crear Actividad (scoped al centro) -->
+    <div class="modal-overlay" id="createActivityModal" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="createActivityTitle">
+            <div class="modal-header">
+                <h3 class="modal-title" id="createActivityTitle">Crear Actividad</h3>
+                <button class="modal-close" onclick="closeCreateActivityModal()" aria-label="Cerrar modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="context-hint">
+                    Se creará en: <strong><?= htmlspecialchars($centro['nombre']) ?></strong>
+                </div>
+                <form id="createActivityForm">
+                    <div class="form-group">
+                        <label for="activityName">Nombre de la Actividad *</label>
+                        <input type="text" id="activityName" name="nombre" required placeholder="Ej. Yoga, Crossfit, Natación">
+                        <span class="field-error" id="activityName-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="activityInstallation">Instalación *</label>
+                        <select id="activityInstallation" name="instalacion_id" required>
+                            <option value="">Selecciona una instalación</option>
+                        </select>
+                        <span class="field-error" id="activityInstallation-error"></span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="activityStartTime">Hora inicio *</label>
+                            <input type="time" id="activityStartTime" name="hora_inicio" required>
+                            <span class="field-error" id="activityStartTime-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="activityEndTime">Hora fin *</label>
+                            <input type="time" id="activityEndTime" name="hora_fin" required>
+                            <span class="field-error" id="activityEndTime-error"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="activityStartDate">Fecha de inicio *</label>
+                        <input type="date" id="activityStartDate" name="fecha_inicio" required>
+                        <span class="field-error" id="activityStartDate-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>Días de la semana *</label>
+                        <div class="checkbox-group" id="dias_semana">
+                            <label><input type="checkbox" name="dias_semana[]" value="L"> L</label>
+                            <label><input type="checkbox" name="dias_semana[]" value="M"> M</label>
+                            <label><input type="checkbox" name="dias_semana[]" value="X"> X</label>
+                            <label><input type="checkbox" name="dias_semana[]" value="J"> J</label>
+                            <label><input type="checkbox" name="dias_semana[]" value="V"> V</label>
+                            <label><input type="checkbox" name="dias_semana[]" value="S"> S</label>
+                            <label><input type="checkbox" name="dias_semana[]" value="D"> D</label>
+                        </div>
+                        <span class="field-error" id="dias_semana-error"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeCreateActivityModal()">Cancelar</button>
+                <button type="button" id="createActivityBtn" class="btn btn-primary" onclick="createActivity()">
+                    <span class="btn-text">Crear Actividad</span>
+                    <span class="btn-loading" style="display:none">
+                        <svg class="spinner" viewBox="0 0 50 50"><circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle></svg>
+                        Guardando...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Crear Participante (scoped al centro) -->
+    <div class="modal-overlay" id="createParticipantModal" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="createParticipantTitle">
+            <div class="modal-header">
+                <h3 class="modal-title" id="createParticipantTitle">Añadir Participante</h3>
+                <button class="modal-close" onclick="closeCreateParticipantModal()" aria-label="Cerrar modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="context-hint">
+                    Se añadirá en: <strong><?= htmlspecialchars($centro['nombre']) ?></strong>
+                </div>
+                <div class="tabs" id="participantTabs">
+                    <button class="tab-btn active" data-tab="manual">Manual</button>
+                    <button class="tab-btn" data-tab="csv">CSV</button>
+                </div>
+                <div class="tab-content active" id="tab-manual">
+                    <form id="createParticipantForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="participantName">Nombre *</label>
+                                <input type="text" id="participantName" name="nombre" required>
+                                <span class="field-error" id="participantName-error"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="participantLastName">Apellidos *</label>
+                                <input type="text" id="participantLastName" name="apellidos" required>
+                                <span class="field-error" id="participantLastName-error"></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="participantInstallation">Instalación *</label>
+                            <select id="participantInstallation" required>
+                                <option value="">Selecciona una instalación</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="participantActivity">Actividad *</label>
+                            <select id="participantActivity" name="actividad_id" required disabled>
+                                <option value="">Selecciona una actividad</option>
+                            </select>
+                            <span class="field-error" id="participantActivity-error"></span>
+                        </div>
+                    </form>
+                </div>
+                <div class="tab-content" id="tab-csv">
+                    <form id="uploadParticipantCsvForm">
+                        <div class="form-group">
+                            <label for="csvParticipantInstallation">Instalación *</label>
+                            <select id="csvParticipantInstallation" required>
+                                <option value="">Selecciona una instalación</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="csvParticipantActivity">Actividad *</label>
+                            <select id="csvParticipantActivity" required disabled>
+                                <option value="">Selecciona una actividad</option>
+                            </select>
+                            <span class="field-error" id="csvParticipantActivity-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="participantCsvFile">Archivo CSV *</label>
+                            <input type="file" id="participantCsvFile" accept=".csv" required>
+                            <div id="csvFileInfo" class="file-info" style="display:none">
+                                <span id="csvFileName"></span>
+                                <button type="button" class="link" onclick="removeCsvFile()">Quitar</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeCreateParticipantModal()">Cancelar</button>
+                <button type="button" id="createParticipantBtn" class="btn btn-primary" onclick="createParticipant()">
+                    <span class="btn-text">Añadir Participante</span>
+                    <span class="btn-loading" style="display:none">
+                        <svg class="spinner" viewBox="0 0 50 50"><circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle></svg>
+                        Guardando...
+                    </span>
+                </button>
+                <button type="button" id="uploadCsvBtn" class="btn" onclick="uploadParticipantCsv()">Subir CSV</button>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/center.js"></script>
 </body>
 </html>

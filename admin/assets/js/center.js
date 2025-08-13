@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Configurar búsqueda y ordenación
     setupSearch();
     setupInstallationForm();
+    setupParticipantTabs();
 });
 
 /**
@@ -450,12 +451,10 @@ function selectCreateOption(type) {
             showCreateInstallationModal();
             break;
         case 'actividad':
-            // TODO: Implementar modal de creación de actividad en detalle de centro
-            showNotification('Crear actividad desde el centro: en desarrollo', 'info');
+            showCreateActivityModal();
             break;
         case 'participante':
-            // TODO: Implementar modal de creación de participante en detalle de centro
-            showNotification('Añadir participante desde el centro: en desarrollo', 'info');
+            showCreateParticipantModal();
             break;
         default:
             showNotification('Opción no soportada', 'error');
@@ -487,6 +486,14 @@ window.showCreateInstallationModal = showCreateInstallationModal;
 window.showAddOptionsModal = showAddOptionsModal;
 window.closeAddOptionsModal = closeAddOptionsModal;
 window.selectCreateOption = selectCreateOption;
+window.showCreateActivityModal = showCreateActivityModal;
+window.closeCreateActivityModal = closeCreateActivityModal;
+window.createActivity = createActivity;
+window.showCreateParticipantModal = showCreateParticipantModal;
+window.closeCreateParticipantModal = closeCreateParticipantModal;
+window.createParticipant = createParticipant;
+window.uploadParticipantCsv = uploadParticipantCsv;
+window.removeCsvFile = removeCsvFile;
 window.editCenter = editCenter;
 window.toggleInstallationDropdown = toggleInstallationDropdown;
 window.viewActivities = viewActivities;
