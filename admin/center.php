@@ -157,6 +157,41 @@ try {
         </div>
     </main>
 
+    <!-- Modal Opciones de Añadir (sin opción Centro) -->
+    <div class="modal-overlay" id="addOptionsModal" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addOptionsTitle">
+            <div class="modal-header">
+                <h2 class="modal-title" id="addOptionsTitle">¿Qué quieres crear?</h2>
+                <button class="modal-close" onclick="closeAddOptionsModal()" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="options-grid">
+                    <button class="option-btn" onclick="selectCreateOption('instalacion')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M10.5 3L12 2l1.5 1H21v4H3V3h7.5z"/>
+                        </svg>
+                        <span class="option-title">Instalación</span>
+                        <span class="option-desc">Añadir instalación a este centro</span>
+                    </button>
+                    <button class="option-btn" onclick="selectCreateOption('actividad')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="option-title">Actividad</span>
+                        <span class="option-desc">Crear actividad en una instalación</span>
+                    </button>
+                    <button class="option-btn" onclick="selectCreateOption('participante')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+                        </svg>
+                        <span class="option-title">Participante</span>
+                        <span class="option-desc">Añadir participante a una actividad</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para crear instalación -->
     <div id="createInstallationModal" class="modal-overlay" aria-hidden="true">
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="createInstallationTitle">

@@ -426,8 +426,40 @@ document.addEventListener('click', function(e) {
  * Funciones para el header (reutilizadas del dashboard)
  */
 function showAddOptionsModal() {
-    // TODO: Implementar modal de opciones de añadir
-    console.log('Mostrar opciones de añadir');
+    const modal = document.getElementById('addOptionsModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeAddOptionsModal() {
+    const modal = document.getElementById('addOptionsModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+}
+
+function selectCreateOption(type) {
+    // Cerrar opciones
+    closeAddOptionsModal();
+    // Abrir el flujo correspondiente
+    switch (type) {
+        case 'instalacion':
+            showCreateInstallationModal();
+            break;
+        case 'actividad':
+            // TODO: Implementar modal de creación de actividad en detalle de centro
+            showNotification('Crear actividad desde el centro: en desarrollo', 'info');
+            break;
+        case 'participante':
+            // TODO: Implementar modal de creación de participante en detalle de centro
+            showNotification('Añadir participante desde el centro: en desarrollo', 'info');
+            break;
+        default:
+            showNotification('Opción no soportada', 'error');
+    }
 }
 
 // Configurar dropdown del perfil
@@ -453,6 +485,8 @@ window.goBack = goBack;
 window.goToInstallation = goToInstallation;
 window.showCreateInstallationModal = showCreateInstallationModal;
 window.showAddOptionsModal = showAddOptionsModal;
+window.closeAddOptionsModal = closeAddOptionsModal;
+window.selectCreateOption = selectCreateOption;
 window.editCenter = editCenter;
 window.toggleInstallationDropdown = toggleInstallationDropdown;
 window.viewActivities = viewActivities;
