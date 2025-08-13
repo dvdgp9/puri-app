@@ -3,7 +3,9 @@
  * Estadísticas específicas para un centro
  */
 
-session_start();
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 header('Content-Type: application/json');
 
 // Configuración de la base de datos
