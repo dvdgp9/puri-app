@@ -322,7 +322,7 @@ function renderCenters() {
     }
 
     const centersHTML = Dashboard.centers.map(center => `
-        <div class="center-item" onclick="viewCenter(${center.id})">
+        <div class="center-item" onclick="goToCenter(${center.id})" style="cursor: pointer;">
             <div class="center-main">
                 <div class="center-header">
                     <h3 class="center-name">${escapeHtml(center.nombre)}</h3>
@@ -351,15 +351,15 @@ function renderCenters() {
             </div>
             <div class="center-actions">
                 <div class="dropdown">
-                    <button class="more-btn" onclick="event.stopPropagation(); toggleDropdown(${center.id})">
+                    <button class="more-btn" onclick="toggleDropdown(${center.id})">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
                         </svg>
                     </button>
                     <div class="dropdown-menu" id="dropdown-${center.id}">
-                        <a href="#" onclick="event.stopPropagation(); viewActivities(${center.id})">Ver actividades</a>
-                        <a href="#" onclick="event.stopPropagation(); editCenter(${center.id})">Editar centro</a>
-                        <a href="#" onclick="event.stopPropagation(); deactivateCenter(${center.id})">Desactivar</a>
+                        <a href="#" onclick="viewActivities(${center.id})">Ver actividades</a>
+                        <a href="#" onclick="editCenter(${center.id})">Editar centro</a>
+                        <a href="#" onclick="deactivateCenter(${center.id})">Desactivar</a>
                     </div>
                 </div>
             </div>
@@ -439,10 +439,11 @@ function openModal(type) {
 }
 
 /**
- * Ver centro - redirigir a página de detalle
+ * Ver centro (placeholder)
  */
 function viewCenter(centerId) {
-    window.location.href = `centro.php?id=${centerId}`;
+    console.log('Ver centro:', centerId);
+    alert(`Ver detalles del centro ${centerId} - En desarrollo`);
 }
 
 /**
@@ -1577,9 +1578,6 @@ function renderParticipantInstallationOptions(instalaciones, installationPrefix,
             // Cargar actividades para esta instalación
             loadParticipantActivities(value, activityPrefix);
             
-            // Mostrar modal de crear instalación con centro preseleccionado
-            showCreateInstallationModalForCenter(value);
-            
             // Limpiar error si existe
             clearFieldError(installationPrefix);
         });
@@ -1959,35 +1957,6 @@ async function uploadParticipantCsv() {
 }
 
 /**
- * Mostrar modal de crear instalación con centro preseleccionado
- */
-function showCreateInstallationModalForCenter(centroId) {
-    // Mostrar el modal normal
-    showCreateInstallationModal();
-    
-    // Preseleccionar el centro después de que se carguen las opciones
-    setTimeout(() => {
-        const centerSelect = document.getElementById('installationCenter');
-        if (centerSelect) {
-            // Si es un select normal
-            centerSelect.value = centroId;
-            
-            // Si es un custom select, actualizar también
-            const centerInput = document.getElementById('installationCenterInput');
-            const centerHidden = document.getElementById('installationCenterHidden');
-            
-            if (centerInput && centerHidden && window.installationCenters) {
-                const selectedCenter = window.installationCenters.find(c => c.id == centroId);
-                if (selectedCenter) {
-                    centerInput.value = selectedCenter.nombre;
-                    centerHidden.value = centroId;
-                }
-            }
-        }
-    }, 100);
-}
-
-/**
  * Mostrar notificación
  */
 function showNotification(message, type = 'info') {
@@ -2117,7 +2086,15 @@ function renderFilteredCenters(centers) {
     container.innerHTML = centersHTML;
 }
 
+/**
+ * Navegar al detalle de un centro
+ */
+function goToCenter(centerId) {
+    window.location.href = `center.php?id=${centerId}`;
+}
+
 // Hacer funciones globales para uso en HTML
 window.openModal = openModal;
 window.viewCenter = viewCenter;
 window.showCenterMenu = showCenterMenu;
+window.goToCenter = goToCenter;

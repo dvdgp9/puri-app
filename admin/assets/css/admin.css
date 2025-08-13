@@ -972,183 +972,6 @@ body {
     font-style: italic;
 }
 
-/* Estilos para página de centro */
-.breadcrumbs {
-    display: flex;
-    align-items: center;
-    margin-bottom: 24px;
-    font-size: 14px;
-}
-
-.breadcrumb-item {
-    color: var(--color-gray-600);
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-
-.breadcrumb-item:hover {
-    color: var(--color-primary);
-}
-
-.breadcrumb-separator {
-    margin: 0 8px;
-    color: var(--color-gray-400);
-}
-
-.breadcrumb-current {
-    color: var(--color-gray-900);
-    font-weight: 500;
-}
-
-.center-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 32px;
-    padding: 24px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.center-info {
-    flex: 1;
-    margin: 0 24px;
-}
-
-.center-title {
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--color-gray-900);
-    margin: 0 0 8px 0;
-}
-
-.center-address {
-    font-size: 16px;
-    color: var(--color-gray-600);
-    margin: 0;
-}
-
-.installations-panel {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-}
-
-.installations-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 24px;
-    border-bottom: 1px solid var(--color-gray-200);
-}
-
-.installations-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--color-gray-900);
-    margin: 0;
-}
-
-.installations-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.installations-content {
-    padding: 24px;
-}
-
-.installations-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
-}
-
-.installation-card {
-    background: white;
-    border: 1px solid var(--color-gray-200);
-    border-radius: 8px;
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-}
-
-.installation-card:hover {
-    border-color: var(--color-primary);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-}
-
-.installation-info {
-    margin-bottom: 16px;
-}
-
-.installation-name {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--color-gray-900);
-    margin: 0 0 12px 0;
-}
-
-.installation-stats {
-    display: flex;
-    gap: 16px;
-}
-
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-.stat-value {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--color-primary);
-    line-height: 1;
-}
-
-.stat-label {
-    font-size: 12px;
-    color: var(--color-gray-500);
-    margin-top: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.installation-actions {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-}
-
-.btn-options {
-    background: none;
-    border: none;
-    padding: 8px;
-    border-radius: 6px;
-    color: var(--color-gray-500);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn-options:hover {
-    background: var(--color-gray-100);
-    color: var(--color-gray-700);
-}
-
-.empty-state {
-    text-align: center;
-    padding: 48px 24px;
-    color: var(--color-gray-500);
-    font-size: 16px;
-}
-
 /* Estilos para modal de actividades */
 .modal-large {
     max-width: 800px;
@@ -1420,31 +1243,245 @@ body {
     background: var(--error-color);
 }
 
+/* Estilos para página de centro */
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.breadcrumbs a {
+    color: var(--admin-primary);
+    text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb-separator {
+    color: var(--text-muted);
+}
+
+.breadcrumb-current {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.center-header-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding: 24px;
+    background: var(--admin-card-bg);
+    border-radius: 12px;
+    box-shadow: var(--admin-shadow);
+}
+
+.center-header-left {
+    flex-shrink: 0;
+}
+
+.center-header-center {
+    flex: 1;
+    text-align: center;
+    margin: 0 24px;
+}
+
+.center-header-right {
+    flex-shrink: 0;
+}
+
+.center-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+.center-address {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 16px;
+}
+
+.center-address svg {
+    flex-shrink: 0;
+}
+
+/* Instalaciones - reutilizar estilos de centros */
+.installations-section {
+    margin-top: 32px;
+}
+
+.installations-panel {
+    background: var(--admin-card-bg);
+    border-radius: 12px;
+    box-shadow: var(--admin-shadow);
+    overflow: hidden;
+}
+
+.installations-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.installations-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.installations-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.installations-content {
+    padding: 24px;
+}
+
+.installations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.installation-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.installation-item:hover {
+    border-color: var(--admin-primary);
+    box-shadow: var(--admin-shadow);
+    transform: translateY(-1px);
+}
+
+.installation-main {
+    flex: 1;
+}
+
+.installation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.installation-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.installation-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.installation-status.active {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+}
+
+.installation-details {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.installation-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.installation-stat svg {
+    flex-shrink: 0;
+}
+
+.installation-actions {
+    flex-shrink: 0;
+    margin-left: 16px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
-    .admin-header {
-        padding: 0 16px;
+    .admin-container {
+        flex-direction: column;
     }
     
-    .admin-content {
-        padding: 16px;
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 1rem;
     }
     
     .stats-grid {
         grid-template-columns: 1fr;
     }
     
-    .centers-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .actions-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .search-bar {
+    .centers-actions, .installations-actions {
         flex-direction: column;
-        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .centers-actions > *, .installations-actions > * {
+        width: 100%;
+    }
+    
+    .center-header-section {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+    }
+    
+    .center-header-center {
+        margin: 0;
+    }
+    
+    .installation-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .installation-header {
+        width: 100%;
+    }
+    
+    .installation-actions {
+        margin-left: 0;
+        align-self: flex-end;
     }
 }
 

@@ -25,29 +25,23 @@ Implementar un dashboard Single Page Application (SPA) con:
 ### Fase 1: Base SPA y Autenticación ✅ COMPLETADA
 - [x] Crear tabla `admins` y `admin_asignaciones`
 - [x] Login de administradores (/admin/login.php)
-- [x] Dashboard principal con estadísticas y listado de centros
-- [x] Sistema de autenticación y autorización por centros asignados
-- [x] API endpoints con filtrado por admin_asignaciones
+- [x] Estructura base SPA: index.html + app.js + router.js
+- [x] Sistema de rutas client-side (hash routing)
+- [x] API endpoints base (/admin/api/)
 
-### Fase 2: Dashboard Principal ✅ COMPLETADA
-- [x] Estadísticas generales del dashboard
-- [x] Listado de centros con búsqueda y ordenación
-- [x] Modales para crear centros, instalaciones, actividades y participantes
-- [x] Sistema de autorización backend completo
-- [x] Filtrado automático por centros asignados al admin
+### Fase 2: Framework SPA Core ✅ COMPLETADA
+- [x] Sidebar dinámico con navegación AJAX
+- [x] Sistema de vistas/componentes (centros, instalaciones, actividades)
+- [x] Loader/spinner para transiciones
+- [x] Manejo de estados y cache local
+- [x] Middleware de autorización client-side
 
-### Fase 3: Vista Detalle de Centro ✅ COMPLETADA
-- [x] Página centro.php con breadcrumbs "Escritorio / NOMBRECENTRO"
-- [x] Header: botón volver + título/dirección + botón editar
-- [x] 4 tarjetas estadísticas específicas del centro
-- [x] Panel instalaciones con búsqueda/ordenación + botón "Nueva Instalación"
-- [x] Tarjetas instalaciones clicables con estadísticas de actividades
-- [x] API endpoint para estadísticas del centro (api/stats/center.php)
-- [x] API endpoint actualizado para instalaciones con estadísticas
-- [x] Estilos CSS consistentes con el dashboard principal
-- [x] Navegación desde dashboard principal (centros clicables)
-- [x] Modal de instalación preselecciona el centro actual
-- [ ] Menú contextual "···" con opciones (Ver, Editar, Desactivar) - PENDIENTE
+### Fase 3: Gestión Dinámica de Centros
+- [ ] Vista centros con listado filtrable en tiempo real
+- [ ] Edición inline: click en nombre/descripción → input → guardar
+- [ ] Modal para crear nuevo centro
+- [ ] Confirmación de eliminación con modal
+- [ ] Selección de centro → actualiza sidebar con instalaciones
 
 ### Fase 4: Gestión Dinámica de Instalaciones
 - [ ] Listado reactivo filtrado por centro seleccionado
