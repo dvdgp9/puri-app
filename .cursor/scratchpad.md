@@ -96,6 +96,15 @@ Implementar un dashboard Single Page Application (SPA) con:
   - ✅ Sistema de permisos superadmin operativo
 - 🎯 **PRÓXIMO**: Fase 3 - Gestión Dinámica de Centros (CRUD completo)
 
+### Progreso reciente (Detalle de Centro)
+- Se ajustó el marcado del modal en `admin/center.php` para usar contenedor `div.modal-overlay > div.modal`. Ahora el estado inicial queda oculto vía CSS (`.modal-overlay` con `opacity:0; visibility:hidden`) y se muestra al añadir `.show`.
+- JS existente (`openModal('createInstallationModal')`) ahora apunta al overlay con el mismo `id`, alineado con CSS que espera `.modal-overlay.show`.
+
+### Siguientes pasos
+- Verificar apertura del modal desde el botón "+ Nueva Instalación" y desde el empty-state.
+- Alinear estructura de tarjetas de stats generadas en `admin/assets/js/center.js::renderStats()` con los selectores de `admin/assets/css/admin.css` (`.stat-header`, `.stat-title`, `.stat-value`, `.stat-icon`).
+- Pruebas de interacción y responsive.
+
 ## Executor's Feedback or Assistance Requests
 
 ### 🚨 PROBLEMA IDENTIFICADO Y SOLUCIONADO: Loop de redirección en login
@@ -204,6 +213,12 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 - [x] Quitar doble inicialización en `app.js`
 - [ ] Validar `check_session.php` sin ruidos en JSON
 - [ ] Probar login/logout end-to-end
+
+### Centro: Correcciones UI/UX (detalle de centro)
+- [x] Modal "Nueva Instalación" oculto por defecto y visible con `.modal-overlay.show`
+- [ ] Botón "+ Nueva Instalación" abre el modal correctamente en todos los casos
+- [ ] Tarjetas de estadísticas igualadas al dashboard (estructura/clases)
+- [ ] Comportamiento responsive revisado (modal, grid, panel)
 
 ## Success Criteria
 

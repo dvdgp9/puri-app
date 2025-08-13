@@ -158,11 +158,11 @@ try {
     </main>
 
     <!-- Modal para crear instalación -->
-    <div id="createInstallationModal" class="modal">
-        <div class="modal-content">
+    <div id="createInstallationModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="createInstallationTitle">
             <div class="modal-header">
-                <h3>Nueva Instalación</h3>
-                <button class="modal-close" onclick="closeModal('createInstallationModal')">&times;</button>
+                <h3 class="modal-title" id="createInstallationTitle">Nueva Instalación</h3>
+                <button class="modal-close" onclick="closeModal('createInstallationModal')" aria-label="Cerrar modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="createInstallationForm">
