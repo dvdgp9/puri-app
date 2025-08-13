@@ -322,7 +322,7 @@ function renderCenters() {
     }
 
     const centersHTML = Dashboard.centers.map(center => `
-        <div class="center-item">
+        <div class="center-item" onclick="viewCenter(${center.id})">
             <div class="center-main">
                 <div class="center-header">
                     <h3 class="center-name">${escapeHtml(center.nombre)}</h3>
@@ -351,15 +351,15 @@ function renderCenters() {
             </div>
             <div class="center-actions">
                 <div class="dropdown">
-                    <button class="more-btn" onclick="toggleDropdown(${center.id})">
+                    <button class="more-btn" onclick="event.stopPropagation(); toggleDropdown(${center.id})">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
                         </svg>
                     </button>
                     <div class="dropdown-menu" id="dropdown-${center.id}">
-                        <a href="#" onclick="viewActivities(${center.id})">Ver actividades</a>
-                        <a href="#" onclick="editCenter(${center.id})">Editar centro</a>
-                        <a href="#" onclick="deactivateCenter(${center.id})">Desactivar</a>
+                        <a href="#" onclick="event.stopPropagation(); viewActivities(${center.id})">Ver actividades</a>
+                        <a href="#" onclick="event.stopPropagation(); editCenter(${center.id})">Editar centro</a>
+                        <a href="#" onclick="event.stopPropagation(); deactivateCenter(${center.id})">Desactivar</a>
                     </div>
                 </div>
             </div>
