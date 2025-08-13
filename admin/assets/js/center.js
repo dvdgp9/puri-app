@@ -24,13 +24,22 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    // Cargar datos
+    loadCenterStats();
+    loadInstallations();
+    
+    // Configurar búsqueda y ordenación
+    setupSearch();
+    setupInstallationForm();
+    setupEditInstallationForm();
+});
+
 /**
  * Manejar edición de instalación
  */
 async function handleEditInstallation(e) {
     e.preventDefault();
 
-    const form = e.target;
     const id = document.getElementById('editInstallationId').value;
     const nombre = document.getElementById('editInstallationName').value.trim();
 
@@ -62,16 +71,6 @@ async function handleEditInstallation(e) {
         showNotification('Error actualizando la instalación', 'error');
     }
 }
-    
-    // Cargar datos
-    loadCenterStats();
-    loadInstallations();
-    
-    // Configurar búsqueda y ordenación
-    setupSearch();
-    setupInstallationForm();
-    setupEditInstallationForm();
-});
 
 /**
  * Cargar estadísticas del centro
