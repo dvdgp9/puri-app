@@ -144,7 +144,7 @@ function renderInstallations() {
         <div class="center-item" onclick="goToInstallation(${installation.id})" style="cursor: pointer;">
             <div class="center-main">
                 <div class="center-header">
-                    <h3 class="center-name">${escapeHtml(installation.nombre)}</h3>
+                    <h3 class="center-name">${escapeHtml(decodeHtml(installation.nombre || ''))}</h3>
                     <span class="center-status active">Activa</span>
                 </div>
                 <div class="center-details">
@@ -353,6 +353,13 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Decodifica entidades HTML si el backend o los datos ya vienen codificados (e.g. &iacute;)
+function decodeHtml(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
 }
 
 function openModal(modalId) {
