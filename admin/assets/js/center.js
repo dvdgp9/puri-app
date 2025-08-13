@@ -434,10 +434,37 @@ document.addEventListener('click', function(e) {
     }
 });
 
+/**
+ * Funciones para el header (reutilizadas del dashboard)
+ */
+function showAddOptionsModal() {
+    // TODO: Implementar modal de opciones de añadir
+    console.log('Mostrar opciones de añadir');
+}
+
+// Configurar dropdown del perfil
+document.addEventListener('DOMContentLoaded', function() {
+    const profileBtn = document.getElementById('profile-dropdown-btn');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    
+    if (profileBtn && profileDropdown) {
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('show');
+        });
+        
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener('click', function() {
+            profileDropdown.classList.remove('show');
+        });
+    }
+});
+
 // Hacer funciones globales para uso en HTML
 window.goBack = goBack;
 window.goToInstallation = goToInstallation;
 window.showCreateInstallationModal = showCreateInstallationModal;
+window.showAddOptionsModal = showAddOptionsModal;
 window.editCenter = editCenter;
 window.toggleInstallationDropdown = toggleInstallationDropdown;
 window.viewActivities = viewActivities;
