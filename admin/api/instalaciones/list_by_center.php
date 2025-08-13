@@ -41,11 +41,30 @@ try {
         }
     }
     
-    // Obtener instalaciones del centro
-    $stmt = $pdo->prepare("SELECT id, nombre FROM instalaciones WHERE centro_id = ? ORDER BY nombre");
+    // Obtener instalaciones del centro con conteos de actividades
+    $stmt = $pdo->prepare("
+        SELECT 
+            i.id,
+            i.nombre,
+            COUNT(CASE WHEN a.fecha_inicio <= CURDATE() AND (a.fecha_fin IS NULL OR a.fecha_fin >= CURDATE()) THEN 1 END) as actividades_activas,
+            COUNT(CASE WHEN a.fecha_inicio > CURDATE() THEN 1 END) as actividades_programadas,
+            COUNT(CASE WHEN a.fecha_fin < CURDATE() THEN 1 END) as actividades_finalizadas
+        FROM instalaciones i
+        LEFT JOIN actividades a ON i.id = a.instalacion_id
+        WHERE i.centro_id = ?
+        GROUP BY i.id, i.nombre
+        ORDER BY i.nombre
+    ");
     $stmt->execute([$centro_id]);
     
     $instalaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Convertir conteos a enteros
+    foreach ($instalaciones as &$instalacion) {
+        $instalacion['actividades_activas'] = (int)$instalacion['actividades_activas'];
+        $instalacion['actividades_programadas'] = (int)$instalacion['actividades_programadas'];
+        $instalacion['actividades_finalizadas'] = (int)$instalacion['actividades_finalizadas'];
+    }
     
     echo json_encode([
         'success' => true,

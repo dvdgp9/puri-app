@@ -972,6 +972,292 @@ body {
     font-style: italic;
 }
 
+/* ===== CENTER DETAIL PAGE STYLES ===== */
+
+/* Breadcrumbs */
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    font-size: 14px;
+    color: var(--color-gray-600);
+}
+
+.breadcrumbs a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumbs a:hover {
+    color: var(--color-primary-dark);
+}
+
+.breadcrumbs .separator {
+    margin: 0 8px;
+    color: var(--color-gray-400);
+}
+
+.breadcrumbs .current {
+    color: var(--color-gray-800);
+    font-weight: 500;
+}
+
+/* Center Header */
+.center-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding: 24px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.center-header-left {
+    flex-shrink: 0;
+}
+
+.btn-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--color-gray-100);
+    border: 1px solid var(--color-gray-300);
+    border-radius: 8px;
+    color: var(--color-gray-700);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+    background: var(--color-gray-200);
+    border-color: var(--color-gray-400);
+}
+
+.center-header-center {
+    flex: 1;
+    text-align: center;
+    margin: 0 24px;
+}
+
+.center-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-gray-900);
+    margin: 0 0 8px 0;
+}
+
+.center-address {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--color-gray-600);
+    font-size: 16px;
+    margin: 0;
+}
+
+.center-header-right {
+    flex-shrink: 0;
+}
+
+/* Installations Panel */
+.installations-panel {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 32px;
+}
+
+.installations-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px;
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.installations-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-gray-900);
+    margin: 0;
+}
+
+.installations-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.installations-content {
+    padding: 24px;
+}
+
+.installations-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+/* Installation Cards */
+.installation-card {
+    background: white;
+    border: 1px solid var(--color-gray-200);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.installation-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(35, 170, 197, 0.15);
+    transform: translateY(-2px);
+}
+
+.installation-content {
+    margin-bottom: 16px;
+}
+
+.installation-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-gray-900);
+    margin: 0 0 12px 0;
+}
+
+.installation-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+}
+
+.stat-item .stat-label {
+    color: var(--color-gray-600);
+}
+
+.stat-item .stat-value {
+    color: var(--color-gray-900);
+    font-weight: 600;
+}
+
+.installation-actions {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+
+.btn-menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--color-gray-500);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-menu:hover {
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--color-gray-600);
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin-bottom: 24px;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--color-gray-200);
+    border-top: 4px solid var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .center-header {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
+    
+    .center-header-center {
+        margin: 0;
+    }
+    
+    .installations-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+    
+    .installations-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .installations-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Estilos para modal de actividades */
 .modal-large {
     max-width: 800px;
