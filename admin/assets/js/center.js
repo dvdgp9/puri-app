@@ -81,57 +81,42 @@ async function loadInstallations() {
 function renderStats() {
     const statsGrid = document.getElementById('stats-grid');
     if (!statsGrid || !Center.stats) return;
-    
-    const stats = [
-        {
-            title: 'Total Instalaciones',
-            value: Center.stats.total_instalaciones || 0,
-            icon: `<svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.495v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5z"/>
-            </svg>`,
-            color: 'primary'
-        },
-        {
-            title: 'Actividades Activas',
-            value: Center.stats.actividades_activas || 0,
-            icon: `<svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-            </svg>`,
-            color: 'success'
-        },
-        {
-            title: 'Actividades Programadas',
-            value: Center.stats.actividades_programadas || 0,
-            icon: `<svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
-            </svg>`,
-            color: 'warning'
-        },
-        {
-            title: 'Total Participantes',
-            value: Center.stats.total_participantes || 0,
-            icon: `<svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-                <path fill-rule="evenodd" d="M5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216z"/>
-                <path d="M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
-            </svg>`,
-            color: 'info'
-        }
-    ];
 
-    const statsHTML = stats.map(stat => `
-        <div class="stat-card stat-card-${stat.color}">
-            <div class="stat-icon">
-                ${stat.icon}
+    const s = Center.stats;
+    statsGrid.innerHTML = `
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-title">Instalaciones</div>
+                <svg class="stat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                </svg>
             </div>
-            <div class="stat-content">
-                <div class="stat-value">${stat.value}</div>
-                <div class="stat-title">${stat.title}</div>
-            </div>
+            <div class="stat-value">${s.total_instalaciones || 0}</div>
+            <div class="stat-change">Total disponibles</div>
         </div>
-    `).join('');
 
-    statsGrid.innerHTML = statsHTML;
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-title">Actividades</div>
+                <svg class="stat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div class="stat-value">${s.actividades_activas || 0}</div>
+            <div class="stat-change">Activas • ${s.actividades_programadas || 0} programadas</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-title">Participantes</div>
+                <svg class="stat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+            </div>
+            <div class="stat-value">${s.total_participantes || 0}</div>
+            <div class="stat-change">Acumulado</div>
+        </div>
+    `;
 }
 
 /**
@@ -198,8 +183,11 @@ function showStatsError() {
     const statsGrid = document.getElementById('stats-grid');
     if (statsGrid) {
         statsGrid.innerHTML = `
-            <div class="error-state">
-                <p>Error cargando estadísticas</p>
+            <div class="error-card">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Error cargando estadísticas
             </div>
         `;
     }
