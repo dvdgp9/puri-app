@@ -323,7 +323,7 @@ function renderCenters() {
 
     const centersHTML = Dashboard.centers.map(center => `
         <div class="center-item">
-            <div class="center-main">
+            <div class="center-main" onclick="viewCenter(${center.id})">
                 <div class="center-header">
                     <h3 class="center-name">${escapeHtml(center.nombre)}</h3>
                     <span class="center-status active">Activo</span>
@@ -351,7 +351,7 @@ function renderCenters() {
             </div>
             <div class="center-actions">
                 <div class="dropdown">
-                    <button class="more-btn" onclick="toggleDropdown(${center.id})">
+                    <button class="more-btn" onclick="toggleDropdown(${center.id}, event)">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
                         </svg>
@@ -442,7 +442,7 @@ function openModal(type) {
  * Ver centro (placeholder)
  */
 function viewCenter(centerId) {
-    console.log('Ver centro:', centerId);
+    if (!centerId) return;
     window.location.href = `centro.php?id=${centerId}`;
 }
 
@@ -481,7 +481,8 @@ function escapeHtml(text) {
 /**
  * Toggle dropdown menu
  */
-function toggleDropdown(centerId) {
+function toggleDropdown(centerId, event) {
+    if (event) event.stopPropagation();
     const dropdown = document.getElementById(`dropdown-${centerId}`);
     const isVisible = dropdown.classList.contains('show');
     
