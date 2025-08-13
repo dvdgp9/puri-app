@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Configurar búsqueda y ordenación
     setupSearch();
     setupInstallationForm();
-    setupParticipantTabs();
 });
 
 /**
@@ -423,43 +422,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-/**
- * Funciones para el header (reutilizadas del dashboard)
- */
-function showAddOptionsModal() {
-    const modal = document.getElementById('addOptionsModal');
-    if (modal) {
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-function closeAddOptionsModal() {
-    const modal = document.getElementById('addOptionsModal');
-    if (modal) {
-        modal.classList.remove('show');
-        document.body.style.overflow = '';
-    }
-}
-
-function selectCreateOption(type) {
-    // Cerrar opciones
-    closeAddOptionsModal();
-    // Abrir el flujo correspondiente
-    switch (type) {
-        case 'instalacion':
-            showCreateInstallationModal();
-            break;
-        case 'actividad':
-            showCreateActivityModal();
-            break;
-        case 'participante':
-            showCreateParticipantModal();
-            break;
-        default:
-            showNotification('Opción no soportada', 'error');
-    }
-}
+// (Eliminado) Botón + Añadir y modales de actividad/participante
 
 // Configurar dropdown del perfil
 document.addEventListener('DOMContentLoaded', function() {
@@ -483,17 +446,6 @@ document.addEventListener('DOMContentLoaded', function() {
 window.goBack = goBack;
 window.goToInstallation = goToInstallation;
 window.showCreateInstallationModal = showCreateInstallationModal;
-window.showAddOptionsModal = showAddOptionsModal;
-window.closeAddOptionsModal = closeAddOptionsModal;
-window.selectCreateOption = selectCreateOption;
-window.showCreateActivityModal = showCreateActivityModal;
-window.closeCreateActivityModal = closeCreateActivityModal;
-window.createActivity = createActivity;
-window.showCreateParticipantModal = showCreateParticipantModal;
-window.closeCreateParticipantModal = closeCreateParticipantModal;
-window.createParticipant = createParticipant;
-window.uploadParticipantCsv = uploadParticipantCsv;
-window.removeCsvFile = removeCsvFile;
 window.editCenter = editCenter;
 window.toggleInstallationDropdown = toggleInstallationDropdown;
 window.viewActivities = viewActivities;
