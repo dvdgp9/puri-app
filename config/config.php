@@ -32,5 +32,7 @@ try {
     die("Error de conexión a la base de datos. Por favor, verifica las credenciales y que el servidor MySQL esté funcionando.");
 }
 
-session_start();
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
