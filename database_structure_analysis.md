@@ -3,7 +3,7 @@
 ## Información General
 - **Base de datos**: `pasarlistabdd`
 - **Servidor**: localhost:3306
-- **Total de tablas**: 6
+- **Total de tablas**: 8
 - **Total de registros**: 135 (aprox.)
 
 ## Estructura de Tablas
@@ -107,6 +107,52 @@
 - ID 1: Actividad 3, Fecha 2025-03-12, "El tal Joseph P&eacute;rez Garc&iacute;a estuvo to..."
 - ID 2: Actividad 3, Fecha 2025-03-10, "Los que faltan est&aacute;n de fiesta regional"
 - ID 3: Actividad 3, Fecha 2025-03-13, "Maldito Paco Torre&ntilde;o"
+
+### 7. Tabla: `admins`
+Definición (DDL):
+
+```sql
+CREATE TABLE admins (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'superadmin') DEFAULT 'admin',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+| Campo | Tipo | Clave | Descripción |
+|-------|------|-------|-------------|
+| `id` | INT | PK | Identificador único del administrador |
+| `username` | VARCHAR(50) | UNIQUE | Nombre de usuario (único) |
+| `password_hash` | VARCHAR(255) | | Hash de contraseña (bcrypt) |
+| `role` | ENUM('admin','superadmin') | | Rol del administrador |
+| `created_at` | TIMESTAMP | | Fecha de creación |
+| `updated_at` | TIMESTAMP | | Fecha de última actualización |
+
+### 8. Tabla: `admin_asignaciones`
+Definición (DDL):
+
+```sql
+CREATE TABLE admin_asignaciones (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    admin_id INT NOT NULL,
+    centro_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE,
+    FOREIGN KEY (centro_id) REFERENCES centros(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_admin_centro (admin_id, centro_id)
+);
+```
+
+| Campo | Tipo | Clave | Descripción |
+|-------|------|-------|-------------|
+| `id` | INT | PK | Identificador único de la asignación |
+| `admin_id` | INT | FK | Referencia al administrador (`admins.id`) |
+| `centro_id` | INT | FK | Referencia al centro (`centros.id`) |
+| `created_at` | TIMESTAMP | | Fecha de creación |
+| `unique_admin_centro` | UNIQUE | | Restricción de unicidad (admin, centro) |
 
 ## Consideraciones Técnicas
 

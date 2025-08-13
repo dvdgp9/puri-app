@@ -53,6 +53,17 @@ try {
         exit;
     }
     
+    // Autorización: si no es superadmin, validar asignación del centro
+    if ($admin_info['role'] !== 'superadmin') {
+        $stmt = $pdo->prepare("SELECT 1 FROM admin_asignaciones WHERE admin_id = ? AND centro_id = ?");
+        $stmt->execute([$admin_info['id'], $centro_id]);
+        if (!$stmt->fetchColumn()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'No autorizado para crear instalaciones en este centro']);
+            exit;
+        }
+    }
+    
     // Verificar que no existe una instalación con el mismo nombre en el centro
     $stmt = $pdo->prepare("SELECT id FROM instalaciones WHERE nombre = ? AND centro_id = ?");
     $stmt->execute([$nombre, $centro_id]);

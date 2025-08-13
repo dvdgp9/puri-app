@@ -61,6 +61,23 @@ try {
         exit;
     }
     
+    // Autorización: si no es superadmin, validar que la actividad pertenezca a un centro asignado
+    if ($admin_info['role'] !== 'superadmin') {
+        $stmt = $pdo->prepare(
+            "SELECT 1
+             FROM actividades a
+             INNER JOIN instalaciones i ON a.instalacion_id = i.id
+             INNER JOIN admin_asignaciones aa ON aa.centro_id = i.centro_id
+             WHERE a.id = ? AND aa.admin_id = ?"
+        );
+        $stmt->execute([$actividad_id, $admin_info['id']]);
+        if (!$stmt->fetchColumn()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'No autorizado para esta actividad']);
+            exit;
+        }
+    }
+    
     // Verificar que no existe ya este participante en la actividad
     $stmt = $pdo->prepare("SELECT id, nombre, apellidos FROM inscritos WHERE actividad_id = ? AND nombre = ? AND apellidos = ?");
     $stmt->execute([$actividad_id, $nombre, $apellidos]);

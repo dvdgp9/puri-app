@@ -10,17 +10,32 @@ try {
     
     // Verificar autenticación de admin
     $admin_info = getAdminInfo();
-    
-    // Por ahora, todos los admins ven todos los centros activos
-    // TODO: Implementar admin_asignaciones cuando esté configurada
-    $stmt = $pdo->prepare("SELECT id, nombre FROM centros WHERE activo = 1 ORDER BY nombre");
-    $stmt->execute();
+
+    // Filtrar por centros asignados si no es superadmin
+    if ($admin_info['role'] === 'superadmin') {
+        $stmt = $pdo->prepare("SELECT id, nombre FROM centros WHERE activo = 1 ORDER BY nombre");
+        $stmt->execute();
+    } else {
+        $stmt = $pdo->prepare(
+            "SELECT id, nombre 
+             FROM centros 
+             WHERE activo = 1 
+               AND id IN (SELECT centro_id FROM admin_asignaciones WHERE admin_id = ?) 
+             ORDER BY nombre"
+        );
+        $stmt->execute([$admin_info['id']]);
+    }
     
     $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     echo json_encode([
         'success' => true,
-        'centros' => $centros
+        'centros' => $centros,
+        'debug' => [
+            'admin_id' => $admin_info['id'],
+            'admin_role' => $admin_info['role'],
+            'total_centros' => count($centros)
+        ]
     ]);
     
 } catch (Exception $e) {

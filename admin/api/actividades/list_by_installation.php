@@ -30,6 +30,22 @@ try {
         exit;
     }
     
+    // Autorización: si no es superadmin, validar que la instalación pertenezca a un centro asignado
+    if ($admin_info['role'] !== 'superadmin') {
+        $stmt = $pdo->prepare(
+            "SELECT 1
+             FROM instalaciones i
+             INNER JOIN admin_asignaciones aa ON aa.centro_id = i.centro_id
+             WHERE i.id = ? AND aa.admin_id = ?"
+        );
+        $stmt->execute([$instalacion_id, $admin_info['id']]);
+        if (!$stmt->fetchColumn()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'No autorizado para esta instalación']);
+            exit;
+        }
+    }
+    
     // Obtener actividades de la instalación
     $stmt = $pdo->prepare("
         SELECT id, nombre, dias_semana, hora_inicio, hora_fin 
