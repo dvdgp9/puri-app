@@ -41,12 +41,39 @@ try {
         }
     }
     
-    // Obtener instalaciones del centro
-    $stmt = $pdo->prepare("SELECT id, nombre FROM instalaciones WHERE centro_id = ? ORDER BY nombre");
+    // Obtener instalaciones del centro con conteos de actividades por estado
+    // activas: fecha_inicio <= hoy y (fecha_fin IS NULL o fecha_fin >= hoy)
+    // programadas: fecha_inicio > hoy
+    // finalizadas: fecha_fin < hoy (y fecha_fin no nula)
+    $sql = "
+        SELECT 
+            i.id,
+            i.nombre,
+            COALESCE(SUM(CASE 
+                WHEN a.id IS NOT NULL 
+                 AND a.fecha_inicio <= CURDATE() 
+                 AND (a.fecha_fin IS NULL OR a.fecha_fin >= CURDATE()) 
+                THEN 1 ELSE 0 END), 0) AS actividades_activas,
+            COALESCE(SUM(CASE 
+                WHEN a.id IS NOT NULL 
+                 AND a.fecha_inicio > CURDATE() 
+                THEN 1 ELSE 0 END), 0) AS actividades_programadas,
+            COALESCE(SUM(CASE 
+                WHEN a.id IS NOT NULL 
+                 AND a.fecha_fin IS NOT NULL 
+                 AND a.fecha_fin < CURDATE() 
+                THEN 1 ELSE 0 END), 0) AS actividades_finalizadas
+        FROM instalaciones i
+        LEFT JOIN actividades a ON a.instalacion_id = i.id
+        WHERE i.centro_id = ?
+        GROUP BY i.id, i.nombre
+        ORDER BY i.nombre
+    ";
+    $stmt = $pdo->prepare($sql);
     $stmt->execute([$centro_id]);
-    
+
     $instalaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     echo json_encode([
         'success' => true,
         'instalaciones' => $instalaciones
