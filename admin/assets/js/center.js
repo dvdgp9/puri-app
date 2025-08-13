@@ -464,10 +464,16 @@ function toggleDropdown(id, prefix = 'dropdown-') {
     document.querySelectorAll('.dropdown-menu.open').forEach(menu => {
         if (menu !== dropdown) {
             menu.classList.remove('open');
+            menu.style.display = 'none';
         }
     });
     
     dropdown.classList.toggle('open');
+    if (dropdown.classList.contains('open')) {
+        dropdown.style.display = 'block';
+    } else {
+        dropdown.style.display = 'none';
+    }
 }
 
 function showNotification(message, type = 'info') {
