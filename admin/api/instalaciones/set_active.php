@@ -42,6 +42,16 @@ try {
         }
     }
 
+    // Verificar existencia de columna 'activo'
+    $colStmt = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'instalaciones' AND COLUMN_NAME = 'activo'");
+    $colStmt->execute();
+    $hasActivo = (int)$colStmt->fetchColumn() > 0;
+    if (!$hasActivo) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => "Falta la columna 'activo' en 'instalaciones'. Ejecute: ALTER TABLE instalaciones ADD COLUMN activo TINYINT(1) NOT NULL DEFAULT 1;"]);
+        exit;
+    }
+
     // Actualizar estado activo
     $stmt = $pdo->prepare('UPDATE instalaciones SET activo = ? WHERE id = ?');
     $stmt->execute([$activo, $id]);

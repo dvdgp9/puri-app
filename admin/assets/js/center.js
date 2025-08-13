@@ -23,6 +23,45 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = 'dashboard.php';
         return;
     }
+
+/**
+ * Manejar edición de instalación
+ */
+async function handleEditInstallation(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const id = document.getElementById('editInstallationId').value;
+    const nombre = document.getElementById('editInstallationName').value.trim();
+
+    const errorSpan = document.getElementById('editInstallationName-error');
+    if (errorSpan) errorSpan.textContent = '';
+
+    if (!nombre) {
+        if (errorSpan) errorSpan.textContent = 'El nombre es obligatorio';
+        return;
+    }
+
+    try {
+        const resp = await fetch('api/instalaciones/update.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: Number(id), nombre })
+        });
+        const result = await resp.json();
+        if (result.success) {
+            closeModal('editInstallationModal');
+            await loadInstallations();
+            await loadCenterStats();
+            showNotification('Instalación actualizada', 'success');
+        } else {
+            showNotification(result.message || 'No se pudo actualizar la instalación', 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Error actualizando la instalación', 'error');
+    }
+}
     
     // Cargar datos
     loadCenterStats();
@@ -31,6 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Configurar búsqueda y ordenación
     setupSearch();
     setupInstallationForm();
+    setupEditInstallationForm();
 });
 
 /**
@@ -265,6 +305,16 @@ function setupInstallationForm() {
     const form = document.getElementById('createInstallationForm');
     if (form) {
         form.addEventListener('submit', handleCreateInstallation);
+    }
+}
+
+/**
+ * Configurar formulario de edición de instalación
+ */
+function setupEditInstallationForm() {
+    const form = document.getElementById('editInstallationForm');
+    if (form) {
+        form.addEventListener('submit', handleEditInstallation);
     }
 }
 
