@@ -135,7 +135,7 @@ function renderStats() {
 }
 
 /**
- * Renderizar instalaciones
+ * Renderizar instalaciones - usando clases del dashboard
  */
 function renderInstallations() {
     const container = document.getElementById('installations-list');
@@ -156,14 +156,14 @@ function renderInstallations() {
     }
 
     const installationsHTML = Center.installations.map(installation => `
-        <div class="installation-item" onclick="goToInstallation(${installation.id})" style="cursor: pointer;">
-            <div class="installation-main">
-                <div class="installation-header">
-                    <h3 class="installation-name">${escapeHtml(installation.nombre)}</h3>
-                    <span class="installation-status active">Activa</span>
+        <div class="center-item" onclick="goToInstallation(${installation.id})" style="cursor: pointer;">
+            <div class="center-main">
+                <div class="center-header">
+                    <h3 class="center-name">${escapeHtml(installation.nombre)}</h3>
+                    <span class="center-status active">Activa</span>
                 </div>
-                <div class="installation-details">
-                    <span class="installation-stat">
+                <div class="center-details">
+                    <span class="center-stat">
                         <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
                         </svg>
@@ -171,11 +171,11 @@ function renderInstallations() {
                     </span>
                 </div>
             </div>
-            <div class="installation-actions">
+            <div class="center-actions">
                 <div class="dropdown">
                     <button class="more-btn" onclick="toggleInstallationDropdown(event, ${installation.id})">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                            <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 1 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 1 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 1 1 0 3z"/>
                         </svg>
                     </button>
                     <div class="dropdown-menu" id="installation-dropdown-${installation.id}">
@@ -233,14 +233,14 @@ function setupSearch() {
 }
 
 /**
- * Filtrar instalaciones
+ * Filtrar instalaciones - usando clases del dashboard
  */
 function filterInstallations() {
     const searchTerm = document.getElementById('search-installations').value.toLowerCase();
-    const installationItems = document.querySelectorAll('.installation-item');
+    const installationItems = document.querySelectorAll('.center-item');
     
     installationItems.forEach(item => {
-        const name = item.querySelector('.installation-name').textContent.toLowerCase();
+        const name = item.querySelector('.center-name').textContent.toLowerCase();
         if (name.includes(searchTerm)) {
             item.style.display = 'flex';
         } else {
@@ -250,16 +250,16 @@ function filterInstallations() {
 }
 
 /**
- * Ordenar instalaciones
+ * Ordenar instalaciones - usando clases del dashboard
  */
 function sortInstallations() {
     const sortValue = document.getElementById('sort-installations').value;
     const container = document.getElementById('installations-list');
-    const items = Array.from(container.querySelectorAll('.installation-item'));
+    const items = Array.from(container.querySelectorAll('.center-item'));
     
     items.sort((a, b) => {
-        const nameA = a.querySelector('.installation-name').textContent;
-        const nameB = b.querySelector('.installation-name').textContent;
+        const nameA = a.querySelector('.center-name').textContent;
+        const nameB = b.querySelector('.center-name').textContent;
         
         if (sortValue === '-nombre') {
             return nameB.localeCompare(nameA);

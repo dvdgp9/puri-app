@@ -129,37 +129,33 @@ try {
             </div>
         </div>
 
-            <!-- Stats Grid -->
-            <section class="stats-section">
-                <div class="stats-grid" id="stats-grid">
-                    <!-- Las estadísticas se cargarán aquí dinámicamente -->
-                </div>
-            </section>
+        <!-- Stats Grid - copiado exacto del dashboard -->
+        <div class="stats-grid" id="stats-grid">
+            <div class="loading-card">Cargando estadísticas...</div>
+        </div>
 
-            <!-- Installations Panel -->
-            <section class="installations-section">
-                <div class="installations-panel">
-                    <div class="installations-header">
-                        <h2 class="installations-title">Instalaciones</h2>
-                        <div class="installations-actions">
-                            <input type="text" id="search-installations" class="search-input" placeholder="Buscar instalaciones...">
-                            <select id="sort-installations" class="sort-select">
-                                <option value="nombre">Ordenar A-Z</option>
-                                <option value="-nombre">Ordenar Z-A</option>
-                            </select>
-                            <button class="btn btn-primary" onclick="showCreateInstallationModal()">
-                                + Nueva Instalación
-                            </button>
-                        </div>
-                    </div>
-                    <div class="installations-content">
-                        <div id="installations-list" class="installations-list">
-                            <!-- Las instalaciones se cargarán aquí dinámicamente -->
-                        </div>
-                    </div>
+        <!-- Panel de Instalaciones - copiado del dashboard -->
+        <div class="centers-panel">
+            <div class="centers-header">
+                <h2 class="centers-title">Instalaciones</h2>
+                <div class="centers-actions">
+                    <input type="text" id="search-installations" class="search-input" placeholder="Buscar instalaciones...">
+                    <select id="sort-installations" class="sort-select">
+                        <option value="nombre">Ordenar A-Z</option>
+                        <option value="-nombre">Ordenar Z-A</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="showCreateInstallationModal()">
+                        + Nueva Instalación
+                    </button>
                 </div>
-            </section>
-        </main>
+            </div>
+            <div class="centers-content">
+                <div id="installations-list" class="centers-list">
+                    <!-- Las instalaciones se cargarán aquí dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </main>
 
     <!-- Modal para crear instalación -->
     <div id="createInstallationModal" class="modal">
