@@ -350,13 +350,13 @@ function renderCenters() {
                 </div>
             </div>
             <div class="center-actions">
-                <div class="dropdown">
-                    <button class="more-btn" onclick="toggleDropdown(${center.id})">
+                <div class="dropdown" onclick="event.stopPropagation()">
+                    <button class="more-btn" onclick="event.stopPropagation(); toggleDropdown(${center.id}, this); return false;">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
                         </svg>
                     </button>
-                    <div class="dropdown-menu" id="dropdown-${center.id}">
+                    <div class="dropdown-menu" id="dropdown-${center.id}" onclick="event.stopPropagation()">
                         <a href="#" onclick="viewActivities(${center.id})">Ver actividades</a>
                         <a href="#" onclick="editCenter(${center.id})">Editar centro</a>
                         <a href="#" onclick="deactivateCenter(${center.id})">Desactivar</a>
@@ -481,18 +481,30 @@ function escapeHtml(text) {
 /**
  * Toggle dropdown menu
  */
-function toggleDropdown(centerId) {
+function toggleDropdown(centerId, btnEl) {
     const dropdown = document.getElementById(`dropdown-${centerId}`);
-    const isVisible = dropdown.classList.contains('show');
-    
+    const wasVisible = dropdown.classList.contains('show');
+
     // Cerrar todos los dropdowns
     document.querySelectorAll('.dropdown-menu').forEach(menu => {
         menu.classList.remove('show');
+        menu.classList.remove('dropup');
     });
-    
-    // Toggle el dropdown actual
-    if (!isVisible) {
-        dropdown.classList.add('show');
+
+    if (wasVisible) return; // si estaba visible, ya lo cerramos arriba
+
+    // Mostrar para medir
+    dropdown.classList.add('show');
+
+    // Comprobar espacio disponible
+    const rect = dropdown.getBoundingClientRect();
+    const viewportH = window.innerHeight || document.documentElement.clientHeight;
+    const margin = 8;
+    const overflowsBottom = rect.bottom > (viewportH - margin);
+    if (overflowsBottom) {
+        dropdown.classList.add('dropup');
+        // Re-medimos tras aplicar dropup por si cambia
+        // (no es necesario ajustar nada más; CSS lo posiciona arriba)
     }
 }
 

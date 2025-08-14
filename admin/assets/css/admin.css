@@ -539,6 +539,12 @@ body {
     display: block;
 }
 
+/* Renderizar hacia arriba cuando no hay espacio abajo */
+.dropdown-menu.dropup {
+    top: auto;
+    bottom: 100%;
+}
+
 .dropdown-menu a {
     display: block;
     padding: 8px 12px;

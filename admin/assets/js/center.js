@@ -463,6 +463,7 @@ function toggleDropdown(id, prefix = 'dropdown-') {
     document.querySelectorAll('.dropdown-menu.open').forEach(menu => {
         if (menu !== dropdown) {
             menu.classList.remove('open');
+            menu.classList.remove('dropup');
             menu.style.display = 'none';
         }
     });
@@ -470,8 +471,19 @@ function toggleDropdown(id, prefix = 'dropdown-') {
     dropdown.classList.toggle('open');
     if (dropdown.classList.contains('open')) {
         dropdown.style.display = 'block';
+        // Calcular si hay espacio inferior suficiente; si no, activar dropup
+        const rect = dropdown.getBoundingClientRect();
+        const viewportH = window.innerHeight || document.documentElement.clientHeight;
+        const margin = 8;
+        const overflowsBottom = rect.bottom > (viewportH - margin);
+        if (overflowsBottom) {
+            dropdown.classList.add('dropup');
+        } else {
+            dropdown.classList.remove('dropup');
+        }
     } else {
         dropdown.style.display = 'none';
+        dropdown.classList.remove('dropup');
     }
 }
 
@@ -504,6 +516,7 @@ document.addEventListener('click', function(e) {
     if (!e.target.closest('.dropdown')) {
         document.querySelectorAll('.dropdown-menu.open').forEach(menu => {
             menu.classList.remove('open');
+            menu.classList.remove('dropup');
         });
     }
 });
