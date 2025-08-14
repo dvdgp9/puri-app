@@ -170,10 +170,33 @@ try {
                         <input type="text" id="activityName" name="nombre" required placeholder="Ejemplo: Natación Infantil">
                         <span class="field-error" id="activityName-error"></span>
                     </div>
+                    <!-- Días de la semana -->
                     <div class="form-group">
-                        <label for="activityDays">Días (separados por coma)</label>
-                        <input type="text" id="activityDays" name="dias_semana" placeholder="Ej: Lu,Mi,V">
-                        <small class="helper-text">Formato recomendado: Lu,Ma,Mi,J,Vi,S,Do</small>
+                        <label>Días de la semana *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Lunes"> Lunes
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Martes"> Martes
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Miércoles"> Miércoles
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Jueves"> Jueves
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Viernes"> Viernes
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Sábado"> Sábado
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="dias_semana[]" value="Domingo"> Domingo
+                            </label>
+                        </div>
+                        <span class="field-error" id="dias_semana-error"></span>
                     </div>
                     <div class="form-grid-2">
                         <div class="form-group">
@@ -220,9 +243,33 @@ try {
                         <input type="text" id="editActivityName" name="nombre" required>
                         <span class="field-error" id="editActivityName-error"></span>
                     </div>
+                    <!-- Días de la semana -->
                     <div class="form-group">
-                        <label for="editActivityDays">Días (texto)</label>
-                        <input type="text" id="editActivityDays" name="dias_semana">
+                        <label>Días de la semana *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="edit_dias_semana[]" value="Lunes"> Lunes
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="edit_dias_semana[]" value="Martes"> Martes
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="edit_dias_semana[]" value="Miércoles"> Miércoles
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="edit_dias_semana[]" value="Jueves"> Jueves
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="edit_dias_semana[]" value="Viernes"> Viernes
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="edit_dias_semana[]" value="Sábado"> Sábado
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="edit_dias_semana[]" value="Domingo"> Domingo
+                            </label>
+                        </div>
+                        <span class="field-error" id="edit_dias_semana-error"></span>
                     </div>
                     <div class="form-grid-2">
                         <div class="form-group">
@@ -232,6 +279,16 @@ try {
                         <div class="form-group">
                             <label for="editActivityEnd">Hora fin</label>
                             <input type="time" id="editActivityEnd" name="hora_fin">
+                        </div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="editActivityDateStart">Fecha inicio *</label>
+                            <input type="date" id="editActivityDateStart" name="fecha_inicio" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editActivityDateEnd">Fecha fin (opcional)</label>
+                            <input type="date" id="editActivityDateEnd" name="fecha_fin">
                         </div>
                     </div>
                 </form>

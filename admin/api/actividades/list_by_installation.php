@@ -48,7 +48,7 @@ try {
     
     // Obtener actividades de la instalación
     $stmt = $pdo->prepare("
-        SELECT id, nombre, dias_semana, hora_inicio, hora_fin 
+        SELECT id, nombre, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin
         FROM actividades 
         WHERE instalacion_id = ? 
         ORDER BY nombre

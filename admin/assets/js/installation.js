@@ -225,19 +225,26 @@ async function handleCreateActivity(e) {
   e.preventDefault();
   const form = e.target;
   const nombre = (form.querySelector('#activityName').value || '').trim();
-  const dias_text = form.querySelector('#activityDays').value || '';
-  const dias_semana = dias_text
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean);
+  // recoger días de checkboxes
+  const dias_semana = Array.from(form.querySelectorAll('input[name="dias_semana[]"]:checked')).map(el => el.value);
   const hora_inicio = form.querySelector('#activityStart').value || '';
   const hora_fin = form.querySelector('#activityEnd').value || '';
   const fecha_inicio = form.querySelector('#activityDateStart').value || new Date().toISOString().slice(0,10);
   const fecha_fin = form.querySelector('#activityDateEnd').value || null;
   const err = document.getElementById('activityName-error');
+  const errDays = document.getElementById('dias_semana-error');
   if (err) err.textContent = '';
+  if (errDays) errDays.textContent = '';
   if (!nombre) {
     if (err) err.textContent = 'El nombre es obligatorio';
+    return;
+  }
+  if (!dias_semana.length) {
+    if (errDays) errDays.textContent = 'Selecciona al menos un día';
+    return;
+  }
+  if (!fecha_inicio) {
+    showNotification('La fecha de inicio es obligatoria', 'error');
     return;
   }
   try {
@@ -266,9 +273,20 @@ function editActivity(id) {
   if (!a) return;
   document.getElementById('editActivityId').value = id;
   document.getElementById('editActivityName').value = decodeHtml(a.nombre || '');
-  document.getElementById('editActivityDays').value = a.dias_semana || '';
+  // set checkboxes for days
+  const diasArr = (a.dias_semana || '').split(',').map(s => s.trim()).filter(Boolean);
+  document.querySelectorAll('input[name="edit_dias_semana[]"]').forEach(cb => {
+    cb.checked = diasArr.includes(cb.value);
+  });
   document.getElementById('editActivityStart').value = a.hora_inicio || '';
   document.getElementById('editActivityEnd').value = a.hora_fin || '';
+  // fechas
+  if (document.getElementById('editActivityDateStart')) {
+    document.getElementById('editActivityDateStart').value = (a.fecha_inicio || '').substring(0,10);
+  }
+  if (document.getElementById('editActivityDateEnd')) {
+    document.getElementById('editActivityDateEnd').value = a.fecha_fin ? String(a.fecha_fin).substring(0,10) : '';
+  }
   openModal('editActivityModal');
 }
 
@@ -276,20 +294,32 @@ async function handleEditActivity(e) {
   e.preventDefault();
   const id = Number(document.getElementById('editActivityId').value);
   const nombre = String(document.getElementById('editActivityName').value || '').trim();
-  const dias_semana = String(document.getElementById('editActivityDays').value || '');
+  const dias_semana = Array.from(document.querySelectorAll('input[name="edit_dias_semana[]"]:checked')).map(el => el.value);
   const hora_inicio = String(document.getElementById('editActivityStart').value || '');
   const hora_fin = String(document.getElementById('editActivityEnd').value || '');
+  const fecha_inicio = document.getElementById('editActivityDateStart') ? String(document.getElementById('editActivityDateStart').value || '') : '';
+  const fecha_fin = document.getElementById('editActivityDateEnd') ? (document.getElementById('editActivityDateEnd').value || null) : null;
   const err = document.getElementById('editActivityName-error');
+  const errDays = document.getElementById('edit_dias_semana-error');
   if (err) err.textContent = '';
+  if (errDays) errDays.textContent = '';
   if (!nombre) {
     if (err) err.textContent = 'El nombre es obligatorio';
+    return;
+  }
+  if (!dias_semana.length) {
+    if (errDays) errDays.textContent = 'Selecciona al menos un día';
+    return;
+  }
+  if (!fecha_inicio) {
+    showNotification('La fecha de inicio es obligatoria', 'error');
     return;
   }
   try {
     const resp = await fetch('api/actividades/update.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, nombre, dias_semana, hora_inicio, hora_fin })
+      body: JSON.stringify({ id, nombre, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin })
     });
     const result = await resp.json();
     if (result.success) {
