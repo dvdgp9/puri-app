@@ -537,6 +537,11 @@ document.addEventListener('click', function(event) {
     if (!event.target.closest('.dropdown')) {
         document.querySelectorAll('.dropdown-menu').forEach(menu => {
             menu.classList.remove('show');
+            menu.classList.remove('dropup');
+            menu.style.top = '';
+            menu.style.left = '';
+            menu.style.right = '';
+            menu.style.bottom = '';
         });
     }
 });

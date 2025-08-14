@@ -538,6 +538,10 @@ document.addEventListener('click', function(e) {
         document.querySelectorAll('.dropdown-menu.open').forEach(menu => {
             menu.classList.remove('open');
             menu.classList.remove('dropup');
+            menu.style.top = '';
+            menu.style.left = '';
+            menu.style.right = '';
+            menu.style.bottom = '';
         });
     }
 });
