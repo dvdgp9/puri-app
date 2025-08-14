@@ -21,6 +21,7 @@ try {
             c.id, 
             c.nombre, 
             c.direccion,
+            c.activo,
             COUNT(DISTINCT i.id) as total_instalaciones,
             COUNT(DISTINCT a.id) as total_actividades
         FROM centros c
@@ -39,7 +40,7 @@ try {
         $params = [$admin_info['id']];
     }
     
-    $query .= " GROUP BY c.id, c.nombre, c.direccion ORDER BY c.nombre ASC";
+    $query .= " GROUP BY c.id, c.nombre, c.direccion, c.activo ORDER BY c.nombre ASC";
     
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);

@@ -326,7 +326,7 @@ function renderCenters() {
             <div class="center-main">
                 <div class="center-header">
                     <h3 class="center-name">${escapeHtml(center.nombre)}</h3>
-                    <span class="center-status active">Activo</span>
+                    <span class="center-status ${center.activo ? 'active' : 'inactive'}">${center.activo ? 'Activo' : 'Inactivo'}</span>
                 </div>
                 <div class="center-details">
                     <span class="center-address">
@@ -337,7 +337,7 @@ function renderCenters() {
                     </span>
                     <span class="center-stat">
                         <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.495v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5z"/>
+                            <path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.495v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5z"/>
                         </svg>
                         ${center.total_instalaciones || 0} instalaciones
                     </span>
@@ -357,9 +357,8 @@ function renderCenters() {
                         </svg>
                     </button>
                     <div class="dropdown-menu" id="dropdown-${center.id}" onclick="event.stopPropagation()">
-                        <a href="#" onclick="viewActivities(${center.id})">Ver actividades</a>
-                        <a href="#" onclick="editCenter(${center.id})">Editar centro</a>
-                        <a href="#" onclick="deactivateCenter(${center.id})">Desactivar</a>
+                        <a href="#" onclick="event.preventDefault(); editCenter(${center.id});">Editar</a>
+                        <a href="#" onclick="event.preventDefault(); toggleActiveCenter(${center.id}, ${center.activo ? 1 : 0});">${center.activo ? 'Desactivar' : 'Activar'}</a>
                     </div>
                 </div>
             </div>
@@ -547,21 +546,42 @@ document.addEventListener('click', function(event) {
 });
 
 /**
- * Funciones del dropdown
+ * Acciones del dropdown de centros
  */
-function viewActivities(centerId) {
-    console.log('Ver actividades del centro:', centerId);
-    // TODO: Implementar navegación a actividades
-}
-
 function editCenter(centerId) {
-    console.log('Editar centro:', centerId);
-    // TODO: Implementar modal de edición
+    // Placeholder hasta implementar modal de edición de centro
+    showNotification('Edición de centro en desarrollo', 'info');
 }
 
-function deactivateCenter(centerId) {
-    console.log('Desactivar centro:', centerId);
-    // TODO: Implementar confirmación y desactivación
+async function toggleActiveCenter(centerId, currentActivo) {
+    try {
+        // Cerrar cualquier dropdown abierto
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.classList.remove('show');
+            menu.classList.remove('dropup');
+            menu.style.top = '';
+            menu.style.left = '';
+            menu.style.right = '';
+            menu.style.bottom = '';
+        });
+
+        const nuevoEstado = currentActivo ? 0 : 1;
+        const resp = await fetch('api/centros/set_active.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: centerId, activo: nuevoEstado })
+        });
+        const result = await resp.json();
+        if (resp.ok && result.success) {
+            showNotification(`Centro ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`, 'success');
+            await loadCenters();
+        } else {
+            showNotification('Error: ' + (result.message || 'No se pudo actualizar el centro'), 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Error al actualizar el estado del centro', 'error');
+    }
 }
 
 /**
