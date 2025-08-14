@@ -476,12 +476,15 @@ function toggleDropdown(id, prefix = 'dropdown-') {
 }
 
 function showNotification(message, type = 'info') {
-    // Crear elemento de notificación
+    // Crear elemento de notificación (estructura unificada con dashboard)
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    // Asegurar color de texto negro para contraste
-    notification.style.color = 'var(--color-black)';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-message">${message}</span>
+            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+        </div>
+    `;
     
     // Añadir al DOM
     document.body.appendChild(notification);
@@ -489,11 +492,11 @@ function showNotification(message, type = 'info') {
     // Mostrar con animación
     setTimeout(() => notification.classList.add('show'), 100);
     
-    // Ocultar después de 3 segundos
+    // Auto-remover después de 5 segundos (igual que dashboard)
     setTimeout(() => {
         notification.classList.remove('show');
         setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    }, 5000);
 }
 
 // Cerrar dropdowns al hacer clic fuera
