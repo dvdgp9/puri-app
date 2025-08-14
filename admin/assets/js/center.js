@@ -473,6 +473,15 @@ function editInstallation(installationId) {
     if (!inst) return;
     document.getElementById('editInstallationId').value = installationId;
     document.getElementById('editInstallationName').value = decodeHtml(inst.nombre || '');
+    // cerrar el dropdown de esta instalación si está abierto
+    const menu = document.getElementById(`installation-dropdown-${installationId}`);
+    if (menu) {
+        menu.classList.remove('show', 'open', 'dropup');
+        menu.style.top = '';
+        menu.style.left = '';
+        menu.style.right = '';
+        menu.style.bottom = '';
+    }
     openModal('editInstallationModal');
 }
 
