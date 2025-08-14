@@ -41,6 +41,17 @@ function setupEventListeners() {
             filterCenters(e.target.value);
         });
     }
+
+function showEditCenterModal() {
+    const modal = document.getElementById('editCenterModal');
+    if (modal) {
+        modal.classList.add('show');
+        setTimeout(() => {
+            const firstInput = modal.querySelector('input[type="text"]');
+            if (firstInput) firstInput.focus();
+        }, 100);
+    }
+}
     
     // Ordenación de centros
     const sortSelect = document.getElementById('sort-centers');
@@ -117,6 +128,30 @@ function setupEventListeners() {
                 await createInstallation(data);
             } finally {
                 // Quitar loading
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            }
+        });
+    }
+
+    // Formulario editar centro
+    const editCenterForm = document.getElementById('editCenterForm');
+    if (editCenterForm) {
+        editCenterForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            clearFormErrors();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            if (!data.nombre || !data.nombre.trim()) {
+                showFieldError('editCenterName', 'El nombre del centro es obligatorio');
+                return;
+            }
+            const submitBtn = document.getElementById('saveEditCenterBtn');
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            try {
+                await updateCenter(data);
+            } finally {
                 submitBtn.classList.remove('loading');
                 submitBtn.disabled = false;
             }
@@ -549,8 +584,30 @@ document.addEventListener('click', function(event) {
  * Acciones del dropdown de centros
  */
 function editCenter(centerId) {
-    // Placeholder hasta implementar modal de edición de centro
-    showNotification('Edición de centro en desarrollo', 'info');
+    // Cerrar dropdowns antes de abrir modal
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.classList.remove('show');
+        menu.classList.remove('dropup');
+        menu.style.top = '';
+        menu.style.left = '';
+        menu.style.right = '';
+        menu.style.bottom = '';
+    });
+    // Buscar datos del centro en memoria
+    const center = (Dashboard.centers || []).find(c => String(c.id) === String(centerId));
+    if (!center) {
+        showNotification('No se encontraron datos del centro', 'error');
+        return;
+    }
+    // Prefijar valores
+    const idInput = document.getElementById('editCenterId');
+    const nameInput = document.getElementById('editCenterName');
+    const addrInput = document.getElementById('editCenterAddress');
+    if (idInput) idInput.value = center.id;
+    if (nameInput) nameInput.value = center.nombre || '';
+    if (addrInput) addrInput.value = center.direccion || '';
+    // Abrir modal
+    showEditCenterModal();
 }
 
 async function toggleActiveCenter(centerId, currentActivo) {
