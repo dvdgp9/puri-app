@@ -656,6 +656,15 @@ body {
     margin-bottom: 6px;
 }
 
+/* Asegurar que los labels en modales sin clase .form-label se vean iguales */
+.modal-body label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-black);
+    margin-bottom: 6px;
+}
+
 .form-input {
     width: 100%;
     padding: 10px 12px;
@@ -1079,6 +1088,7 @@ body {
 }
 
 .checkbox-inline {
+    display: inline-flex;
     display: flex;
     align-items: center;
     margin: 0;
