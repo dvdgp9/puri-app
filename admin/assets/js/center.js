@@ -459,33 +459,57 @@ function toggleDropdown(id, prefix = 'dropdown-') {
     const dropdown = document.getElementById(prefix + id);
     if (!dropdown) return;
     
-    const wasVisible = dropdown.classList.contains('show');
+    const wasOpen = dropdown.classList.contains('open');
     
     // Cerrar otros dropdowns
-    document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        menu.classList.remove('show');
+    document.querySelectorAll('.dropdown-menu.open').forEach(menu => {
+        menu.classList.remove('open');
         menu.classList.remove('dropup');
+        menu.style.display = 'none';
+        menu.style.top = '';
+        menu.style.left = '';
+        menu.style.right = '';
+        menu.style.bottom = '';
     });
     
-    if (wasVisible) return; // si estaba visible, ya lo cerramos arriba
+    if (wasOpen) return; // Si estaba abierto, ya lo cerramos arriba
     
-    // Mostrar para medir
-    dropdown.classList.add('show');
-    
-    // Comprobar espacio disponible
-    const rect = dropdown.getBoundingClientRect();
-    const viewportH = window.innerHeight || document.documentElement.clientHeight;
-    const margin = 8;
-    const overflowsBottom = rect.bottom > (viewportH - margin);
-    if (overflowsBottom) {
-        dropdown.classList.add('dropup');
-        // Re-medimos tras aplicar dropup por si cambia
-        // (no es necesario ajustar nada más; CSS lo posiciona arriba)
+    // Obtener posición del contenedor dropdown
+    const dropdownContainer = dropdown.closest('.dropdown');
+    if (dropdownContainer) {
+        const containerRect = dropdownContainer.getBoundingClientRect();
+        const viewportH = window.innerHeight || document.documentElement.clientHeight;
+        const viewportW = window.innerWidth || document.documentElement.clientWidth;
+        
+        // Calcular posición
+        const isInBottomHalf = containerRect.bottom > (viewportH / 2);
+        const isNearRightEdge = containerRect.right > (viewportW - 180); // 180px = ancho aprox del menu
+        
+        if (isInBottomHalf) {
+            dropdown.classList.add('dropup');
+            dropdown.style.bottom = (viewportH - containerRect.top) + 'px';
+            dropdown.style.top = 'auto';
+        } else {
+            dropdown.style.top = containerRect.bottom + 'px';
+            dropdown.style.bottom = 'auto';
+        }
+        
+        if (isNearRightEdge) {
+            dropdown.style.right = (viewportW - containerRect.right) + 'px';
+            dropdown.style.left = 'auto';
+        } else {
+            dropdown.style.left = containerRect.left + 'px';
+            dropdown.style.right = 'auto';
+        }
     }
+    
+    // Abrir dropdown
+    dropdown.classList.add('open');
+    dropdown.style.display = 'block';
 }
 
 function showNotification(message, type = 'info') {
-    // Crear elemento de notificación
+    // Crear elemento de notificación (estructura unificada con dashboard)
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
@@ -511,8 +535,8 @@ function showNotification(message, type = 'info') {
 // Cerrar dropdowns al hacer clic fuera
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.dropdown')) {
-        document.querySelectorAll('.dropdown-menu').forEach(menu => {
-            menu.classList.remove('show');
+        document.querySelectorAll('.dropdown-menu.open').forEach(menu => {
+            menu.classList.remove('open');
             menu.classList.remove('dropup');
         });
     }
