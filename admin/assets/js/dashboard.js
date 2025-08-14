@@ -21,6 +21,26 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDashboardData();
 });
 
+// Mostrar modal de edición de centro
+function showEditCenterModal() {
+    const modal = document.getElementById('editCenterModal');
+    if (modal) {
+        modal.classList.add('show');
+        setTimeout(() => {
+            const firstInput = modal.querySelector('input[type="text"]');
+            if (firstInput) firstInput.focus();
+        }, 100);
+    }
+}
+
+// Cerrar modal de edición de centro
+function closeEditCenterModal() {
+    const modal = document.getElementById('editCenterModal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
 /**
  * Configurar todos los event listeners
  */
@@ -41,17 +61,6 @@ function setupEventListeners() {
             filterCenters(e.target.value);
         });
     }
-
-function showEditCenterModal() {
-    const modal = document.getElementById('editCenterModal');
-    if (modal) {
-        modal.classList.add('show');
-        setTimeout(() => {
-            const firstInput = modal.querySelector('input[type="text"]');
-            if (firstInput) firstInput.focus();
-        }, 100);
-    }
-}
     
     // Ordenación de centros
     const sortSelect = document.getElementById('sort-centers');
