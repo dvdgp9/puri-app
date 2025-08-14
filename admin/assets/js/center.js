@@ -32,6 +32,23 @@ document.addEventListener('DOMContentLoaded', function() {
     setupSearch();
     setupInstallationForm();
     setupEditInstallationForm();
+
+    // Prefijar valores del modal de edición con datos iniciales si existen en el header
+    const nameEl = document.querySelector('.center-title');
+    const addrEl = document.querySelector('.center-address');
+    if (nameEl && document.getElementById('editCenterName')) {
+        document.getElementById('editCenterName').value = (nameEl.textContent || '').trim();
+    }
+    if (addrEl && document.getElementById('editCenterAddress')) {
+        const txt = (addrEl.textContent || '').replace(/^\s*\n?\s*/, '').trim();
+        document.getElementById('editCenterAddress').value = txt.replace(/^\s*$/, '');
+    }
+
+    // Submit editar centro
+    const editCenterForm = document.getElementById('editCenterForm');
+    if (editCenterForm) {
+        editCenterForm.addEventListener('submit', handleEditCenterSubmit);
+    }
 });
 
 /**
@@ -371,8 +388,75 @@ function showCreateInstallationModal() {
 }
 
 function editCenter(centerId) {
-    // TODO: Implementar modal de edición de centro
-    console.log('Editar centro:', centerId);
+    // Prefijar datos desde la cabecera si están
+    const title = document.querySelector('.center-title');
+    const addr = document.querySelector('.center-address');
+    const idInput = document.getElementById('editCenterId');
+    const nameInput = document.getElementById('editCenterName');
+    const addrInput = document.getElementById('editCenterAddress');
+    if (idInput) idInput.value = String(centerId || Center.id || '');
+    if (nameInput && title) nameInput.value = (title.textContent || '').trim();
+    if (addrInput && addr) addrInput.value = (addr.textContent || '').trim().replace(/^Sin dirección$/i, '');
+    showEditCenterModal();
+}
+
+function showEditCenterModal() {
+    const modal = document.getElementById('editCenterModal');
+    if (modal) {
+        modal.classList.add('show');
+        setTimeout(() => {
+            const firstInput = modal.querySelector('input[type="text"]');
+            if (firstInput) firstInput.focus();
+        }, 100);
+    }
+}
+
+function closeEditCenterModal() {
+    const modal = document.getElementById('editCenterModal');
+    if (modal) modal.classList.remove('show');
+}
+
+async function handleEditCenterSubmit(e) {
+    e.preventDefault();
+    // limpiar errores
+    const errName = document.getElementById('editCenterName-error');
+    if (errName) errName.textContent = '';
+    const id = Number(document.getElementById('editCenterId').value);
+    const nombre = String(document.getElementById('editCenterName').value || '').trim();
+    const direccion = String(document.getElementById('editCenterAddress').value || '').trim();
+    if (!nombre) {
+        if (errName) errName.textContent = 'El nombre del centro es obligatorio';
+        return;
+    }
+    const btn = document.getElementById('saveEditCenterBtn');
+    if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+    try {
+        const resp = await fetch('api/centros/update.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, nombre, direccion })
+        });
+        const result = await resp.json();
+        if (resp.ok && result.success) {
+            // actualizar cabecera
+            const title = document.querySelector('.center-title');
+            const address = document.querySelector('.center-address');
+            if (title) title.textContent = nombre;
+            if (address) address.innerHTML = address.innerHTML.replace(/>([^<]*)$/, `>${direccion || 'Sin dirección'}`);
+            closeEditCenterModal();
+            showNotification('Centro actualizado correctamente', 'success');
+        } else {
+            showNotification(result.error || result.message || 'No se pudo actualizar el centro', 'error');
+            if ((result.error || '').toLowerCase().includes('nombre')) {
+                if (errName) errName.textContent = result.error;
+            }
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Error al actualizar el centro', 'error');
+    } finally {
+        if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    }
 }
 
 function toggleInstallationDropdown(event, installationId) {

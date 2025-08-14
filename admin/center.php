@@ -203,6 +203,42 @@ try {
     </div>
 
 
+    <!-- Modal Editar Centro -->
+    <div class="modal-overlay" id="editCenterModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Editar Centro</h2>
+                <button class="modal-close" onclick="closeEditCenterModal()">&times;</button>
+            </div>
+            <form id="editCenterForm">
+                <input type="hidden" id="editCenterId" name="id" value="<?= (int)$centro['id'] ?>">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="editCenterName">Nombre del Centro</label>
+                        <input type="text" id="editCenterName" name="nombre" class="form-input" required>
+                        <div class="form-error" id="editCenterName-error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editCenterAddress">Dirección</label>
+                        <input type="text" id="editCenterAddress" name="direccion" class="form-input">
+                        <div class="form-error" id="editCenterAddress-error"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditCenterModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="saveEditCenterBtn">
+                        <span class="btn-text">Guardar cambios</span>
+                        <span class="btn-loading">
+                            <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="assets/js/center.js"></script>
 </body>
 </html>
