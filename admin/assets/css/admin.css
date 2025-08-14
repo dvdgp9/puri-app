@@ -545,6 +545,15 @@ body {
     bottom: 100%;
 }
 
+/* Portal: cuando movemos el menú al body para evitar clipping */
+.dropdown-menu.dropdown-portal {
+    position: fixed; /* respecto al viewport */
+    top: 0;
+    left: 0;
+    transform: none; /* lo posiciona JS con top/left exactos */
+    z-index: 4000; /* por encima del resto */
+}
+
 .dropdown-menu a {
     display: block;
     padding: 8px 12px;

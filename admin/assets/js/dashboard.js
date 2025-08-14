@@ -485,10 +485,9 @@ function toggleDropdown(centerId, btnEl) {
     const dropdown = document.getElementById(`dropdown-${centerId}`);
     const wasVisible = dropdown.classList.contains('show');
 
-    // Cerrar todos los dropdowns
+    // Cerrar todos los dropdowns (y restaurar si estaban en portal)
     document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        menu.classList.remove('show');
-        menu.classList.remove('dropup');
+        closePortalDropdown(menu);
     });
 
     if (wasVisible) return; // si estaba visible, ya lo cerramos arriba
@@ -496,16 +495,61 @@ function toggleDropdown(centerId, btnEl) {
     // Mostrar para medir
     dropdown.classList.add('show');
 
-    // Comprobar espacio disponible
-    const rect = dropdown.getBoundingClientRect();
+    // Calcular posición respecto al botón
+    const btnRect = btnEl.getBoundingClientRect();
+
+    // Medir dropdown: asegurar dimensiones
+    const prevStyles = { display: dropdown.style.display, visibility: dropdown.style.visibility };
+    dropdown.style.display = 'block';
+    dropdown.style.visibility = 'hidden';
+    const menuWidth = dropdown.offsetWidth;
+    const menuHeight = dropdown.offsetHeight;
+    dropdown.style.display = prevStyles.display || '';
+    dropdown.style.visibility = prevStyles.visibility || '';
+
+    const viewportW = window.innerWidth || document.documentElement.clientWidth;
     const viewportH = window.innerHeight || document.documentElement.clientHeight;
     const margin = 8;
-    const overflowsBottom = rect.bottom > (viewportH - margin);
-    if (overflowsBottom) {
-        dropdown.classList.add('dropup');
-        // Re-medimos tras aplicar dropup por si cambia
-        // (no es necesario ajustar nada más; CSS lo posiciona arriba)
+    const openUp = (btnRect.bottom + menuHeight + margin > viewportH);
+
+    // Activar portal: mover al body y posicionar fijo
+    openPortalDropdown(dropdown, btnRect, { menuWidth, menuHeight, openUp, viewportW });
+}
+
+function openPortalDropdown(menuEl, btnRect, { menuWidth, menuHeight, openUp, viewportW }) {
+    // Guardar padre original para restaurar
+    if (!menuEl._originParent) {
+        menuEl._originParent = menuEl.parentElement;
     }
+    // Posicionar: alineamos borde derecho del menú con el del botón
+    const left = Math.min(
+        viewportW - menuWidth - 8,
+        Math.max(8, btnRect.right - menuWidth)
+    );
+    const top = openUp ? (btnRect.top - menuHeight - 4) : (btnRect.bottom + 4);
+
+    // Mover al body
+    document.body.appendChild(menuEl);
+    menuEl.classList.add('dropdown-portal');
+    menuEl.classList.remove('dropup');
+    if (openUp) menuEl.classList.add('dropup');
+    Object.assign(menuEl.style, { position: 'fixed', left: `${left}px`, top: `${top}px`, display: 'block' });
+}
+
+function closePortalDropdown(menuEl) {
+    // Ocultar y limpiar clases
+    menuEl.classList.remove('show');
+    menuEl.classList.remove('dropup');
+    menuEl.classList.remove('dropdown-portal');
+    // Restaurar posición en DOM si fue portalizado
+    if (menuEl._originParent) {
+        menuEl._originParent.appendChild(menuEl);
+    }
+    // Limpiar estilos inline relevantes
+    menuEl.style.position = '';
+    menuEl.style.left = '';
+    menuEl.style.top = '';
+    menuEl.style.display = '';
 }
 
 /**
@@ -514,7 +558,7 @@ function toggleDropdown(centerId, btnEl) {
 document.addEventListener('click', function(event) {
     if (!event.target.closest('.dropdown')) {
         document.querySelectorAll('.dropdown-menu').forEach(menu => {
-            menu.classList.remove('show');
+            closePortalDropdown(menu);
         });
     }
 });

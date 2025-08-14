@@ -24,6 +24,76 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+// Toggle específico para menús de instalación con portal al body
+function toggleInstallationDropdown(event, installationId) {
+    event.stopPropagation();
+    const dropdown = document.getElementById(`installation-dropdown-${installationId}`);
+    if (!dropdown) return;
+
+    const wasOpen = dropdown.classList.contains('open') || dropdown.classList.contains('show');
+
+    // Cerrar todos
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        closePortalDropdown(menu);
+        menu.classList.remove('open');
+        menu.style.display = '';
+    });
+
+    if (wasOpen) return;
+
+    // Mostrar para medir
+    dropdown.classList.add('open');
+    dropdown.style.display = 'block';
+
+    // Medidas
+    const btnEl = event.currentTarget;
+    const btnRect = btnEl.getBoundingClientRect();
+
+    // asegurar dimensiones exactas
+    const prevStyles = { display: dropdown.style.display, visibility: dropdown.style.visibility };
+    dropdown.style.display = 'block';
+    dropdown.style.visibility = 'hidden';
+    const menuWidth = dropdown.offsetWidth;
+    const menuHeight = dropdown.offsetHeight;
+    dropdown.style.display = prevStyles.display || '';
+    dropdown.style.visibility = prevStyles.visibility || '';
+
+    const viewportW = window.innerWidth || document.documentElement.clientWidth;
+    const viewportH = window.innerHeight || document.documentElement.clientHeight;
+    const margin = 8;
+    const openUp = (btnRect.bottom + menuHeight + margin > viewportH);
+
+    openPortalDropdown(dropdown, btnRect, { menuWidth, menuHeight, openUp, viewportW });
+}
+
+function openPortalDropdown(menuEl, btnRect, { menuWidth, menuHeight, openUp, viewportW }) {
+    if (!menuEl._originParent) {
+        menuEl._originParent = menuEl.parentElement;
+    }
+    const left = Math.min(
+        viewportW - menuWidth - 8,
+        Math.max(8, btnRect.right - menuWidth)
+    );
+    const top = openUp ? (btnRect.top - menuHeight - 4) : (btnRect.bottom + 4);
+
+    document.body.appendChild(menuEl);
+    menuEl.classList.add('dropdown-portal');
+    if (openUp) menuEl.classList.add('dropup'); else menuEl.classList.remove('dropup');
+    Object.assign(menuEl.style, { position: 'fixed', left: `${left}px`, top: `${top}px`, display: 'block' });
+}
+
+function closePortalDropdown(menuEl) {
+    menuEl.classList.remove('dropdown-portal');
+    menuEl.classList.remove('dropup');
+    menuEl.classList.remove('open');
+    if (menuEl._originParent) {
+        menuEl._originParent.appendChild(menuEl);
+    }
+    menuEl.style.position = '';
+    menuEl.style.left = '';
+    menuEl.style.top = '';
+    menuEl.style.display = '';
+}
     // Cargar datos
     loadCenterStats();
     loadInstallations();
@@ -514,9 +584,8 @@ function showNotification(message, type = 'info') {
 // Cerrar dropdowns al hacer clic fuera
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.dropdown')) {
-        document.querySelectorAll('.dropdown-menu.open').forEach(menu => {
-            menu.classList.remove('open');
-            menu.classList.remove('dropup');
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            closePortalDropdown(menu);
         });
     }
 });
