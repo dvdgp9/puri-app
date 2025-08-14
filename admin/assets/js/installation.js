@@ -287,6 +287,15 @@ function editActivity(id) {
   if (document.getElementById('editActivityDateEnd')) {
     document.getElementById('editActivityDateEnd').value = a.fecha_fin ? String(a.fecha_fin).substring(0,10) : '';
   }
+  // cerrar el dropdown de esta actividad si está abierto
+  const menu = document.getElementById(`activity-dropdown-${id}`);
+  if (menu) {
+    menu.classList.remove('show', 'open', 'dropup');
+    menu.style.top = '';
+    menu.style.left = '';
+    menu.style.right = '';
+    menu.style.bottom = '';
+  }
   openModal('editActivityModal');
 }
 
