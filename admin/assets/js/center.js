@@ -24,76 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-// Toggle específico para menús de instalación con portal al body
-function toggleInstallationDropdown(event, installationId) {
-    event.stopPropagation();
-    const dropdown = document.getElementById(`installation-dropdown-${installationId}`);
-    if (!dropdown) return;
-
-    const wasOpen = dropdown.classList.contains('open') || dropdown.classList.contains('show');
-
-    // Cerrar todos
-    document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        closePortalDropdown(menu);
-        menu.classList.remove('open');
-        menu.style.display = '';
-    });
-
-    if (wasOpen) return;
-
-    // Mostrar para medir
-    dropdown.classList.add('open');
-    dropdown.style.display = 'block';
-
-    // Medidas
-    const btnEl = event.currentTarget;
-    const btnRect = btnEl.getBoundingClientRect();
-
-    // asegurar dimensiones exactas
-    const prevStyles = { display: dropdown.style.display, visibility: dropdown.style.visibility };
-    dropdown.style.display = 'block';
-    dropdown.style.visibility = 'hidden';
-    const menuWidth = dropdown.offsetWidth;
-    const menuHeight = dropdown.offsetHeight;
-    dropdown.style.display = prevStyles.display || '';
-    dropdown.style.visibility = prevStyles.visibility || '';
-
-    const viewportW = window.innerWidth || document.documentElement.clientWidth;
-    const viewportH = window.innerHeight || document.documentElement.clientHeight;
-    const margin = 8;
-    const openUp = (btnRect.bottom + menuHeight + margin > viewportH);
-
-    openPortalDropdown(dropdown, btnRect, { menuWidth, menuHeight, openUp, viewportW });
-}
-
-function openPortalDropdown(menuEl, btnRect, { menuWidth, menuHeight, openUp, viewportW }) {
-    if (!menuEl._originParent) {
-        menuEl._originParent = menuEl.parentElement;
-    }
-    const left = Math.min(
-        viewportW - menuWidth - 8,
-        Math.max(8, btnRect.right - menuWidth)
-    );
-    const top = openUp ? (btnRect.top - menuHeight - 4) : (btnRect.bottom + 4);
-
-    document.body.appendChild(menuEl);
-    menuEl.classList.add('dropdown-portal');
-    if (openUp) menuEl.classList.add('dropup'); else menuEl.classList.remove('dropup');
-    Object.assign(menuEl.style, { position: 'fixed', left: `${left}px`, top: `${top}px`, display: 'block' });
-}
-
-function closePortalDropdown(menuEl) {
-    menuEl.classList.remove('dropdown-portal');
-    menuEl.classList.remove('dropup');
-    menuEl.classList.remove('open');
-    if (menuEl._originParent) {
-        menuEl._originParent.appendChild(menuEl);
-    }
-    menuEl.style.position = '';
-    menuEl.style.left = '';
-    menuEl.style.top = '';
-    menuEl.style.display = '';
-}
     // Cargar datos
     loadCenterStats();
     loadInstallations();
@@ -529,36 +459,33 @@ function toggleDropdown(id, prefix = 'dropdown-') {
     const dropdown = document.getElementById(prefix + id);
     if (!dropdown) return;
     
+    const wasVisible = dropdown.classList.contains('show');
+    
     // Cerrar otros dropdowns
-    document.querySelectorAll('.dropdown-menu.open').forEach(menu => {
-        if (menu !== dropdown) {
-            menu.classList.remove('open');
-            menu.classList.remove('dropup');
-            menu.style.display = 'none';
-        }
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.classList.remove('show');
+        menu.classList.remove('dropup');
     });
     
-    dropdown.classList.toggle('open');
-    if (dropdown.classList.contains('open')) {
-        dropdown.style.display = 'block';
-        // Calcular si hay espacio inferior suficiente; si no, activar dropup
-        const rect = dropdown.getBoundingClientRect();
-        const viewportH = window.innerHeight || document.documentElement.clientHeight;
-        const margin = 8;
-        const overflowsBottom = rect.bottom > (viewportH - margin);
-        if (overflowsBottom) {
-            dropdown.classList.add('dropup');
-        } else {
-            dropdown.classList.remove('dropup');
-        }
-    } else {
-        dropdown.style.display = 'none';
-        dropdown.classList.remove('dropup');
+    if (wasVisible) return; // si estaba visible, ya lo cerramos arriba
+    
+    // Mostrar para medir
+    dropdown.classList.add('show');
+    
+    // Comprobar espacio disponible
+    const rect = dropdown.getBoundingClientRect();
+    const viewportH = window.innerHeight || document.documentElement.clientHeight;
+    const margin = 8;
+    const overflowsBottom = rect.bottom > (viewportH - margin);
+    if (overflowsBottom) {
+        dropdown.classList.add('dropup');
+        // Re-medimos tras aplicar dropup por si cambia
+        // (no es necesario ajustar nada más; CSS lo posiciona arriba)
     }
 }
 
 function showNotification(message, type = 'info') {
-    // Crear elemento de notificación (estructura unificada con dashboard)
+    // Crear elemento de notificación
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
@@ -585,7 +512,8 @@ function showNotification(message, type = 'info') {
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.dropdown')) {
         document.querySelectorAll('.dropdown-menu').forEach(menu => {
-            closePortalDropdown(menu);
+            menu.classList.remove('show');
+            menu.classList.remove('dropup');
         });
     }
 });

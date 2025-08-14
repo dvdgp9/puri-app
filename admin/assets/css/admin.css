@@ -520,9 +520,11 @@ body {
 /* Dropdown */
 .dropdown {
     position: relative;
+    z-index: 1000;
 }
 
 .dropdown-menu {
+    /* Ensure dropdown can escape container bounds */
     position: absolute;
     top: 100%;
     right: 0;
@@ -531,8 +533,8 @@ body {
     border-radius: 8px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     min-width: 160px;
-    z-index: 1000;
     display: none;
+    z-index: 1000;
 }
 
 .dropdown-menu.show {
@@ -543,15 +545,6 @@ body {
 .dropdown-menu.dropup {
     top: auto;
     bottom: 100%;
-}
-
-/* Portal: cuando movemos el menú al body para evitar clipping */
-.dropdown-menu.dropdown-portal {
-    position: fixed; /* respecto al viewport */
-    top: 0;
-    left: 0;
-    transform: none; /* lo posiciona JS con top/left exactos */
-    z-index: 4000; /* por encima del resto */
 }
 
 .dropdown-menu a {
@@ -1236,7 +1229,6 @@ body {
     position: fixed;
     top: 20px;
     right: 20px;
-    padding: 16px 20px;
     border-radius: 8px;
     color: var(--white);
     font-weight: 500;
@@ -1256,6 +1248,38 @@ body {
 
 .notification.error {
     background: var(--error-color);
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+}
+
+.notification-message {
+    flex: 1;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.notification-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 /* Estilos para página de centro */
@@ -1340,7 +1364,6 @@ body {
     background: var(--admin-card-bg);
     border-radius: 12px;
     box-shadow: var(--admin-shadow);
-    overflow: hidden;
 }
 
 .installations-header {
