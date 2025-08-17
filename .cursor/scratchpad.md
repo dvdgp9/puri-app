@@ -220,6 +220,11 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 - [x] Crear `admin/index.php` con redirección: si `admin_logged_in` → `dashboard.php`, si no → `login.php` (soluciona 403 en `/admin`)
 - [ ] Validar en producción que `https://puri.ebone.es/admin` redirige correctamente (no 403)
 
+### Instalación: UI listado de actividades
+- [x] API `admin/api/actividades/list_by_installation.php` devuelve `participantes_count` (subquery sobre `inscritos`)
+- [x] UI `admin/assets/js/installation.js`: icono de horario cambiado a reloj + añadido contador de participantes en la línea inferior
+- [ ] Validar visualmente en `installation.php` (días, horario y participantes se ven correctamente en todos los items)
+
 ### Centro: Correcciones UI/UX (detalle de centro)
 - [x] Modal "Nueva Instalación" oculto por defecto y visible con `.modal-overlay.show`
 - [ ] Botón "+ Nueva Instalación" abre el modal correctamente en todos los casos

@@ -144,10 +144,16 @@ function renderActivities() {
             ${escapeHtml(a.dias_semana || '-')}
           </span>
           <span class="center-stat">
-            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 3.5a.5.5 0 0 1 .5.5v4h4a.5.5 0 0 1 0 1H8.5v4a.5.5 0 0 1-1 0V9H3.5a.5.5 0 0 1 0-1h4V4a.5.5 0 0 1 .5-.5z"/>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             ${a.hora_inicio ? a.hora_inicio.substring(0,5) : '--:--'} - ${a.hora_fin ? a.hora_fin.substring(0,5) : '--:--'}
+          </span>
+          <span class="center-stat">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            ${(Number(a.participantes_count) || 0)}
           </span>
         </div>
       </div>

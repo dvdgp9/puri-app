@@ -46,12 +46,20 @@ try {
         }
     }
     
-    // Obtener actividades de la instalación
+    // Obtener actividades de la instalación, incluyendo conteo de participantes
     $stmt = $pdo->prepare("
-        SELECT id, nombre, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin
-        FROM actividades 
-        WHERE instalacion_id = ? 
-        ORDER BY nombre
+        SELECT 
+            a.id, 
+            a.nombre, 
+            a.dias_semana, 
+            a.hora_inicio, 
+            a.hora_fin, 
+            a.fecha_inicio, 
+            a.fecha_fin,
+            (SELECT COUNT(*) FROM inscritos i WHERE i.actividad_id = a.id) AS participantes_count
+        FROM actividades a
+        WHERE a.instalacion_id = ? 
+        ORDER BY a.nombre
     ");
     $stmt->execute([$instalacion_id]);
     
