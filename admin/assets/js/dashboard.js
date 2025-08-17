@@ -974,6 +974,52 @@ async function createCenter(data) {
 }
 
 /**
+ * Actualizar centro (desde el dashboard)
+ */
+async function updateCenter(data) {
+    try {
+        const payload = {
+            id: Number(data.id),
+            nombre: String(data.nombre || '').trim(),
+            direccion: String(data.direccion || '').trim()
+        };
+        const resp = await fetch('api/centros/update.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await resp.json();
+        if (resp.ok && result.success) {
+            // Actualizar el centro en memoria
+            if (Array.isArray(Dashboard.centers)) {
+                const idx = Dashboard.centers.findIndex(c => String(c.id) === String(payload.id));
+                if (idx !== -1) {
+                    Dashboard.centers[idx] = {
+                        ...Dashboard.centers[idx],
+                        nombre: payload.nombre,
+                        direccion: payload.direccion
+                    };
+                }
+            }
+            // Re-render listado y cerrar modal
+            renderCenters();
+            closeEditCenterModal();
+            showNotification('Centro actualizado correctamente', 'success');
+        } else {
+            const msg = result.error || result.message || 'No se pudo actualizar el centro';
+            showNotification(msg, 'error');
+            // Marcar error en campo nombre si aplica
+            if (String(msg).toLowerCase().includes('nombre')) {
+                showFieldError('editCenterName', msg);
+            }
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Error al actualizar el centro', 'error');
+    }
+}
+
+/**
  * Crear instalación
  */
 async function createInstallation(data) {
