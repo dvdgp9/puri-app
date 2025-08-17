@@ -138,8 +138,8 @@ function renderActivities() {
         </div>
         <div class="center-details">
           <span class="center-stat">
-            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M3.5 0a.5.5 0 0 0-.5.5V2H1.5A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14H3v1.5a.5.5 0 0 0 .8.4L8 12.5l4.2 3.4a.5.5 0 0 0 .8-.4V14h1.5A1.5 1.5 0 0 0 16 12.5v-9A1.5 1.5 0 0 0 14.5 2H13V.5a.5.5 0 0 0-1 0V2H4.5V.5a.5.5 0 0 0-1 0V2z"/>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
             ${escapeHtml(a.dias_semana || '-')}
           </span>

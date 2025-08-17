@@ -223,6 +223,7 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 ### Instalación: UI listado de actividades
 - [x] API `admin/api/actividades/list_by_installation.php` devuelve `participantes_count` (subquery sobre `inscritos`)
 - [x] UI `admin/assets/js/installation.js`: icono de horario cambiado a reloj + añadido contador de participantes en la línea inferior
+- [x] UI `admin/assets/js/installation.js`: icono de días cambiado a calendario consistente con estadísticas
 - [ ] Validar visualmente en `installation.php` (días, horario y participantes se ven correctamente en todos los items)
 
 ### Centro: Correcciones UI/UX (detalle de centro)
