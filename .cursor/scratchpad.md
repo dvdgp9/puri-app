@@ -102,6 +102,12 @@ Implementar un dashboard Single Page Application (SPA) con:
 
 - Se actualizó `admin/assets/js/center.js::renderStats()` para replicar la estructura del dashboard: `.stat-card` con `.stat-header`, `.stat-title`, `.stat-icon`, `.stat-value`, `.stat-change`. Se usaron iconos y copy del dashboard. También se alineó `showStatsError()` para usar `.error-card`.
 
+### Progreso reciente (Icono Editar)
+- Se reemplazó el icono "Editar" por versión de trazo (outline) para mejorar alineación visual y consistencia:
+  - `admin/center.php`: botón en `.center-header-right`
+  - `admin/installation.php`: botón en `.center-header-right`
+  - Cambio: `fill="currentColor"` → `fill="none"` y `stroke="currentColor"` con `stroke-width` y joins redondeados
+
 ### Siguientes pasos
 - Verificar apertura del modal desde el botón "+ Nueva Instalación" y desde el empty-state.
 - Alinear estructura de tarjetas de stats generadas en `admin/assets/js/center.js::renderStats()` con los selectores de `admin/assets/css/admin.css` (`.stat-header`, `.stat-title`, `.stat-value`, `.stat-icon`).
@@ -225,6 +231,11 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 - [x] UI `admin/assets/js/installation.js`: icono de horario cambiado a reloj + añadido contador de participantes en la línea inferior
 - [x] UI `admin/assets/js/installation.js`: icono de días cambiado a calendario consistente con estadísticas
 - [ ] Validar visualmente en `installation.php` (días, horario y participantes se ven correctamente en todos los items)
+
+### UI: Botón "Editar" (alineación/icono)
+- [x] Reemplazar icono de lápiz por versión outline en `admin/center.php`
+- [x] Reemplazar icono de lápiz por versión outline en `admin/installation.php`
+- [ ] Validar visualmente alineación del icono respecto al texto en ambos headers (hard refresh para evitar caché)
 
 ### Centro: Correcciones UI/UX (detalle de centro)
 - [x] Modal "Nueva Instalación" oculto por defecto y visible con `.modal-overlay.show`
