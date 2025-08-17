@@ -215,6 +215,10 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 - [x] Quitar doble inicialización en `app.js`
 - [ ] Validar `check_session.php` sin ruidos en JSON
 - [ ] Probar login/logout end-to-end
+  
+### Infra: Acceso /admin
+- [x] Crear `admin/index.php` con redirección: si `admin_logged_in` → `dashboard.php`, si no → `login.php` (soluciona 403 en `/admin`)
+- [ ] Validar en producción que `https://puri.ebone.es/admin` redirige correctamente (no 403)
 
 ### Centro: Correcciones UI/UX (detalle de centro)
 - [x] Modal "Nueva Instalación" oculto por defecto y visible con `.modal-overlay.show`
@@ -232,6 +236,8 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 - Confirma por favor el dominio/puerto con el que accedes (p. ej. `http://localhost:8080` o `http://127.0.0.1`), y si usas exactamente el mismo host para `login.php` y `index.html`.
 - ¿Puedes confirmar si ves mensaje de error en `login.php` después de enviar? Si no aparece, ¿la redirección sucede pero vuelve a `login.php` sola?
 - Si quieres que proceda ya con los cambios, indícame si continuamos en modo Executor.
+
+Actualización rápida (2025-08-17 12:23): creado `admin/index.php` para evitar 403 al entrar a `/admin`. ¿Puedes probar en `https://puri.ebone.es/admin` y confirmar si te lleva al login (si no autenticado) o al dashboard (si ya estás autenticado)?
 
 ## Lessons
 
