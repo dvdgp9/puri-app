@@ -10,7 +10,7 @@ $pageTitle = "Sistema de Asistencia";
 $lang = "es";  // Set the language
 require_once 'includes/header.php';
 ?>
-    <div class="container">
+    <div class="container home-hero">
         <!-- Logo placeholder, reemplazar src con tu logo real -->
         <img src="public/assets/images/logo.png" alt="Logo" class="logo" onerror="this.src='data:image/svg+xml;charset=UTF-8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'120\' viewBox=\'0 0 120 120\'><rect width=\'120\' height=\'120\' fill=\'%2323AAC5\'/><text x=\'50%\' y=\'50%\' font-size=\'50\' text-anchor=\'middle\' dy=\'.3em\' fill=\'white\'>P</text></svg>'">
         

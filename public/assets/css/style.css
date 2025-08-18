@@ -140,6 +140,22 @@ button:active {
 
 /* Responsive */
 @media (max-width: 480px) {
+  /* Página de inicio/login: limitar a alto de pantalla y compactar */
+  body { min-height: 100svh; }
+  .home-hero {
+    padding: 1rem !important;
+    max-height: calc(100svh - 20px);
+    overflow: auto;
+  }
+  .home-hero .logo { max-width: 120px; margin-bottom: 1rem; }
+  .home-hero h1 { font-size: 1.5rem; margin: 0.25rem 0 0.5rem; }
+  .home-hero .subtitle { font-size: 0.95rem; }
+  .home-hero .form-group { margin-bottom: 0.75rem; }
+  .home-hero select,
+  .home-hero input[type="password"],
+  .home-hero button {
+    font-size: 0.95rem;
+  }
     .container {
         padding: 1.5rem;
     }
