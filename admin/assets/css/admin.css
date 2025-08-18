@@ -777,6 +777,14 @@ body {
     animation: spin 1s linear infinite;
 }
 
+/* Inline loader container inside buttons (hidden by default) */
+.btn .btn-loading {
+    display: none;
+    align-items: center;
+}
+
+/* Note: Inline loaders will be shown via JS when appropriate to avoid double spinner with ::after */
+
 @keyframes spin {
     to {
         transform: translate(-50%, -50%) rotate(360deg);
