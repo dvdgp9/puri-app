@@ -1387,6 +1387,19 @@ input[type="time"] {
   border-color: var(--primary-color);
 }
 
+/* Mostrar solo el icono en inputs de fecha cuando estén vacíos (WebKit) */
+.date-group input[type="date"]::-webkit-datetime-edit {
+  color: transparent;
+}
+.date-group input[type="date"]:focus::-webkit-datetime-edit,
+.date-group input[type="date"].has-value::-webkit-datetime-edit {
+  color: inherit;
+}
+.date-group input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  cursor: pointer;
+}
+
 .days-group {
   display: flex;
   align-items: center;

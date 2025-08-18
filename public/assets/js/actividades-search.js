@@ -41,8 +41,25 @@ document.addEventListener('DOMContentLoaded', function() {
         sortSelect.addEventListener('change', filtrarActividades);
     }
 
-    if (dateFrom) dateFrom.addEventListener('change', filtrarActividades);
-    if (dateTo) dateTo.addEventListener('change', filtrarActividades);
+    const syncDateHasValue = (el) => {
+        if (!el) return;
+        if (el.value && el.value.trim() !== '') {
+            el.classList.add('has-value');
+        } else {
+            el.classList.remove('has-value');
+        }
+    };
+
+    if (dateFrom) {
+        syncDateHasValue(dateFrom);
+        dateFrom.addEventListener('change', () => { syncDateHasValue(dateFrom); filtrarActividades(); });
+        dateFrom.addEventListener('input', () => { syncDateHasValue(dateFrom); });
+    }
+    if (dateTo) {
+        syncDateHasValue(dateTo);
+        dateTo.addEventListener('change', () => { syncDateHasValue(dateTo); filtrarActividades(); });
+        dateTo.addEventListener('input', () => { syncDateHasValue(dateTo); });
+    }
     if (dayChips.length) {
         dayChips.forEach(chip => {
             chip.addEventListener('click', () => {
@@ -59,6 +76,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (sortSelect) sortSelect.selectedIndex = 0;
             if (dateFrom) dateFrom.value = '';
             if (dateTo) dateTo.value = '';
+            syncDateHasValue(dateFrom);
+            syncDateHasValue(dateTo);
             dayChips.forEach(chip => {
                 chip.setAttribute('aria-pressed', 'false');
                 chip.classList.remove('active');
