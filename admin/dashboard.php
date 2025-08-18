@@ -735,9 +735,14 @@ $admin_info = getAdminInfo();
             <form id="manageCentersForm" onsubmit="saveManageCenters(event)">
                 <input type="hidden" id="manageCentersAdminId" name="admin_id">
                 <div class="modal-body">
-                    <div id="manageCentersList" class="checkbox-group">
+                    <div class="form-group">
+                        <label class="form-label" for="manageCentersSearch">Buscar centros</label>
+                        <input type="text" id="manageCentersSearch" class="form-input" placeholder="Escribe para filtrar..." oninput="filterManageCenters(this.value)">
+                    </div>
+                    <div id="manageCentersList" class="checkbox-group" style="max-height: 320px; overflow: auto; padding-right: 4px;">
                         <!-- Lista de centros con checkboxes -->
                     </div>
+                    <div id="manageCentersNoResults" class="empty-state" style="display: none;">No hay centros que coincidan</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeManageCentersModal()">Cancelar</button>

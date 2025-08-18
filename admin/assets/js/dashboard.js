@@ -91,6 +91,23 @@ async function loadAdmins({ q = '', sort = 'created_at_desc' } = {}) {
     }
 }
 
+// Filtrado de lista de centros en el modal por término de búsqueda
+function filterManageCenters(term) {
+    const container = document.getElementById('manageCentersList');
+    const noRes = document.getElementById('manageCentersNoResults');
+    if (!container) return;
+    const t = (term || '').toLowerCase().trim();
+    const items = Array.from(container.querySelectorAll('label.checkbox-inline'));
+    let visible = 0;
+    items.forEach(label => {
+        const text = label.textContent.toLowerCase();
+        const show = !t || text.includes(t);
+        label.style.display = show ? 'flex' : 'none';
+        if (show) visible++;
+    });
+    if (noRes) noRes.style.display = visible === 0 ? 'block' : 'none';
+}
+
 function sortAdminsList(items, sort) {
     const arr = [...items];
     switch (sort) {
@@ -283,11 +300,18 @@ async function manageAdminCenters(adminId) {
     if (hiddenId) hiddenId.value = adminId;
     const list = document.getElementById('manageCentersList');
     if (list) list.innerHTML = '<div class="custom-select-loading">Cargando centros...</div>';
+    // Resetear búsqueda
+    const search = document.getElementById('manageCentersSearch');
+    if (search) {
+        search.value = '';
+    }
     showManageCentersModal();
     try {
         const res = await AdminAPI.centersList(adminId);
         if (!res.success) throw new Error(res.error || 'No se pudo cargar');
         renderManageCentersList(res.data || []);
+        // Focus en búsqueda tras render
+        if (search) search.focus();
     } catch (e) {
         console.error(e);
         if (list) list.innerHTML = '<div class="error-card">Error cargando centros</div>';
