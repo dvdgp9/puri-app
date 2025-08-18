@@ -179,7 +179,7 @@ function setupDropdowns() {
     if (addBtn && addDropdown) {
         addBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            toggleDropdown(addDropdown);
+            toggleDropdownElement(addDropdown);
         });
     }
     
@@ -190,7 +190,7 @@ function setupDropdowns() {
     if (profileBtn && profileDropdown) {
         profileBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            toggleDropdown(profileDropdown);
+            toggleDropdownElement(profileDropdown);
         });
     }
     
@@ -203,12 +203,12 @@ function setupDropdowns() {
 /**
  * Toggle dropdown
  */
-function toggleDropdown(dropdown) {
+function toggleDropdownElement(dropdownEl) {
     // Cerrar otros dropdowns
     closeAllDropdowns();
     
     // Toggle el dropdown actual
-    dropdown.classList.toggle('active');
+    dropdownEl.classList.toggle('active');
 }
 
 /**
