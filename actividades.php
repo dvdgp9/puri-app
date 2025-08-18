@@ -151,8 +151,7 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
       <!-- Barra de filtros (rediseño) -->
       <fieldset class="filters-bar">
         <legend>Filtrar</legend>
-        <!-- Fila superior: búsqueda + ordenación -->
-        <div class="filters-row top">
+        <div class="filters-row">
           <div class="filters-group search-group">
             <div class="search-box">
               <i class="fas fa-search"></i>
@@ -169,14 +168,11 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
               <option value="fecha-desc">Fecha inicio (↓)</option>
             </select>
           </div>
-        </div>
-        <!-- Fila inferior: fechas + días + reset -->
-        <div class="filters-row bottom">
-          <div class="filters-group date-group">
+          <div class="filters-group date-group date-compact">
             <label for="start-date-from">Inicio desde:</label>
-            <input type="date" id="start-date-from">
+            <input type="date" id="start-date-from" aria-label="Seleccionar fecha de inicio desde">
             <label for="start-date-to">hasta:</label>
-            <input type="date" id="start-date-to">
+            <input type="date" id="start-date-to" aria-label="Seleccionar fecha de inicio hasta">
           </div>
           <div class="filters-group days-group">
             <span class="group-label">Días:</span>

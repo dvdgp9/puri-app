@@ -1272,18 +1272,9 @@ input[type="time"] {
 
 .filters-row {
   display: grid;
+  grid-template-columns: 1.2fr 1fr 1.4fr auto;
   gap: 1rem;
   align-items: center;
-}
-
-/* Fila superior: búsqueda + orden */
-.filters-row.top {
-  grid-template-columns: 1.6fr 1fr;
-}
-
-/* Fila inferior: fechas + días + reset */
-.filters-row.bottom {
-  grid-template-columns: 1.2fr 1fr auto;
 }
 
 .filters-group label,
@@ -1346,9 +1337,51 @@ input[type="time"] {
   white-space: nowrap;
 }
 
+/* Fecha compacta: solo icono calendario */
+.date-compact {
+  white-space: nowrap;
+}
+
+.date-compact input[type="date"] {
+  width: 42px; /* solo icono */
+  min-width: 42px;
+  padding: 8px;
+  text-indent: 0; /* no desplazamiento inesperado */
+  cursor: pointer;
+}
+
+/* Ocultar la parte editable en navegadores WebKit/Blink (Chrome, Edge, Safari) */
+.date-compact input[type="date"]::-webkit-datetime-edit,
+.date-compact input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.date-compact input[type="date"]::-webkit-datetime-edit-text,
+.date-compact input[type="date"]::-webkit-datetime-edit-month-field,
+.date-compact input[type="date"]::-webkit-datetime-edit-day-field,
+.date-compact input[type="date"]::-webkit-datetime-edit-year-field {
+  display: none;
+}
+
+.date-compact input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* Fallback general: si algún navegador muestra texto, lo hacemos invisible */
+.date-compact input[type="date"] {
+  color: transparent;
+  text-shadow: none;
+}
+
+.date-compact input[type="date"]:focus {
+  color: transparent;
+  text-shadow: none;
+}
+
+.date-compact label {
+  margin-right: 8px;
+}
+
 @media (max-width: 992px) {
-  .filters-row.top,
-  .filters-row.bottom {
+  .filters-row {
     grid-template-columns: 1fr;
   }
 }
