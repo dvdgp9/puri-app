@@ -201,6 +201,8 @@ async function handleEditActivitySubmit(e) {
 // Add Participants Modal
 function openAddParticipantsModal() {
   prefillLockedFields();
+  // Default to manual tab and correct button visibility
+  switchParticipantTab('manual');
   openModal('createParticipantModal');
 }
 function closeCreateParticipantModal() { closeModal('createParticipantModal'); }
@@ -211,16 +213,23 @@ function switchParticipantTab(tab) {
   const manualTab = document.getElementById('manualTab');
   const csvTab = document.getElementById('csvTab');
   if (!manualBtn || !csvBtn || !manualTab || !csvTab) return;
+  // Toggle footer action buttons to match active tab
+  const createBtn = document.getElementById('createParticipantBtn');
+  const uploadBtn = document.getElementById('uploadParticipantsCsvBtn');
   if (tab === 'manual') {
     manualBtn.classList.add('active');
     csvBtn.classList.remove('active');
     manualTab.classList.add('active');
     csvTab.classList.remove('active');
+    if (createBtn) createBtn.style.display = '';
+    if (uploadBtn) uploadBtn.style.display = 'none';
   } else {
     manualBtn.classList.remove('active');
     csvBtn.classList.add('active');
     manualTab.classList.remove('active');
     csvTab.classList.add('active');
+    if (createBtn) createBtn.style.display = 'none';
+    if (uploadBtn) uploadBtn.style.display = '';
   }
 }
 

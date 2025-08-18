@@ -328,16 +328,26 @@ try {
                                     Descargar plantilla
                                 </a>
                                 <input type="file" id="participantsCsv" name="csv" accept=".csv">
-                            </div>
-                        </div>
-                    </form>
+            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateParticipantModal()">Cancelar</button>
+                <button type="submit" form="createParticipantForm" class="btn btn-primary" id="createParticipantBtn">
+                    <span class="btn-text">Inscribir Participante</span>
+                    <span class="btn-loading">
+                        <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
+                        </svg>
+                    </span>
+                </button>
+                <button type="submit" form="uploadParticipantCsvForm" class="btn btn-primary" id="uploadParticipantsCsvBtn" style="display: none;">
+                    <span class="btn-text">Subir CSV</span>
+                    <span class="btn-loading">
+                        <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
+                        </svg>
+                    </span>
+                </button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeCreateParticipantModal()">Cancelar</button>
-                <button type="submit" form="createParticipantForm" class="btn btn-primary" id="createParticipantBtn">Añadir</button>
-                <button type="submit" form="uploadParticipantCsvForm" class="btn btn-primary" id="uploadParticipantsCsvBtn">Subir CSV</button>
-            </div>
         </div>
     </div>
 
