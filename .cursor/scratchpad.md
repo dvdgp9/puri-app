@@ -124,6 +124,12 @@ Implementar un dashboard Single Page Application (SPA) con:
   - Archivos actualizados: `admin/assets/js/center.js`, `admin/assets/js/installation.js`, `admin/assets/js/activity.js`.
   - Soporte CSS ya existente en `admin/assets/css/admin.css` para `.dropdown-content.active`.
 
+### Progreso reciente (Superadmin – Admins)
+- ✅ Creado endpoint `admin/api/superadmin/admins/list.php` (solo superadmin) que devuelve `[ { id, username, role, created_at } ]` ordenado por `created_at DESC`, con respuestas JSON `{ success, data, error? }`.
+  - ✅ Añadido contenedor del panel `#admins-panel` en `admin/dashboard.php` (oculto por defecto) con búsqueda y ordenación.
+  - ✅ JS: incorporado `AdminAPI` (list/create/update/delete), `loadAdmins()` y `renderAdmins()` en `admin/assets/js/dashboard.js`.
+  - ✅ Botón "Administradores" ahora abre el panel, carga y renderiza el listado con búsqueda/ordenación.
+
 ### Siguientes pasos
 - Verificar apertura del modal desde el botón "+ Nueva Instalación" y desde el empty-state.
 - Alinear estructura de tarjetas de stats generadas en `admin/assets/js/center.js::renderStats()` con los selectores de `admin/assets/css/admin.css` (`.stat-header`, `.stat-title`, `.stat-value`, `.stat-icon`).
@@ -294,3 +300,63 @@ Actualización rápida (2025-08-17 12:23): creado `admin/index.php` para evitar 
 
 - Preferir un único bootstrap de SPA para evitar condiciones de carrera en autenticación.
 - Al autenticar, regenerar el ID de sesión para mitigar fijación de sesión y estabilizar el cookie.
+
+---
+
+## Planner: Superadmin – Gestión de Administradores (nueva vista en Dashboard)
+
+### Background and Motivation
+Como superadmin necesito gestionar administradores/superadmins desde el propio Dashboard (sin salir), pudiendo listarlos, crear nuevos, cambiarles el rol y eliminarlos.
+
+### Key Challenges and Analysis
+- Seguridad: Solo superadmin puede usar estos endpoints/acciones. Evitar borrar el último superadmin o degradarlo. Evitar que un admin se elimine a sí mismo por accidente.
+- Backend: Falta API para CRUD de admins. Seguir patrón por recurso existente (carpetas y ficheros por acción) y usar `requireSuperAdmin()`.
+- UI/Integración: Añadir botón "Administradores" en el header del `dashboard.php` visible solo para superadmin. Mostrar un panel dentro del Dashboard (no nueva página) para el listado y acciones.
+- Consistencia: Reutilizar estilos de listas y modales ya presentes en el Dashboard; notificaciones/estados de carga homogéneos.
+
+### High-level Task Breakdown
+1) Backend API (carpeta nueva `admin/api/superadmin/admins/`):
+   - `list.php` (GET): devuelve `[ { id, username, role, created_at } ]` ordenado por `created_at DESC`.
+   - `create.php` (POST): valida `username` único, `password` (min 8), `role in {admin, superadmin}`. Inserta y devuelve el admin creado.
+   - `update.php` (POST/PUT): cambiar `role` y opcionalmente resetear contraseña. Bloquear degradar el ÚNICO superadmin.
+   - `delete.php` (POST/DELETE): borrar admin por `id`. Impedir borrar a sí mismo y el último superadmin.
+   - Todas exigen `requireSuperAdmin()` y devuelven JSON `{ success, data?, error? }`.
+
+2) Dashboard UI (en `admin/dashboard.php` + `admin/assets/js/dashboard.js`):
+   - Header: botón "Administradores" solo si `isSuperAdmin()` (PHP) y/o chequeo en cliente. Estado activo cuando está visible el panel.
+   - Panel Admins dentro del Dashboard: contenedor `#admins-panel` con:
+     - Buscador y orden simple por nombre/fecha.
+     - Tabla/listado con `username`, `role`, `created_at`, acciones (Editar rol/Reset pass, Eliminar).
+     - Botón "+ Añadir" abre modal.
+   - Modales:
+     - Crear admin: `username`, `password`, `role`.
+     - Editar rol/Reset pass: selector de rol, campo de nueva contraseña opcional.
+     - Confirmación de eliminación.
+   - JS: funciones `loadAdmins()`, `renderAdmins()`, `createAdmin()`, `updateAdmin()`, `deleteAdmin()` consumiendo la nueva API.
+
+3) Reglas adicionales de seguridad UX
+   - Deshabilitar acciones peligrosas con tooltips si incumplen reglas (p. ej. "No puedes borrar el último superadmin").
+   - Evitar eliminar al usuario autenticado (self-delete) y mostrar aviso.
+
+### Success Criteria
+- El botón "Administradores" aparece solo para superadmin en `dashboard.php` y abre un panel con el listado.
+- Se puede crear admin (validaciones), cambiar rol y eliminar, con notificaciones de éxito/error.
+- Endpoints rechazan accesos de no-superadmin. No se puede eliminar/degradar al último superadmin ni auto-eliminarse.
+- Estilos/UX consistentes con el resto del Dashboard.
+
+### Project Status Board (Superadmin – Admins)
+- [x] Backend: `admin/api/superadmin/admins/list.php`
+- [x] Backend: `admin/api/superadmin/admins/create.php`
+- [x] Backend: `admin/api/superadmin/admins/update.php`
+- [x] Backend: `admin/api/superadmin/admins/delete.php`
+- [x] Dashboard UI: botón "Administradores" (solo superadmin)
+- [x] Dashboard UI: contenedor `#admins-panel` y layout de listado
+- [x] JS: `loadAdmins()` y `renderAdmins()`
+- [ ] JS: `createAdmin()` (modal + validación)
+- [ ] JS: `updateAdmin()` (cambio rol + reset pass opcional)
+- [ ] JS: `deleteAdmin()` (confirmación + reglas)
+- [ ] Notificaciones y estados de carga/errores
+- [ ] Pruebas E2E básicas (crear→editar rol→eliminar)
+
+### Progreso reciente (Superadmin – Admins)
+Se ha completado la UI del contenedor de administradores y la carga/renderizado inicial de la lista de administradores. Pendiente implementar la lógica de creación, edición y eliminación de administradores, así como las notificaciones y pruebas E2E.

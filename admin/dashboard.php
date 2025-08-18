@@ -27,6 +27,14 @@ $admin_info = getAdminInfo();
             <div class="title">Puri: Gestión de centros deportivos</div>
         </div>
         <div class="actions">
+            <?php if (isSuperAdmin()) { ?>
+            <button class="btn btn-secondary" onclick="showAdminsPanel()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0V10m0 10H7m10-10H7"/>
+                </svg>
+                Administradores
+            </button>
+            <?php } ?>
             <button class="btn btn-primary" onclick="showAddOptionsModal()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -64,6 +72,30 @@ $admin_info = getAdminInfo();
         <!-- Stats Grid -->
         <div class="stats-grid" id="stats-grid">
             <div class="loading-card">Cargando estadísticas...</div>
+        </div>
+
+        <!-- Panel de Administradores (solo visible cuando se activa) -->
+        <div class="centers-panel" id="admins-panel" style="display:none;">
+            <div class="centers-header">
+                <h2 class="centers-title">Administradores</h2>
+                <div class="centers-actions">
+                    <input type="text" id="search-admins" class="search-input" placeholder="Buscar por usuario...">
+                    <select id="sort-admins" class="sort-select">
+                        <option value="created_at_desc">Más recientes</option>
+                        <option value="created_at_asc">Más antiguos</option>
+                        <option value="username_asc">Usuario A-Z</option>
+                        <option value="username_desc">Usuario Z-A</option>
+                    </select>
+                    <button class="btn btn-primary" id="addAdminBtn" onclick="alert('Modal de crear admin - próximamente')">
+                        + Añadir Admin
+                    </button>
+                </div>
+            </div>
+            <div class="centers-content">
+                <div id="admins-list" class="centers-list">
+                    <!-- Los administradores se cargarán aquí dinámicamente -->
+                </div>
+            </div>
         </div>
 
         <!-- Panel de Centros -->

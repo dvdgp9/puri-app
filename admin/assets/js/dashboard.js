@@ -7,6 +7,7 @@
 const Dashboard = {
     stats: null,
     centers: [],
+    admins: [],
     currentUser: null
 };
 
@@ -67,6 +68,26 @@ function setupEventListeners() {
     if (sortSelect) {
         sortSelect.addEventListener('change', function(e) {
             sortCenters(e.target.value);
+        });
+    }
+
+    // Búsqueda de administradores
+    const searchAdmins = document.getElementById('search-admins');
+    if (searchAdmins) {
+        searchAdmins.addEventListener('input', function(e) {
+            // Cargar con filtro rápido (debounce ligero)
+            if (setupEventListeners._admTimer) clearTimeout(setupEventListeners._admTimer);
+            setupEventListeners._admTimer = setTimeout(() => {
+                loadAdmins({ q: e.target.value, sort: document.getElementById('sort-admins')?.value || 'created_at_desc' });
+            }, 250);
+        });
+    }
+
+    // Ordenación de administradores
+    const sortAdmins = document.getElementById('sort-admins');
+    if (sortAdmins) {
+        sortAdmins.addEventListener('change', function(e) {
+            loadAdmins({ q: document.getElementById('search-admins')?.value || '', sort: e.target.value });
         });
     }
     
@@ -479,6 +500,23 @@ function sortCenters(sortBy) {
 function openModal(type) {
     console.log('Abrir modal para:', type);
     alert(`Modal para crear ${type} - En desarrollo`);
+}
+
+/**
+ * Abrir panel de administradores (placeholder)
+ */
+function showAdminsPanel() {
+    console.log('Abrir panel de administradores');
+    const panel = document.getElementById('admins-panel');
+    if (panel) {
+        panel.style.display = 'block';
+        // Cargar listado al abrir
+        const q = document.getElementById('search-admins')?.value || '';
+        const sort = document.getElementById('sort-admins')?.value || 'created_at_desc';
+        loadAdmins({ q, sort });
+        // Desplazar a la sección
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 /**
