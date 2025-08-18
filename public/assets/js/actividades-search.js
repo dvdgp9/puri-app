@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Configurar event listeners
     const searchInput = document.getElementById('search-input');
     const sortSelect = document.getElementById('sort-select');
+    const dateFrom = document.getElementById('start-date-from');
+    const dateTo = document.getElementById('start-date-to');
+    const dayCheckboxes = Array.from(document.querySelectorAll('.filter-day'));
     
     if (searchInput) {
         searchInput.addEventListener('input', filtrarActividades);
@@ -36,30 +39,52 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sortSelect) {
         sortSelect.addEventListener('change', filtrarActividades);
     }
+
+    if (dateFrom) dateFrom.addEventListener('change', filtrarActividades);
+    if (dateTo) dateTo.addEventListener('change', filtrarActividades);
+    if (dayCheckboxes.length) dayCheckboxes.forEach(cb => cb.addEventListener('change', filtrarActividades));
 });
 
 // Función para filtrar actividades
 function filtrarActividades() {
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    const sortBy = document.getElementById('sort-select').value;
+    const searchTerm = (document.getElementById('search-input')?.value || '').toLowerCase();
+    const sortBy = (document.getElementById('sort-select')?.value) || '';
+    const fromVal = document.getElementById('start-date-from')?.value || '';
+    const toVal = document.getElementById('start-date-to')?.value || '';
+    const selectedDays = Array.from(document.querySelectorAll('.filter-day:checked')).map(cb => cb.value);
     
     // Filtrar y ordenar cada categoría usando los datos originales
     Object.keys(actividadesOriginales).forEach(categoria => {
         const actividadesFiltradas = actividadesOriginales[categoria].filter(item => {
-            const nombre = item.querySelector('.activity-name span').textContent.toLowerCase();
-            return nombre.includes(searchTerm);
+            // Texto (nombre)
+            const nombre = item.querySelector('.activity-name span')?.textContent.toLowerCase() || '';
+            if (searchTerm && !nombre.includes(searchTerm)) return false;
+
+            // Fecha inicio (data-fecha-inicio en formato YYYY-MM-DD)
+            const fechaInicio = item.getAttribute('data-fecha-inicio') || '';
+            if (fromVal && (!fechaInicio || fechaInicio < fromVal)) return false;
+            if (toVal && (!fechaInicio || fechaInicio > toVal)) return false;
+
+            // Días de realización (data-dias: "Lunes,Martes,...")
+            if (selectedDays.length) {
+                const diasStr = (item.getAttribute('data-dias') || '').trim();
+                if (!diasStr) return false;
+                const dias = diasStr.split(',').map(d => d.trim());
+                // Pasa si coincide con AL MENOS uno de los seleccionados
+                const anyMatch = selectedDays.some(d => dias.includes(d));
+                if (!anyMatch) return false;
+            }
+
+            return true;
         });
         
         // Ordenar
         actividadesFiltradas.sort((a, b) => {
-            const nombreA = a.querySelector('.activity-name span').textContent.toLowerCase();
-            const nombreB = b.querySelector('.activity-name span').textContent.toLowerCase();
-            
-            if (sortBy === 'nombre-asc') {
-                return nombreA.localeCompare(nombreB);
-            } else {
-                return nombreB.localeCompare(nombreA);
-            }
+            const nombreA = a.querySelector('.activity-name span')?.textContent.toLowerCase() || '';
+            const nombreB = b.querySelector('.activity-name span')?.textContent.toLowerCase() || '';
+            if (sortBy === 'nombre-asc') return nombreA.localeCompare(nombreB);
+            if (sortBy === 'nombre-desc') return nombreB.localeCompare(nombreA);
+            return 0;
         });
         
         // Actualizar la vista
@@ -111,20 +136,25 @@ function actualizarVista(categoria, actividadesFiltradas) {
 
 // Función para mostrar mensaje si no hay resultados en ninguna categoría
 function mostrarMensajeSinResultados() {
-    const todasVacias = [
-        document.querySelectorAll('ul.list-container:not(.scheduled-activities):not(.finished-activities) .list-item').length === 0 && 
-        !document.querySelector('ul.list-container:not(.scheduled-activities):not(.finished-activities) .empty-message'),
-        document.querySelectorAll('ul.scheduled-activities .list-item').length === 0 && 
-        !document.querySelector('ul.scheduled-activities .empty-message'),
-        document.querySelectorAll('ul.finished-activities .list-item').length === 0 && 
-        !document.querySelector('ul.finished-activities .empty-message')
-    ].every(vacio => vacio);
-    
+    const listas = [
+        'ul.list-container:not(.scheduled-activities):not(.finished-activities)',
+        'ul.scheduled-activities',
+        'ul.finished-activities'
+    ];
+    const todasVacias = listas.every(sel => {
+        const cont = document.querySelector(sel);
+        if (!cont) return true;
+        const hayItems = cont.querySelectorAll('.list-item').length > 0;
+        const hayMensaje = !!cont.querySelector('.empty-message');
+        return !(hayItems || hayMensaje) || (hayMensaje && !hayItems);
+    });
+
     const mensajeGlobal = document.getElementById('no-results-message');
-    
-    if (todasVacias && document.getElementById('search-input').value) {
-        mensajeGlobal.style.display = 'block';
-    } else {
-        mensajeGlobal.style.display = 'none';
-    }
+    const tieneAlgunaEntrada = (
+        (document.getElementById('search-input')?.value || '') ||
+        (document.getElementById('start-date-from')?.value || '') ||
+        (document.getElementById('start-date-to')?.value || '') ||
+        Array.from(document.querySelectorAll('.filter-day:checked')).length
+    );
+    mensajeGlobal.style.display = (todasVacias && tieneAlgunaEntrada) ? 'block' : 'none';
 }

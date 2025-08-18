@@ -162,6 +162,21 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
             <option value="nombre-desc">Nombre (Z-A)</option>
           </select>
         </div>
+        <div class="date-filters" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <label for="start-date-from">Inicio desde:</label>
+          <input type="date" id="start-date-from">
+          <label for="start-date-to">hasta:</label>
+          <input type="date" id="start-date-to">
+        </div>
+        <div class="days-filters" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;">
+          <span>Días:</span>
+          <?php $diasSemana = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+          foreach ($diasSemana as $dia): ?>
+            <label style="display:flex; gap:4px; align-items:center;">
+              <input type="checkbox" class="filter-day" value="<?php echo $dia; ?>"> <?php echo substr($dia,0,1); ?>
+            </label>
+          <?php endforeach; ?>
+        </div>
       </div>
       
       <!-- Mensaje de no resultados -->
@@ -176,7 +191,7 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
       <?php else: ?>
         <ul class="list-container">
           <?php foreach($actividades_activas as $actividad): ?>
-            <li class="list-item">
+            <li class="list-item" data-fecha-inicio="<?php echo htmlspecialchars($actividad['fecha_inicio']); ?>" data-dias="<?php echo htmlspecialchars($actividad['dias_semana'] ?? ''); ?>">
               <div class="item-title-container">
                 <a href="asistencia.php?actividad_id=<?php echo $actividad['id']; ?>">
                   <div class="activity-card">
@@ -223,7 +238,7 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
       <?php else: ?>
         <ul class="list-container scheduled-activities">
           <?php foreach($actividades_programadas as $actividad): ?>
-            <li class="list-item">
+            <li class="list-item" data-fecha-inicio="<?php echo htmlspecialchars($actividad['fecha_inicio']); ?>" data-dias="<?php echo htmlspecialchars($actividad['dias_semana'] ?? ''); ?>">
               <div class="item-title-container">
                 <a href="asistencia.php?actividad_id=<?php echo $actividad['id']; ?>">
                   <div class="activity-card">
@@ -268,7 +283,7 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
         <h2 class="section-title">Actividades Finalizadas</h2>
         <ul class="list-container finished-activities">
           <?php foreach($actividades_finalizadas as $actividad): ?>
-            <li class="list-item">
+            <li class="list-item" data-fecha-inicio="<?php echo htmlspecialchars($actividad['fecha_inicio']); ?>" data-dias="<?php echo htmlspecialchars($actividad['dias_semana'] ?? ''); ?>">
               <div class="item-title-container">
                 <a href="asistencia.php?actividad_id=<?php echo $actividad['id']; ?>">
                   <div class="activity-card">
