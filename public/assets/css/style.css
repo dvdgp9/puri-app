@@ -1620,7 +1620,8 @@ input[type="time"] {
     border-radius: 10px;
   }
 
-  .date-group { gap: 6px; }
+  /* Ocultar filtros de fecha en móvil */
+  .date-group { display: none !important; }
   .date-group label {
     position: absolute !important;
     width: 1px;
