@@ -38,6 +38,25 @@ const AdminAPI = {
             body: JSON.stringify({ id })
         });
         return resp.json();
+    },
+    async create({ username, password, role }) {
+        const resp = await fetch('api/superadmin/admins/create.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, role })
+        });
+        return resp.json();
+    },
+    async update({ id, role, new_password }) {
+        const payload = { id };
+        if (role) payload.role = role;
+        if (new_password) payload.new_password = new_password;
+        const resp = await fetch('api/superadmin/admins/update.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        return resp.json();
     }
 };
 
@@ -124,7 +143,7 @@ function renderAdmins() {
                         </svg>
                     </button>
                     <div class="dropdown-menu" id="dropdown-adm-${a.id}" onclick="event.stopPropagation()">
-                        <a href="#" onclick="event.preventDefault(); alert('Editar - próximamente');">Editar</a>
+                        <a href="#" onclick="event.preventDefault(); openEditAdmin(${a.id});">Editar</a>
                         <a href="#" onclick="event.preventDefault(); confirmDeleteAdmin(${a.id});">Eliminar</a>
                     </div>
                 </div>
@@ -160,6 +179,73 @@ function confirmDeleteAdmin(id) {
         console.error(err);
         showNotification?.('Error de conexión eliminando admin', 'error');
     });
+}
+
+// ====== Admins: Modales y formularios ======
+
+function showCreateAdminModal() {
+    const modal = document.getElementById('createAdminModal');
+    if (modal) {
+        modal.classList.add('show');
+        setTimeout(() => {
+            const first = modal.querySelector('input,select');
+            if (first) first.focus();
+        }, 50);
+    }
+}
+
+function closeCreateAdminModal() {
+    const modal = document.getElementById('createAdminModal');
+    if (modal) modal.classList.remove('show');
+    // limpiar formulario
+    const form = document.getElementById('createAdminForm');
+    if (form) form.reset();
+    clearFormErrors();
+}
+
+function openEditAdmin(id) {
+    // Cerrar dropdowns antes de abrir modal
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.classList.remove('show');
+        menu.classList.remove('dropup');
+        menu.style.top = '';
+        menu.style.left = '';
+        menu.style.right = '';
+        menu.style.bottom = '';
+    });
+    const admin = (Dashboard.admins || []).find(a => String(a.id) === String(id));
+    if (!admin) {
+        showNotification?.('No se encontraron datos del administrador', 'error');
+        return;
+    }
+    const idInput = document.getElementById('editAdminId');
+    const userInput = document.getElementById('editAdminUsername');
+    const roleSelect = document.getElementById('editAdminRole');
+    const passInput = document.getElementById('editAdminNewPassword');
+    if (idInput) idInput.value = admin.id;
+    if (userInput) userInput.value = admin.username || '';
+    if (roleSelect) roleSelect.value = admin.role || 'admin';
+    if (passInput) passInput.value = '';
+    showEditAdminModal();
+}
+
+function showEditAdminModal() {
+    const modal = document.getElementById('editAdminModal');
+    if (modal) {
+        modal.classList.add('show');
+        setTimeout(() => {
+            const first = modal.querySelector('select');
+            if (first) first.focus();
+        }, 50);
+    }
+}
+
+function closeEditAdminModal() {
+    const modal = document.getElementById('editAdminModal');
+    if (modal) modal.classList.remove('show');
+    clearFormErrors();
+    const form = document.getElementById('editAdminForm');
+    if (form) form.reset();
 }
 
 // Mostrar modal de edición de centro
@@ -228,6 +314,117 @@ function setupEventListeners() {
     if (sortAdmins) {
         sortAdmins.addEventListener('change', function(e) {
             loadAdmins({ q: document.getElementById('search-admins')?.value || '', sort: e.target.value });
+        });
+    }
+    
+    // Crear admin
+    const createAdminForm = document.getElementById('createAdminForm');
+    if (createAdminForm) {
+        createAdminForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            clearFormErrors();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            // Validación básica
+            if (!data.username || !data.username.trim()) {
+                const el = document.getElementById('adminUsername-error');
+                if (el) el.textContent = 'El usuario es obligatorio';
+                return;
+            }
+            if (!data.password || String(data.password).length < 8) {
+                const el = document.getElementById('adminPassword-error');
+                if (el) el.textContent = 'Mínimo 8 caracteres';
+                return;
+            }
+            if (!data.role) {
+                const el = document.getElementById('adminRole-error');
+                if (el) el.textContent = 'Seleccione un rol';
+                return;
+            }
+            const btn = document.getElementById('createAdminBtn');
+            btn?.classList.add('loading');
+            if (btn) btn.disabled = true;
+            try {
+                const res = await AdminAPI.create({ username: data.username.trim(), password: String(data.password), role: data.role });
+                if (res.success) {
+                    showNotification?.('Administrador creado', 'success');
+                    closeCreateAdminModal();
+                    // recargar lista
+                    const q = document.getElementById('search-admins')?.value || '';
+                    const sort = document.getElementById('sort-admins')?.value || 'created_at_desc';
+                    await loadAdmins({ q, sort });
+                } else {
+                    showNotification?.(res.error || 'No se pudo crear', 'error');
+                    // errores de campo comunes
+                    if (/usuario/i.test(res.error || '')) {
+                        const el = document.getElementById('adminUsername-error');
+                        if (el) el.textContent = res.error;
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                showNotification?.('Error de conexión creando admin', 'error');
+            } finally {
+                btn?.classList.remove('loading');
+                if (btn) btn.disabled = false;
+            }
+        });
+    }
+
+    // Editar admin
+    const editAdminForm = document.getElementById('editAdminForm');
+    if (editAdminForm) {
+        editAdminForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            clearFormErrors();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            const id = parseInt(data.id, 10);
+            if (!id) {
+                showNotification?.('ID inválido', 'error');
+                return;
+            }
+            const payload = { id };
+            const role = data.role;
+            const newPass = String(data.new_password || '').trim();
+            if (role) payload.role = role;
+            if (newPass) {
+                if (newPass.length < 8) {
+                    const el = document.getElementById('editAdminNewPassword-error');
+                    if (el) el.textContent = 'Mínimo 8 caracteres';
+                    return;
+                }
+                payload.new_password = newPass;
+            }
+            const btn = document.getElementById('saveEditAdminBtn');
+            btn?.classList.add('loading');
+            if (btn) btn.disabled = true;
+            try {
+                const res = await AdminAPI.update(payload);
+                if (res.success) {
+                    showNotification?.('Administrador actualizado', 'success');
+                    closeEditAdminModal();
+                    // actualizar en memoria sin recargar
+                    const idx = (Dashboard.admins || []).findIndex(a => String(a.id) === String(id));
+                    if (idx >= 0) {
+                        Dashboard.admins[idx] = { ...Dashboard.admins[idx], ...res.data };
+                        renderAdmins();
+                    } else {
+                        // fallback: recargar
+                        const q = document.getElementById('search-admins')?.value || '';
+                        const sort = document.getElementById('sort-admins')?.value || 'created_at_desc';
+                        await loadAdmins({ q, sort });
+                    }
+                } else {
+                    showNotification?.(res.error || 'No se pudo actualizar', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showNotification?.('Error de conexión actualizando admin', 'error');
+            } finally {
+                btn?.classList.remove('loading');
+                if (btn) btn.disabled = false;
+            }
         });
     }
     

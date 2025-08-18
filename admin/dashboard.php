@@ -86,7 +86,7 @@ $admin_info = getAdminInfo();
                         <option value="username_asc">Usuario A-Z</option>
                         <option value="username_desc">Usuario Z-A</option>
                     </select>
-                    <button class="btn btn-primary" id="addAdminBtn" onclick="alert('Modal de crear admin - próximamente')">
+                    <button class="btn btn-primary" id="addAdminBtn" onclick="showCreateAdminModal()">
                         + Añadir Admin
                     </button>
                 </div>
@@ -636,6 +636,92 @@ $admin_info = getAdminInfo();
                     </span>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal Crear Admin -->
+    <div class="modal-overlay" id="createAdminModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Crear Administrador</h2>
+                <button class="modal-close" onclick="closeCreateAdminModal()">&times;</button>
+            </div>
+            <form id="createAdminForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="adminUsername">Usuario</label>
+                        <input type="text" id="adminUsername" name="username" class="form-input" placeholder="usuario" required>
+                        <div class="form-error" id="adminUsername-error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="adminPassword">Contraseña</label>
+                        <input type="password" id="adminPassword" name="password" class="form-input" placeholder="mín. 8 caracteres" required>
+                        <div class="form-error" id="adminPassword-error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="adminRole">Rol</label>
+                        <select id="adminRole" name="role" class="form-input" required>
+                            <option value="admin">Admin</option>
+                            <option value="superadmin">Superadmin</option>
+                        </select>
+                        <div class="form-error" id="adminRole-error"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateAdminModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="createAdminBtn">
+                        <span class="btn-text">Crear</span>
+                        <span class="btn-loading">
+                            <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Admin -->
+    <div class="modal-overlay" id="editAdminModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Editar Administrador</h2>
+                <button class="modal-close" onclick="closeEditAdminModal()">&times;</button>
+            </div>
+            <form id="editAdminForm">
+                <input type="hidden" id="editAdminId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Usuario</label>
+                        <input type="text" id="editAdminUsername" class="form-input" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editAdminRole">Rol</label>
+                        <select id="editAdminRole" name="role" class="form-input">
+                            <option value="admin">Admin</option>
+                            <option value="superadmin">Superadmin</option>
+                        </select>
+                        <div class="form-error" id="editAdminRole-error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editAdminNewPassword">Nueva contraseña (opcional)</label>
+                        <input type="password" id="editAdminNewPassword" name="new_password" class="form-input" placeholder="dejar vacío si no cambia">
+                        <div class="form-error" id="editAdminNewPassword-error"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditAdminModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="saveEditAdminBtn">
+                        <span class="btn-text">Guardar cambios</span>
+                        <span class="btn-loading">
+                            <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

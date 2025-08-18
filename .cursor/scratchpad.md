@@ -352,11 +352,14 @@ Como superadmin necesito gestionar administradores/superadmins desde el propio D
 - [x] Dashboard UI: botón "Administradores" (solo superadmin)
 - [x] Dashboard UI: contenedor `#admins-panel` y layout de listado
 - [x] JS: `loadAdmins()` y `renderAdmins()`
-- [ ] JS: `createAdmin()` (modal + validación)
-- [ ] JS: `updateAdmin()` (cambio rol + reset pass opcional)
-- [ ] JS: `deleteAdmin()` (confirmación + reglas)
-- [ ] Notificaciones y estados de carga/errores
+- [x] UI: Modales Crear/Editar Admin en `admin/dashboard.php`
+- [x] JS: Crear admin (API `create.php`, validación, loading, notificación)
+- [x] JS: Editar admin (rol + reset password opcional, API `update.php`)
+- [x] JS: Eliminar admin (confirmación + reglas del backend, notificación)
 - [ ] Pruebas E2E básicas (crear→editar rol→eliminar)
 
 ### Progreso reciente (Superadmin – Admins)
-Se ha completado la UI del contenedor de administradores y la carga/renderizado inicial de la lista de administradores. Pendiente implementar la lógica de creación, edición y eliminación de administradores, así como las notificaciones y pruebas E2E.
+- Añadidos modales de Crear/Editar en `admin/dashboard.php` y handlers en `admin/assets/js/dashboard.js`.
+- Implementado `AdminAPI.create/update` y flujos de validación, loading y notificaciones.
+- Integrado acción "Editar" en el dropdown de cada admin para abrir el modal precargado.
+- Pendiente: pruebas E2E y decidir si migrar a una vista dedicada `admin/admins.php` en lugar del panel en el dashboard.
