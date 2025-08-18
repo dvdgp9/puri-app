@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateTo = document.getElementById('start-date-to');
     const dayChips = Array.from(document.querySelectorAll('.chip-day'));
     const resetBtn = document.getElementById('filters-reset');
+    const dateToggles = Array.from(document.querySelectorAll('.date-toggle'));
     
     if (searchInput) {
         searchInput.addEventListener('input', filtrarActividades);
@@ -43,11 +44,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const syncDateHasValue = (el) => {
         if (!el) return;
-        if (el.value && el.value.trim() !== '') {
-            el.classList.add('has-value');
-        } else {
-            el.classList.remove('has-value');
-        }
+        const hasVal = !!(el.value && el.value.trim() !== '');
+        el.classList.toggle('has-value', hasVal);
+        const container = el.closest('.date-compact');
+        if (container) container.classList.toggle('has-value', hasVal);
     };
 
     if (dateFrom) {
@@ -70,6 +70,22 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+    if (dateToggles.length) {
+        dateToggles.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                if (!input) return;
+                // Abre el datepicker nativo
+                if (typeof input.showPicker === 'function') {
+                    input.showPicker();
+                } else {
+                    input.focus();
+                    input.click();
+                }
+            });
+        });
+    }
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
             if (searchInput) searchInput.value = '';
@@ -78,6 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (dateTo) dateTo.value = '';
             syncDateHasValue(dateFrom);
             syncDateHasValue(dateTo);
+            document.querySelectorAll('.date-compact').forEach(dc => dc.classList.remove('has-value'));
             dayChips.forEach(chip => {
                 chip.setAttribute('aria-pressed', 'false');
                 chip.classList.remove('active');

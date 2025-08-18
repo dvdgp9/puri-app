@@ -174,9 +174,19 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
           <div class="filters-bottom-row">
             <div class="date-group">
               <label for="start-date-from">Inicio desde:</label>
-              <input type="date" id="start-date-from">
+              <div class="date-compact">
+                <button type="button" class="date-toggle" data-target="start-date-from" aria-label="Elegir fecha de inicio">
+                  <i class="far fa-calendar"></i>
+                </button>
+                <input type="date" id="start-date-from">
+              </div>
               <label for="start-date-to">hasta:</label>
-              <input type="date" id="start-date-to">
+              <div class="date-compact">
+                <button type="button" class="date-toggle" data-target="start-date-to" aria-label="Elegir fecha hasta">
+                  <i class="far fa-calendar"></i>
+                </button>
+                <input type="date" id="start-date-to">
+              </div>
             </div>
             <div class="days-group">
               <span class="group-label">Días:</span>
