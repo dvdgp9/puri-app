@@ -131,7 +131,7 @@ function renderActivities() {
   }
 
   const items = Installation.activities.map(a => `
-    <div class="center-item" style="cursor: default;">
+    <div class="center-item" onclick="goToActivity(${a.id})" style="cursor: pointer;">
       <div class="center-main">
         <div class="center-header">
           <h3 class="center-name">${escapeHtml(decodeHtml(a.nombre || ''))}</h3>
@@ -354,6 +354,9 @@ async function handleEditActivity(e) {
 // Navigation & UI helpers
 function goBackToCenter(centerId) {
   window.location.href = `center.php?id=${centerId}`;
+}
+function goToActivity(activityId) {
+  window.location.href = `activity.php?id=${activityId}`;
 }
 function showCreateActivityModal() { openModal('createActivityModal'); }
 function toggleActivityDropdown(event, id) {
