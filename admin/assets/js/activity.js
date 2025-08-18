@@ -50,7 +50,11 @@ async function loadParticipants() {
     const resp = await fetch(`api/participantes/list_by_activity.php?actividad_id=${ActivityPage.id}`);
     const data = await resp.json();
     if (!data.success) throw new Error(data.message || 'Error');
-    ActivityPage.participants = data.participants || [];
+    ActivityPage.participants = (data.participants || []).slice().sort((a, b) => {
+      const nameA = `${(a.apellidos||'').toString()} ${(a.nombre||'').toString()}`.trim();
+      const nameB = `${(b.apellidos||'').toString()} ${(b.nombre||'').toString()}`.trim();
+      return nameA.localeCompare(nameB);
+    });
     renderParticipants();
   } catch (e) {
     console.error(e);
