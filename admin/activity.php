@@ -119,7 +119,21 @@ try {
                     <?php
                         $dias = isset($actividad['dias_semana']) ? trim($actividad['dias_semana']) : '';
                         if ($dias !== '') {
-                            echo ' · ' . htmlspecialchars($dias);
+                            $map = [
+                                'lunes' => 'L', 'martes' => 'M', 'miércoles' => 'X', 'miercoles' => 'X',
+                                'jueves' => 'J', 'viernes' => 'V', 'sábado' => 'S', 'sabado' => 'S', 'domingo' => 'D',
+                                'l' => 'L', 'm' => 'M', 'x' => 'X', 'j' => 'J', 'v' => 'V', 's' => 'S', 'd' => 'D'
+                            ];
+                            $parts = preg_split('/\s*,\s*/u', $dias, -1, PREG_SPLIT_NO_EMPTY);
+                            if (count($parts) <= 1) {
+                                $parts = preg_split('/\s*y\s*/iu', $dias, -1, PREG_SPLIT_NO_EMPTY);
+                            }
+                            $letters = [];
+                            foreach ($parts as $p) {
+                                $key = mb_strtolower(trim($p), 'UTF-8');
+                                $letters[] = $map[$key] ?? mb_strtoupper(mb_substr($key, 0, 1, 'UTF-8'), 'UTF-8');
+                            }
+                            echo ' · ' . htmlspecialchars(implode(', ', $letters));
                         }
                         $hIni = isset($actividad['hora_inicio']) && $actividad['hora_inicio'] ? substr($actividad['hora_inicio'], 0, 5) : null;
                         $hFin = isset($actividad['hora_fin']) && $actividad['hora_fin'] ? substr($actividad['hora_fin'], 0, 5) : null;
