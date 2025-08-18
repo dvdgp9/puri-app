@@ -160,7 +160,7 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
           </div>
           <div class="filters-group sort-group">
             <label for="sort-select">Ordenar por:</label>
-            <select id="sort-select">
+            <select id="sort-select" aria-label="Ordenar por">
               <option value="" disabled selected>Seleccionar orden</option>
               <option value="nombre-asc">Nombre (A-Z)</option>
               <option value="nombre-desc">Nombre (Z-A)</option>
@@ -169,22 +169,23 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
             </select>
           </div>
           <div class="filters-group date-group date-compact">
-            <label for="start-date-from">Inicio desde:</label>
+            <span class="group-label">Inicio:</span>
+            <label for="start-date-from" class="sr-only">Desde</label>
             <input type="date" id="start-date-from" aria-label="Seleccionar fecha de inicio desde">
-            <label for="start-date-to">hasta:</label>
+            <label for="start-date-to" class="sr-only">Hasta</label>
             <input type="date" id="start-date-to" aria-label="Seleccionar fecha de inicio hasta">
           </div>
           <div class="filters-group days-group">
             <span class="group-label">Días:</span>
             <?php $diasSemana = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
             foreach ($diasSemana as $dia): ?>
-              <button type="button" class="chip chip-day" data-day="<?php echo $dia; ?>" aria-pressed="false" title="<?php echo $dia; ?>">
+              <button type="button" class="chip chip-sm chip-day" data-day="<?php echo $dia; ?>" aria-pressed="false" title="<?php echo $dia; ?>">
                 <?php echo substr($dia,0,1); ?>
               </button>
             <?php endforeach; ?>
           </div>
           <div class="filters-group actions-group">
-            <button type="button" id="filters-reset" class="button btn-outline btn-sm">Limpiar filtros</button>
+            <button type="button" id="filters-reset" class="button btn-outline btn-sm">Limpiar</button>
           </div>
         </div>
       </fieldset>
