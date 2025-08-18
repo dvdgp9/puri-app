@@ -328,9 +328,13 @@ try {
                                     Descargar plantilla
                                 </a>
                                 <input type="file" id="participantsCsv" name="csv" accept=".csv">
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeCreateParticipantModal()">Cancelar</button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeCreateParticipantModal()">Cancelar</button>
                 <button type="submit" form="createParticipantForm" class="btn btn-primary" id="createParticipantBtn">
                     <span class="btn-text">Inscribir Participante</span>
                     <span class="btn-loading">
@@ -347,7 +351,7 @@ try {
                         </svg>
                     </span>
                 </button>
-                </div>
+            </div>
         </div>
     </div>
 
