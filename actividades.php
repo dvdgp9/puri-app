@@ -148,21 +148,17 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
         <span><?php echo htmlspecialchars(html_entity_decode($info['instalacion_nombre'])); ?></span>
       </div>
       
-      <!-- Barra de filtros (diseño perfecto) -->
+      <!-- Barra de filtros (compacta) -->
       <fieldset class="filters-bar">
         <legend>Filtrar</legend>
         <div class="filters-row">
-          <!-- Búsqueda principal -->
-          <div class="filters-group search-group">
+          <!-- Fila 1: Búsqueda + Ordenar -->
+          <div class="filters-top-row">
             <div class="search-box">
               <i class="fas fa-search"></i>
               <input type="text" id="search-input" placeholder="Buscar actividades...">
             </div>
-          </div>
-          
-          <!-- Orden y fechas en fila -->
-          <div class="sort-date-row">
-            <div class="filters-group sort-group">
+            <div class="sort-group">
               <label for="sort-select">Ordenar por:</label>
               <select id="sort-select">
                 <option value="" disabled selected>Seleccionar orden</option>
@@ -172,17 +168,17 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
                 <option value="fecha-desc">Fecha inicio (↓)</option>
               </select>
             </div>
-            <div class="filters-group date-group">
+          </div>
+          
+          <!-- Fila 2: Fechas + Días + Reset -->
+          <div class="filters-bottom-row">
+            <div class="date-group">
               <label for="start-date-from">Inicio desde:</label>
               <input type="date" id="start-date-from">
               <label for="start-date-to">hasta:</label>
               <input type="date" id="start-date-to">
             </div>
-          </div>
-          
-          <!-- Días y acciones -->
-          <div class="days-actions-row">
-            <div class="filters-group days-group">
+            <div class="days-group">
               <span class="group-label">Días:</span>
               <?php $diasSemana = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
               foreach ($diasSemana as $dia): ?>
@@ -191,7 +187,7 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
                 </button>
               <?php endforeach; ?>
             </div>
-            <div class="filters-group actions-group">
+            <div class="actions-group">
               <button type="button" id="filters-reset" class="button btn-outline btn-sm">Limpiar filtros</button>
             </div>
           </div>
