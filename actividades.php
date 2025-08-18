@@ -160,6 +160,8 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
             <option value="" disabled selected>Seleccionar orden</option>
             <option value="nombre-asc">Nombre (A-Z)</option>
             <option value="nombre-desc">Nombre (Z-A)</option>
+            <option value="fecha-asc">Fecha inicio (↑)</option>
+            <option value="fecha-desc">Fecha inicio (↓)</option>
           </select>
         </div>
         <div class="date-filters" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">

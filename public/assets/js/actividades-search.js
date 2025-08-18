@@ -65,14 +65,14 @@ function filtrarActividades() {
             if (fromVal && (!fechaInicio || fechaInicio < fromVal)) return false;
             if (toVal && (!fechaInicio || fechaInicio > toVal)) return false;
 
-            // Días de realización (data-dias: "Lunes,Martes,...")
+            // Días de realización (data-dias: "Lunes,Martes,...") con lógica AND
             if (selectedDays.length) {
                 const diasStr = (item.getAttribute('data-dias') || '').trim();
                 if (!diasStr) return false;
                 const dias = diasStr.split(',').map(d => d.trim());
-                // Pasa si coincide con AL MENOS uno de los seleccionados
-                const anyMatch = selectedDays.some(d => dias.includes(d));
-                if (!anyMatch) return false;
+                // Debe contener TODOS los seleccionados (AND)
+                const allMatch = selectedDays.every(d => dias.includes(d));
+                if (!allMatch) return false;
             }
 
             return true;
@@ -82,8 +82,13 @@ function filtrarActividades() {
         actividadesFiltradas.sort((a, b) => {
             const nombreA = a.querySelector('.activity-name span')?.textContent.toLowerCase() || '';
             const nombreB = b.querySelector('.activity-name span')?.textContent.toLowerCase() || '';
+            const fechaA = a.getAttribute('data-fecha-inicio') || '';
+            const fechaB = b.getAttribute('data-fecha-inicio') || '';
+
             if (sortBy === 'nombre-asc') return nombreA.localeCompare(nombreB);
             if (sortBy === 'nombre-desc') return nombreB.localeCompare(nombreA);
+            if (sortBy === 'fecha-asc') return fechaA.localeCompare(fechaB);
+            if (sortBy === 'fecha-desc') return fechaB.localeCompare(fechaA);
             return 0;
         });
         

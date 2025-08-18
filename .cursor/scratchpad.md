@@ -361,3 +361,55 @@ Como superadmin necesito gestionar administradores/superadmins desde el propio D
 - [x] JS: Crear admin (API `create.php`, validación, loading, notificación)
 - [x] JS: Editar admin (rol + reset password opcional, API `update.php`)
 - [x] JS: Eliminar admin (confirmación + reglas del backend, notificación)
+
+---
+
+## Planner: Mejora UI/UX filtros en `actividades.php`
+
+### Background and Motivation
+Los filtros actuales funcionan pero pueden ser más claros y eficientes. Buscamos mejorar discoverability, reducir fricción en móvil y añadir patrones modernos (chips, sticky, reset) sin romper estilos existentes.
+
+### Key Challenges and Analysis
+- Mantener consistencia con `public/assets/css/style.css` (tipografía, paleta, spacing).
+- Accesibilidad: roles/aria en chips (toggle), etiquetas visibles, foco claro.
+- Rendimiento: filtrar/ordenar client-side con debounce para listas largas.
+
+### High-level Task Breakdown
+1) Rediseño de barra de filtros (markup en `actividades.php`)
+   - Contenedor `.filters-bar` con `fieldset` + `legend "Filtrar"`.
+   - Input búsqueda con icono (`.search-box`).
+   - Rango de fechas compacto (`#start-date-from`, `#start-date-to`).
+   - Días como chips togglables (`button.chip[data-day]`, `aria-pressed`).
+   - Select de orden: Nombre A→Z, Z→A, Fecha ↑, Fecha ↓.
+   - Botón "Limpiar filtros" `.btn-outline.btn-sm`.
+2) Estilos (en `public/assets/css/style.css`)
+   - `.filters-bar` grid responsive, sticky top dentro del contenedor.
+   - `.chip` base + `.active`, estados hover/focus, tamaños táctiles.
+   - Ajustes de spacing y estados (focus-visible) accesibles.
+3) Lógica JS (en `public/assets/js/actividades-search.js`)
+   - Debounce de búsqueda (250ms).
+   - Soporte chips (buttons) además de checkboxes actuales (compat temporal).
+   - Orden por fecha de inicio (asc/desc) además del nombre.
+   - Botón Reset que limpia filtros y re-renderiza.
+   - Persistencia ligera en `localStorage` (últimos filtros) y restauración on load.
+4) QA y Accesibilidad
+   - Navegación por teclado (Tab/Shift+Tab), `aria-pressed` en chips.
+   - Móvil: touch targets ≥44px, wrap correcto.
+   - Performance: probar con 200+ items.
+
+### Success Criteria
+- La barra de filtros es clara, compacta y sticky al hacer scroll en `actividades.php`.
+- Los chips de días se pueden alternar con ratón y teclado; `aria-pressed` refleja el estado.
+- Orden por fecha funciona correctamente usando `data-fecha-inicio` (`YYYY-MM-DD`).
+- Botón "Limpiar filtros" restablece todos los controles y oculta el mensaje de "sin resultados".
+- Los filtros se recuerdan al recargar (localStorage) y se aplican automáticamente.
+
+### Project Status Board (UI/UX Actividades)
+- [ ] Rediseñar markup filtros en `actividades.php`
+- [ ] Añadir estilos `.filters-bar` y `.chip` a `style.css`
+- [ ] Mejorar `actividades-search.js` (debounce, chips, ordenar por fecha, reset, persistencia)
+- [ ] QA accesibilidad/Responsive y performance
+
+### Executor's Feedback or Assistance Requests
+- Confirmar si prefieres que los chips de días apliquen condición "cualquiera" (OR, actual) o "todos" (AND).
+- Confirmar si el sticky debe quedar bajo el header global y su offset exacto (px).
