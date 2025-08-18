@@ -108,6 +108,17 @@ Implementar un dashboard Single Page Application (SPA) con:
   - `admin/installation.php`: botón en `.center-header-right`
   - Cambio: `fill="currentColor"` → `fill="none"` y `stroke="currentColor"` con `stroke-width` y joins redondeados
 
+### Progreso reciente (Actividad: Participantes)
+✅ Creado endpoint `admin/api/participantes/list_by_activity.php` para listar inscritos por actividad, con autorización basada en asignaciones de centro y retorno de contexto (centro, instalación, actividad) para el breadcrumb de la página.
+✅ Creada página `admin/activity.php` con breadcrumb, header (Volver, Editar, + Añadir Participantes), panel de participantes con búsqueda/orden y modales (Editar actividad, Añadir participantes con pestañas Manual/CSV).
+✅ Añadido script `admin/assets/js/activity.js` que:
+  - Carga y renderiza inscritos por actividad (búsqueda y ordenación en cliente).
+  - Abre/precarga modal de edición y guarda cambios vía `admin/api/actividades/update.php`.
+  - Crea participantes manualmente vía `admin/api/participantes/create.php` fijando `actividad_id`.
+  - Sube CSV vía `admin/api/participantes/upload_csv.php` con `actividad_id` fijado.
+  - Notificaciones y estados de carga básicos implementados.
+✅ Corregido enlace de plantilla CSV a `public/assets/plantilla-asistentes.csv`.
+
 ### Siguientes pasos
 - Verificar apertura del modal desde el botón "+ Nueva Instalación" y desde el empty-state.
 - Alinear estructura de tarjetas de stats generadas en `admin/assets/js/center.js::renderStats()` con los selectores de `admin/assets/css/admin.css` (`.stat-header`, `.stat-title`, `.stat-value`, `.stat-icon`).
@@ -247,6 +258,16 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 - [ ] Botón "+ Nueva Instalación" abre el modal correctamente en todos los casos
 - [x] Tarjetas de estadísticas igualadas al dashboard (estructura/clases)
 - [ ] Comportamiento responsive revisado (modal, grid, panel)
+
+### Actividad: Página de Participantes
+- [x] API `admin/api/participantes/list_by_activity.php` (listar inscritos por actividad con contexto y auth)
+- [x] Crear `admin/activity.php` (breadcrumb, header con botón Editar, botón "+ Añadir Participantes", listado)
+- [x] Crear `admin/assets/js/activity.js` (carga actividad+inscritos, render, búsqueda/orden)
+- [x] Modal "Añadir Participantes": pestañas Manual y CSV con `actividad_id` fijado y campos de contexto bloqueados
+- [x] Wire Manual → `admin/api/participantes/create.php`
+- [x] Wire CSV → `admin/api/participantes/upload_csv.php`
+- [ ] Notificaciones y manejo de errores consistente con centros/instalaciones
+- [ ] Pruebas E2E de flujo completo
 
 ## Success Criteria
 
