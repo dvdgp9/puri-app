@@ -1606,6 +1606,8 @@ input[type="time"] {
   }
   .filters-row { gap: 0.5rem; }
   .filters-top-row { gap: 0.75rem; }
+  /* Ocultar ordenación en móvil */
+  .sort-group { display: none !important; }
 
   .search-box input {
     font-size: 0.85rem;
