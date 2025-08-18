@@ -148,38 +148,46 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
         <span><?php echo htmlspecialchars(html_entity_decode($info['instalacion_nombre'])); ?></span>
       </div>
       
-      <!-- Barra de búsqueda y ordenación -->
-      <div class="search-sort-container">
-        <div class="search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" id="search-input" placeholder="Buscar actividades...">
+      <!-- Barra de filtros (rediseño) -->
+      <fieldset class="filters-bar">
+        <legend>Filtrar</legend>
+        <div class="filters-row">
+          <div class="filters-group search-group">
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" id="search-input" placeholder="Buscar actividades...">
+            </div>
+          </div>
+          <div class="filters-group sort-group">
+            <label for="sort-select">Ordenar por:</label>
+            <select id="sort-select">
+              <option value="" disabled selected>Seleccionar orden</option>
+              <option value="nombre-asc">Nombre (A-Z)</option>
+              <option value="nombre-desc">Nombre (Z-A)</option>
+              <option value="fecha-asc">Fecha inicio (↑)</option>
+              <option value="fecha-desc">Fecha inicio (↓)</option>
+            </select>
+          </div>
+          <div class="filters-group date-group">
+            <label for="start-date-from">Inicio desde:</label>
+            <input type="date" id="start-date-from">
+            <label for="start-date-to">hasta:</label>
+            <input type="date" id="start-date-to">
+          </div>
+          <div class="filters-group days-group">
+            <span class="group-label">Días:</span>
+            <?php $diasSemana = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+            foreach ($diasSemana as $dia): ?>
+              <button type="button" class="chip chip-day" data-day="<?php echo $dia; ?>" aria-pressed="false" title="<?php echo $dia; ?>">
+                <?php echo substr($dia,0,1); ?>
+              </button>
+            <?php endforeach; ?>
+          </div>
+          <div class="filters-group actions-group">
+            <button type="button" id="filters-reset" class="button btn-outline btn-sm">Limpiar filtros</button>
+          </div>
         </div>
-        <div class="sort-box">
-          <label for="sort-select">Ordenar por:</label>
-          <select id="sort-select">
-            <option value="" disabled selected>Seleccionar orden</option>
-            <option value="nombre-asc">Nombre (A-Z)</option>
-            <option value="nombre-desc">Nombre (Z-A)</option>
-            <option value="fecha-asc">Fecha inicio (↑)</option>
-            <option value="fecha-desc">Fecha inicio (↓)</option>
-          </select>
-        </div>
-        <div class="date-filters" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <label for="start-date-from">Inicio desde:</label>
-          <input type="date" id="start-date-from">
-          <label for="start-date-to">hasta:</label>
-          <input type="date" id="start-date-to">
-        </div>
-        <div class="days-filters" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;">
-          <span>Días:</span>
-          <?php $diasSemana = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-          foreach ($diasSemana as $dia): ?>
-            <label style="display:flex; gap:4px; align-items:center;">
-              <input type="checkbox" class="filter-day" value="<?php echo $dia; ?>"> <?php echo substr($dia,0,1); ?>
-            </label>
-          <?php endforeach; ?>
-        </div>
-      </div>
+      </fieldset>
       
       <!-- Mensaje de no resultados -->
       <div id="no-results-message" class="no-results-message" style="display: none;">

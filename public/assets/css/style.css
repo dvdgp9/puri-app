@@ -1255,3 +1255,90 @@ input[type="time"] {
   margin-right: 5px;
   color: #666;
 }
+
+/* ===== Filtros (Actividades) - Rediseño ===== */
+.filters-bar {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0 1.5rem 0;
+}
+
+.filters-bar > legend {
+  padding: 0 6px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.filters-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.4fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+.filters-group label,
+.filters-group .group-label {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  margin-right: 8px;
+  font-weight: 500;
+}
+
+.filters-group.date-group input[type="date"] {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+}
+
+/* Chips de días */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  min-width: 36px;
+  padding: 0 10px;
+  border-radius: 18px;
+  border: 1px solid #e1e1e1;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.chip:hover {
+  border-color: #ccc;
+}
+
+.chip:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(35, 170, 197, 0.12);
+}
+
+.chip.active,
+.chip[aria-pressed="true"] {
+  background: rgba(35, 170, 197, 0.12);
+  color: var(--primary-dark);
+  border-color: var(--primary-color);
+  font-weight: 600;
+}
+
+.days-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actions-group .button {
+  white-space: nowrap;
+}
+
+@media (max-width: 992px) {
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+}

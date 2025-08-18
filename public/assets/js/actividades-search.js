@@ -30,7 +30,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const sortSelect = document.getElementById('sort-select');
     const dateFrom = document.getElementById('start-date-from');
     const dateTo = document.getElementById('start-date-to');
-    const dayCheckboxes = Array.from(document.querySelectorAll('.filter-day'));
+    const dayChips = Array.from(document.querySelectorAll('.chip-day'));
+    const resetBtn = document.getElementById('filters-reset');
     
     if (searchInput) {
         searchInput.addEventListener('input', filtrarActividades);
@@ -42,7 +43,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (dateFrom) dateFrom.addEventListener('change', filtrarActividades);
     if (dateTo) dateTo.addEventListener('change', filtrarActividades);
-    if (dayCheckboxes.length) dayCheckboxes.forEach(cb => cb.addEventListener('change', filtrarActividades));
+    if (dayChips.length) {
+        dayChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                const pressed = chip.getAttribute('aria-pressed') === 'true';
+                chip.setAttribute('aria-pressed', String(!pressed));
+                chip.classList.toggle('active', !pressed);
+                filtrarActividades();
+            });
+        });
+    }
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            if (searchInput) searchInput.value = '';
+            if (sortSelect) sortSelect.selectedIndex = 0;
+            if (dateFrom) dateFrom.value = '';
+            if (dateTo) dateTo.value = '';
+            dayChips.forEach(chip => {
+                chip.setAttribute('aria-pressed', 'false');
+                chip.classList.remove('active');
+            });
+            filtrarActividades();
+        });
+    }
 });
 
 // Función para filtrar actividades
@@ -51,7 +74,7 @@ function filtrarActividades() {
     const sortBy = (document.getElementById('sort-select')?.value) || '';
     const fromVal = document.getElementById('start-date-from')?.value || '';
     const toVal = document.getElementById('start-date-to')?.value || '';
-    const selectedDays = Array.from(document.querySelectorAll('.filter-day:checked')).map(cb => cb.value);
+    const selectedDays = Array.from(document.querySelectorAll('.chip-day[aria-pressed="true"]')).map(chip => chip.getAttribute('data-day'));
     
     // Filtrar y ordenar cada categoría usando los datos originales
     Object.keys(actividadesOriginales).forEach(categoria => {
@@ -159,7 +182,7 @@ function mostrarMensajeSinResultados() {
         (document.getElementById('search-input')?.value || '') ||
         (document.getElementById('start-date-from')?.value || '') ||
         (document.getElementById('start-date-to')?.value || '') ||
-        Array.from(document.querySelectorAll('.filter-day:checked')).length
+        Array.from(document.querySelectorAll('.chip-day[aria-pressed="true"]')).length
     );
     mensajeGlobal.style.display = (todasVacias && tieneAlgunaEntrada) ? 'block' : 'none';
 }
