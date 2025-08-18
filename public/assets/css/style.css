@@ -1353,15 +1353,16 @@ input[type="time"] {
 .filters-bottom-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
+  justify-content: flex-start;
+  column-gap: 0.75rem;
+  row-gap: 0.5rem;
   flex-wrap: wrap;
 }
 
 .date-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -1379,7 +1380,7 @@ input[type="time"] {
   background: #fff;
   font-size: 0.9rem;
   transition: border-color 0.2s ease;
-  width: 140px;
+  width: 120px;
 }
 
 .date-group input[type="date"]:focus {
@@ -1440,7 +1441,7 @@ input[type="time"] {
 }
 
 .date-compact.has-value input[type="date"] {
-  width: 160px;
+  width: 120px;
   opacity: 1;
   pointer-events: auto;
 }
@@ -1452,8 +1453,15 @@ input[type="time"] {
 .days-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
+}
+
+/* Mantener acciones al final de la fila */
+.actions-group {
+  margin-left: auto;
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .days-group .group-label {
@@ -1516,15 +1524,14 @@ input[type="time"] {
 
 /* Botón reset compacto */
 .actions-group .button {
-  padding: 9px 16px;
+  padding: 8px 12px;
   border: 2px solid #e2e8f0;
   border-radius: 9px;
   background: #fff;
-  color: #64748b;
-  font-weight: 600;
-  font-size: 0.85rem;
+  color: #475569;
+  cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
   height: 38px;
 }
 
