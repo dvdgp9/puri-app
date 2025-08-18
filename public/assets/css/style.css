@@ -1256,165 +1256,247 @@ input[type="time"] {
   color: #666;
 }
 
-/* ===== Filtros (Actividades) - Rediseño ===== */
+/* ===== Filtros (Actividades) - Diseño Perfecto ===== */
 .filters-bar {
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 0.75rem 1rem; /* más compacto */
-  margin: 0.75rem 0 1rem 0; /* más compacto */
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin: 1.5rem 0 2rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .filters-bar > legend {
-  padding: 0 6px;
-  font-weight: 600;
-  color: var(--text-color);
+  padding: 0 12px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--primary-dark);
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .filters-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.75rem; /* más compacto */
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
+/* Grupos de filtros */
 .filters-group {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 0; /* evita overflow */
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .filters-group label,
 .filters-group .group-label {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--text-color);
-  margin-right: 8px;
-  font-weight: 500;
-}
-
-.filters-group.date-group input[type="date"] {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: #fff;
-}
-
-/* Chips de días */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 36px;
-  min-width: 36px;
-  padding: 0 10px;
-  border-radius: 18px;
-  border: 1px solid #e1e1e1;
-  background: #fff;
-  color: #333;
-  cursor: pointer;
-  user-select: none;
-  transition: all 0.2s ease;
-}
-
-.chip:hover {
-  border-color: #ccc;
-}
-
-.chip:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(35, 170, 197, 0.12);
-}
-
-.chip.active,
-.chip[aria-pressed="true"] {
-  background: rgba(35, 170, 197, 0.12);
-  color: var(--primary-dark);
-  border-color: var(--primary-color);
   font-weight: 600;
+  min-width: fit-content;
+  margin-bottom: 0;
 }
 
-/* Tamaño pequeño de chip */
-.chip-sm {
-  height: 28px;
-  min-width: 28px;
-  border-radius: 14px;
-  padding: 0 8px;
-  font-size: 0.9rem;
+/* Grupo de búsqueda */
+.search-group {
+  order: 1;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 12px 16px 12px 44px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(35, 170, 197, 0.1);
+}
+
+.search-box i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 1rem;
+}
+
+/* Grupo de orden y fechas en fila */
+.sort-date-row {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  flex-wrap: wrap;
+  order: 2;
+}
+
+.sort-group, .date-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sort-group select {
+  padding: 10px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.95rem;
+  min-width: 180px;
+  transition: border-color 0.2s ease;
+}
+
+.sort-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.date-group input[type="date"] {
+  padding: 10px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease;
+}
+
+.date-group input[type="date"]:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* Grupo de días y acciones */
+.days-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  order: 3;
 }
 
 .days-group {
   display: flex;
   align-items: center;
-  gap: 6px; /* más compacto */
+  gap: 8px;
   flex-wrap: wrap;
 }
 
+/* Chips de días mejorados */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  border-radius: 22px;
+  border: 2px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.chip:hover {
+  border-color: var(--primary-color);
+  background: rgba(35, 170, 197, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.chip:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(35, 170, 197, 0.2);
+}
+
+.chip:active {
+  transform: translateY(0);
+}
+
+.chip.active,
+.chip[aria-pressed="true"] {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #1e7a8c 100%);
+  color: #fff;
+  border-color: var(--primary-color);
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(35, 170, 197, 0.3);
+}
+
+.chip.active:hover,
+.chip[aria-pressed="true"]:hover {
+  background: linear-gradient(135deg, #1e7a8c 0%, var(--primary-color) 100%);
+  transform: translateY(-1px);
+}
+
+/* Botón reset mejorado */
 .actions-group .button {
+  padding: 10px 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
-.actions-group {
-  justify-content: flex-end;
+.actions-group .button:hover {
+  border-color: #f87171;
+  color: #dc2626;
+  background: #fef2f2;
 }
 
-/* Fecha compacta: solo icono calendario */
-.date-compact {
-  white-space: nowrap;
+/* Responsive perfecto */
+@media (max-width: 1200px) {
+  .sort-date-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
 }
 
-.date-compact input[type="date"] {
-  width: 36px; /* más compacto, solo icono */
-  min-width: 36px;
-  padding: 6px;
-  text-indent: 0; /* no desplazamiento inesperado */
-  cursor: pointer;
-}
-
-/* Ocultar la parte editable en navegadores WebKit/Blink (Chrome, Edge, Safari) */
-.date-compact input[type="date"]::-webkit-datetime-edit,
-.date-compact input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-.date-compact input[type="date"]::-webkit-datetime-edit-text,
-.date-compact input[type="date"]::-webkit-datetime-edit-month-field,
-.date-compact input[type="date"]::-webkit-datetime-edit-day-field,
-.date-compact input[type="date"]::-webkit-datetime-edit-year-field {
-  display: none;
-}
-
-.date-compact input[type="date"]::-webkit-calendar-picker-indicator {
-  opacity: 1;
-  cursor: pointer;
-}
-
-/* Fallback general: si algún navegador muestra texto, lo hacemos invisible */
-.date-compact input[type="date"] {
-  color: transparent;
-  text-shadow: none;
-}
-
-.date-compact input[type="date"]:focus {
-  color: transparent;
-  text-shadow: none;
-}
-
-.date-compact label {
-  margin-right: 8px;
-}
-
-/* Utilidad accesible */
-.sr-only {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
-}
-
-@media (max-width: 992px) {
+@media (max-width: 768px) {
+  .filters-bar {
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+  
   .filters-row {
-    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .days-actions-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .search-box {
+    max-width: 100%;
+  }
+  
+  .chip {
+    height: 40px;
+    min-width: 40px;
+    font-size: 0.85rem;
   }
 }

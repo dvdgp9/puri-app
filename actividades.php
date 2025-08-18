@@ -148,44 +148,52 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
         <span><?php echo htmlspecialchars(html_entity_decode($info['instalacion_nombre'])); ?></span>
       </div>
       
-      <!-- Barra de filtros (rediseño) -->
+      <!-- Barra de filtros (diseño perfecto) -->
       <fieldset class="filters-bar">
         <legend>Filtrar</legend>
         <div class="filters-row">
+          <!-- Búsqueda principal -->
           <div class="filters-group search-group">
             <div class="search-box">
               <i class="fas fa-search"></i>
               <input type="text" id="search-input" placeholder="Buscar actividades...">
             </div>
           </div>
-          <div class="filters-group sort-group">
-            <label for="sort-select">Ordenar por:</label>
-            <select id="sort-select" aria-label="Ordenar por">
-              <option value="" disabled selected>Seleccionar orden</option>
-              <option value="nombre-asc">Nombre (A-Z)</option>
-              <option value="nombre-desc">Nombre (Z-A)</option>
-              <option value="fecha-asc">Fecha inicio (↑)</option>
-              <option value="fecha-desc">Fecha inicio (↓)</option>
-            </select>
+          
+          <!-- Orden y fechas en fila -->
+          <div class="sort-date-row">
+            <div class="filters-group sort-group">
+              <label for="sort-select">Ordenar por:</label>
+              <select id="sort-select">
+                <option value="" disabled selected>Seleccionar orden</option>
+                <option value="nombre-asc">Nombre (A-Z)</option>
+                <option value="nombre-desc">Nombre (Z-A)</option>
+                <option value="fecha-asc">Fecha inicio (↑)</option>
+                <option value="fecha-desc">Fecha inicio (↓)</option>
+              </select>
+            </div>
+            <div class="filters-group date-group">
+              <label for="start-date-from">Inicio desde:</label>
+              <input type="date" id="start-date-from">
+              <label for="start-date-to">hasta:</label>
+              <input type="date" id="start-date-to">
+            </div>
           </div>
-          <div class="filters-group date-group date-compact">
-            <span class="group-label">Inicio:</span>
-            <label for="start-date-from" class="sr-only">Desde</label>
-            <input type="date" id="start-date-from" aria-label="Seleccionar fecha de inicio desde">
-            <label for="start-date-to" class="sr-only">Hasta</label>
-            <input type="date" id="start-date-to" aria-label="Seleccionar fecha de inicio hasta">
-          </div>
-          <div class="filters-group days-group">
-            <span class="group-label">Días:</span>
-            <?php $diasSemana = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-            foreach ($diasSemana as $dia): ?>
-              <button type="button" class="chip chip-sm chip-day" data-day="<?php echo $dia; ?>" aria-pressed="false" title="<?php echo $dia; ?>">
-                <?php echo substr($dia,0,1); ?>
-              </button>
-            <?php endforeach; ?>
-          </div>
-          <div class="filters-group actions-group">
-            <button type="button" id="filters-reset" class="button btn-outline btn-sm">Limpiar</button>
+          
+          <!-- Días y acciones -->
+          <div class="days-actions-row">
+            <div class="filters-group days-group">
+              <span class="group-label">Días:</span>
+              <?php $diasSemana = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+              foreach ($diasSemana as $dia): ?>
+                <button type="button" class="chip chip-day" data-day="<?php echo $dia; ?>" aria-pressed="false" title="<?php echo $dia; ?>">
+                  <?php echo substr($dia,0,1); ?>
+                </button>
+              <?php endforeach; ?>
+            </div>
+            <div class="filters-group actions-group">
+              <button type="button" id="filters-reset" class="button btn-outline btn-sm">Limpiar filtros</button>
+            </div>
           </div>
         </div>
       </fieldset>
