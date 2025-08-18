@@ -117,6 +117,10 @@ try {
                     </svg>
                     <?= htmlspecialchars($actividad['centro_nombre']) ?> · <?= htmlspecialchars($actividad['instalacion_nombre']) ?>
                     <?php
+                        $dias = isset($actividad['dias_semana']) ? trim($actividad['dias_semana']) : '';
+                        if ($dias !== '') {
+                            echo ' · ' . htmlspecialchars($dias);
+                        }
                         $hIni = isset($actividad['hora_inicio']) && $actividad['hora_inicio'] ? substr($actividad['hora_inicio'], 0, 5) : null;
                         $hFin = isset($actividad['hora_fin']) && $actividad['hora_fin'] ? substr($actividad['hora_fin'], 0, 5) : null;
                         if ($hIni || $hFin) {
