@@ -40,6 +40,19 @@ window.addEventListener('DOMContentLoaded', () => {
   // Edit participant form
   const editParticipantForm = document.getElementById('editParticipantForm');
   if (editParticipantForm) editParticipantForm.addEventListener('submit', handleEditParticipantSubmit);
+
+  // Header profile dropdown toggle
+  const profileBtn = document.getElementById('profile-dropdown-btn');
+  const profileDropdown = document.getElementById('profile-dropdown');
+  if (profileBtn && profileDropdown) {
+    profileBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      profileDropdown.classList.toggle('active');
+    });
+    document.addEventListener('click', function(){
+      profileDropdown.classList.remove('active');
+    });
+  }
 });
 
 // Load participants

@@ -119,6 +119,11 @@ Implementar un dashboard Single Page Application (SPA) con:
   - Notificaciones y estados de carga básicos implementados.
 ✅ Corregido enlace de plantilla CSV a `public/assets/plantilla-asistentes.csv`.
 
+### Progreso reciente (Header perfil)
+- Estandarizado el dropdown de perfil del header en todas las páginas admin usando la clase `active` y cierre por clic fuera.
+  - Archivos actualizados: `admin/assets/js/center.js`, `admin/assets/js/installation.js`, `admin/assets/js/activity.js`.
+  - Soporte CSS ya existente en `admin/assets/css/admin.css` para `.dropdown-content.active`.
+
 ### Siguientes pasos
 - Verificar apertura del modal desde el botón "+ Nueva Instalación" y desde el empty-state.
 - Alinear estructura de tarjetas de stats generadas en `admin/assets/js/center.js::renderStats()` con los selectores de `admin/assets/css/admin.css` (`.stat-header`, `.stat-title`, `.stat-value`, `.stat-icon`).
@@ -236,6 +241,9 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 ### Infra: Acceso /admin
 - [x] Crear `admin/index.php` con redirección: si `admin_logged_in` → `dashboard.php`, si no → `login.php` (soluciona 403 en `/admin`)
 - [ ] Validar en producción que `https://puri.ebone.es/admin` redirige correctamente (no 403)
+
+### UI: Header perfil (dropdown)
+- [x] Estandarizar comportamiento del dropdown del perfil en header (center.js, installation.js, activity.js)
 
 ### Dashboard: Centros (CRUD)
 - [x] Implementar `updateCenter` en `admin/assets/js/dashboard.js` (editar centro desde modal)

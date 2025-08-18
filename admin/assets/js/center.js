@@ -649,12 +649,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (profileBtn && profileDropdown) {
         profileBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            profileDropdown.classList.toggle('show');
+            profileDropdown.classList.toggle('active');
         });
         
         // Cerrar dropdown al hacer clic fuera
         document.addEventListener('click', function() {
-            profileDropdown.classList.remove('show');
+            profileDropdown.classList.remove('active');
         });
     }
 });
