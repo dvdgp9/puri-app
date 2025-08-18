@@ -57,6 +57,18 @@ const AdminAPI = {
             body: JSON.stringify(payload)
         });
         return resp.json();
+    },
+    async centersList(admin_id) {
+        const resp = await fetch(`api/superadmin/admins/centers_list.php?admin_id=${encodeURIComponent(admin_id)}`);
+        return resp.json();
+    },
+    async centersSave(admin_id, center_ids) {
+        const resp = await fetch('api/superadmin/admins/centers_save.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admin_id, center_ids })
+        });
+        return resp.json();
     }
 };
 
@@ -144,6 +156,7 @@ function renderAdmins() {
                     </button>
                     <div class="dropdown-menu" id="dropdown-adm-${a.id}" onclick="event.stopPropagation()">
                         <a href="#" onclick="event.preventDefault(); openEditAdmin(${a.id});">Editar</a>
+                        <a href="#" onclick="event.preventDefault(); manageAdminCenters(${a.id});">Gestionar centros</a>
                         <a href="#" onclick="event.preventDefault(); confirmDeleteAdmin(${a.id});">Eliminar</a>
                     </div>
                 </div>
@@ -246,6 +259,103 @@ function closeEditAdminModal() {
     clearFormErrors();
     const form = document.getElementById('editAdminForm');
     if (form) form.reset();
+}
+
+// ====== Superadmin: Gestionar Centros asignados a Admin ======
+async function manageAdminCenters(adminId) {
+    // Cerrar cualquier dropdown abierto
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.classList.remove('show');
+        menu.classList.remove('dropup');
+        menu.style.top = '';
+        menu.style.left = '';
+        menu.style.right = '';
+        menu.style.bottom = '';
+    });
+    const admin = (Dashboard.admins || []).find(a => String(a.id) === String(adminId));
+    if (!admin) {
+        showNotification?.('Administrador no encontrado', 'error');
+        return;
+    }
+    const title = document.getElementById('manageCentersTitle');
+    if (title) title.textContent = `Centros de ${admin.username}`;
+    const hiddenId = document.getElementById('manageCentersAdminId');
+    if (hiddenId) hiddenId.value = adminId;
+    const list = document.getElementById('manageCentersList');
+    if (list) list.innerHTML = '<div class="custom-select-loading">Cargando centros...</div>';
+    showManageCentersModal();
+    try {
+        const res = await AdminAPI.centersList(adminId);
+        if (!res.success) throw new Error(res.error || 'No se pudo cargar');
+        renderManageCentersList(res.data || []);
+    } catch (e) {
+        console.error(e);
+        if (list) list.innerHTML = '<div class="error-card">Error cargando centros</div>';
+        showNotification?.('Error cargando centros', 'error');
+    }
+}
+
+function renderManageCentersList(items) {
+    const list = document.getElementById('manageCentersList');
+    if (!list) return;
+    if (!items.length) {
+        list.innerHTML = '<div class="empty-state">No hay centros</div>';
+        return;
+    }
+    list.innerHTML = items.map(c => `
+        <label class="checkbox-inline" style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+            <input type="checkbox" class="mc-center" value="${c.id}" ${c.asignado ? 'checked' : ''}>
+            <span>${escapeHtml(c.nombre)}</span>
+            <span class="badge ${c.activo ? 'active' : 'inactive'}" style="margin-left:auto;">${c.activo ? 'Activo' : 'Inactivo'}</span>
+        </label>
+    `).join('');
+}
+
+function showManageCentersModal() {
+    const modal = document.getElementById('manageAdminCentersModal');
+    if (modal) {
+        modal.classList.add('show');
+        setTimeout(() => {
+            const first = modal.querySelector('input[type="checkbox"]');
+            if (first) first.focus();
+        }, 100);
+    }
+}
+
+function closeManageCentersModal() {
+    const modal = document.getElementById('manageAdminCentersModal');
+    if (modal) modal.classList.remove('show');
+    const list = document.getElementById('manageCentersList');
+    if (list) list.innerHTML = '';
+}
+
+async function saveManageCenters(e) {
+    e?.preventDefault?.();
+    const adminId = parseInt(document.getElementById('manageCentersAdminId')?.value || '0', 10);
+    if (!adminId) {
+        showNotification?.('Admin inválido', 'error');
+        return;
+    }
+    const checkboxes = Array.from(document.querySelectorAll('#manageCentersList .mc-center'));
+    const selected = checkboxes.filter(ch => ch.checked).map(ch => parseInt(ch.value, 10)).filter(n => n > 0);
+    const btn = document.getElementById('saveManageCentersBtn');
+    btn?.classList.add('loading');
+    if (btn) btn.disabled = true;
+    try {
+        const res = await AdminAPI.centersSave(adminId, selected);
+        if (res.success) {
+            showNotification?.('Asignaciones guardadas', 'success');
+            closeManageCentersModal();
+        } else {
+            showNotification?.(res.error || 'No se pudo guardar', 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification?.('Error de conexión guardando asignaciones', 'error');
+    } finally {
+        btn?.classList.remove('loading');
+        if (btn) btn.disabled = false;
+    }
 }
 
 // Mostrar modal de edición de centro

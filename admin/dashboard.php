@@ -724,6 +724,35 @@ $admin_info = getAdminInfo();
             </form>
         </div>
     </div>
+    
+    <!-- Modal Gestionar Centros por Admin (Superadmin) -->
+    <div class="modal-overlay" id="manageAdminCentersModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="manageCentersTitle">Centros del administrador</h2>
+                <button class="modal-close" onclick="closeManageCentersModal()">&times;</button>
+            </div>
+            <form id="manageCentersForm" onsubmit="saveManageCenters(event)">
+                <input type="hidden" id="manageCentersAdminId" name="admin_id">
+                <div class="modal-body">
+                    <div id="manageCentersList" class="checkbox-group">
+                        <!-- Lista de centros con checkboxes -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeManageCentersModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="saveManageCentersBtn">
+                        <span class="btn-text">Guardar</span>
+                        <span class="btn-loading">
+                            <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="assets/js/dashboard.js"></script>
 </body>
