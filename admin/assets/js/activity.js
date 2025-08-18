@@ -36,6 +36,10 @@ window.addEventListener('DOMContentLoaded', () => {
   if (createForm) createForm.addEventListener('submit', handleCreateParticipantSubmit);
   const uploadCsvForm = document.getElementById('uploadParticipantCsvForm');
   if (uploadCsvForm) uploadCsvForm.addEventListener('submit', handleUploadCsvSubmit);
+
+  // Edit participant form
+  const editParticipantForm = document.getElementById('editParticipantForm');
+  if (editParticipantForm) editParticipantForm.addEventListener('submit', handleEditParticipantSubmit);
 });
 
 // Load participants
@@ -84,6 +88,18 @@ function renderParticipants() {
               </svg>
               ID: ${Number(p.id) || ''}
             </span>
+          </div>
+        </div>
+        <div class="center-actions">
+          <div class="dropdown" onclick="event.stopPropagation()">
+            <button class="more-btn" onclick="event.stopPropagation(); toggleParticipantDropdown(${p.id}, this); return false;">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 1 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 1 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 1 1 0 3z"/>
+              </svg>
+            </button>
+            <div class="dropdown-menu" id="participant-dropdown-${p.id}" onclick="event.stopPropagation()">
+              <a href="#" onclick="event.preventDefault(); editParticipant(${p.id});">Editar</a>
+            </div>
           </div>
         </div>
       </div>
@@ -309,5 +325,113 @@ function setBtnLoading(btn, loading) {
   if (text && spinner) {
     if (loading) { text.style.display = 'none'; spinner.style.display = 'inline-block'; }
     else { text.style.display = ''; spinner.style.display = 'none'; }
+  }
+}
+
+// Participants edit dropdown/modal
+function toggleParticipantDropdown(id, btnEl) {
+  const dropdown = document.getElementById(`participant-dropdown-${id}`);
+  const wasVisible = dropdown.classList.contains('show');
+  document.querySelectorAll('.dropdown-menu').forEach(menu => {
+    menu.classList.remove('show');
+    menu.classList.remove('dropup');
+    menu.style.top = '';
+    menu.style.left = '';
+    menu.style.right = '';
+    menu.style.bottom = '';
+  });
+  if (wasVisible) return;
+  const container = btnEl.closest('.dropdown');
+  if (container) {
+    const rect = container.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const bottomHalf = rect.bottom > (vh / 2);
+    const nearRight = rect.right > (vw - 180);
+    if (bottomHalf) {
+      dropdown.classList.add('dropup');
+      dropdown.style.bottom = (vh - rect.top) + 'px';
+      dropdown.style.top = 'auto';
+    } else {
+      dropdown.style.top = rect.bottom + 'px';
+      dropdown.style.bottom = 'auto';
+    }
+    if (nearRight) {
+      dropdown.style.right = (vw - rect.right) + 'px';
+      dropdown.style.left = 'auto';
+    } else {
+      dropdown.style.left = rect.left + 'px';
+      dropdown.style.right = 'auto';
+    }
+  }
+  dropdown.classList.add('show');
+}
+
+document.addEventListener('click', function(event) {
+  if (!event.target.closest('.dropdown')) {
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+      menu.classList.remove('show');
+      menu.classList.remove('dropup');
+      menu.style.top = '';
+      menu.style.left = '';
+      menu.style.right = '';
+      menu.style.bottom = '';
+    });
+  }
+});
+
+function editParticipant(id) {
+  const p = (ActivityPage.participants || []).find(x => String(x.id) === String(id));
+  if (!p) return;
+  const idInput = document.getElementById('editParticipantId');
+  const nameInput = document.getElementById('editParticipantName');
+  const lastInput = document.getElementById('editParticipantLastName');
+  if (idInput) idInput.value = String(p.id);
+  if (nameInput) nameInput.value = p.nombre || '';
+  if (lastInput) lastInput.value = p.apellidos || '';
+  // close dropdown if open
+  const menu = document.getElementById(`participant-dropdown-${id}`);
+  if (menu) {
+    menu.classList.remove('show', 'open', 'dropup');
+    menu.style.top = '';
+    menu.style.left = '';
+    menu.style.right = '';
+    menu.style.bottom = '';
+  }
+  openModal('editParticipantModal');
+}
+
+async function handleEditParticipantSubmit(e) {
+  e.preventDefault();
+  const id = Number(document.getElementById('editParticipantId').value);
+  const nombre = String(document.getElementById('editParticipantName').value || '').trim();
+  const apellidos = String(document.getElementById('editParticipantLastName').value || '').trim();
+  const errName = document.getElementById('editParticipantName-error');
+  const errLast = document.getElementById('editParticipantLastName-error');
+  if (errName) errName.textContent = '';
+  if (errLast) errLast.textContent = '';
+  if (!nombre) { if (errName) errName.textContent = 'El nombre es obligatorio'; return; }
+  if (!apellidos) { if (errLast) errLast.textContent = 'Los apellidos son obligatorios'; return; }
+  try {
+    const btn = document.getElementById('saveEditParticipantBtn');
+    setBtnLoading(btn, true);
+    const resp = await fetch('api/participantes/update.php', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, nombre, apellidos })
+    });
+    const result = await resp.json();
+    if (result.success) {
+      await loadParticipants();
+      closeModal('editParticipantModal');
+      showNotification('Participante actualizado', 'success');
+    } else {
+      showNotification(result.message || 'No se pudo actualizar el participante', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showNotification('Error actualizando participante', 'error');
+  } finally {
+    const btn = document.getElementById('saveEditParticipantBtn');
+    setBtnLoading(btn, false);
   }
 }

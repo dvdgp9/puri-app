@@ -319,6 +319,40 @@ try {
         </div>
     </div>
 
+    <!-- Modal: Editar Participante -->
+    <div id="editParticipantModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editParticipantTitle">
+            <div class="modal-header">
+                <h3 class="modal-title" id="editParticipantTitle">Editar Participante</h3>
+                <button class="modal-close" onclick="closeModal('editParticipantModal')" aria-label="Cerrar modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editParticipantForm">
+                    <input type="hidden" id="editParticipantId" name="id" />
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="editParticipantName">Nombre *</label>
+                            <input type="text" id="editParticipantName" name="nombre" required>
+                            <span class="field-error" id="editParticipantName-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="editParticipantLastName">Apellidos *</label>
+                            <input type="text" id="editParticipantLastName" name="apellidos" required>
+                            <span class="field-error" id="editParticipantLastName-error"></span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editParticipantModal')">Cancelar</button>
+                <button type="submit" form="editParticipantForm" class="btn btn-primary" id="saveEditParticipantBtn">
+                    <span class="btn-text">Guardar cambios</span>
+                    <span class="btn-loading" style="display:none">Guardando...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/activity.js"></script>
 </body>
 </html>
