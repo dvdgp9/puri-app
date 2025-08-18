@@ -330,7 +330,7 @@ function renderManageCentersList(items) {
         <label class="checkbox-inline" style="display:flex;align-items:center;gap:8px;padding:6px 0;">
             <input type="checkbox" class="mc-center" value="${c.id}" ${c.asignado ? 'checked' : ''}>
             <span>${escapeHtml(c.nombre)}</span>
-            <span class="badge ${c.activo ? 'active' : 'inactive'}" style="margin-left:auto;">${c.activo ? 'Activo' : 'Inactivo'}</span>
+            <span class="status-dot" style="margin-left:auto;display:inline-block;width:10px;height:10px;border-radius:50%;background-color:${c.activo ? '#16a34a' : '#ef4444'}" title="${c.activo ? 'Activo' : 'Inactivo'}"></span>
         </label>
     `).join('');
 }
