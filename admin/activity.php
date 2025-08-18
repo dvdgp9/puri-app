@@ -132,9 +132,6 @@ try {
                     </svg>
                     Editar
                 </button>
-                <button class="btn btn-primary" onclick="openAddParticipantsModal()">
-                    + Añadir Participantes
-                </button>
             </div>
         </div>
 
