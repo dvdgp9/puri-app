@@ -48,7 +48,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($actividad['nombre']) ?> - Sistema Puri</title>
+    <title><?= htmlspecialchars(html_entity_decode($actividad['nombre'], ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?> - Sistema Puri</title>
     <link rel="stylesheet" href="assets/css/admin.css">
     <link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -110,12 +110,19 @@ try {
                 </button>
             </div>
             <div class="center-header-center">
-                <h1 class="center-title installation-title"><?= htmlspecialchars($actividad['nombre']) ?></h1>
+                <h1 class="center-title installation-title"><?= htmlspecialchars(html_entity_decode($actividad['nombre'], ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?></h1>
                 <p class="center-address">
                     <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
                     </svg>
                     <?= htmlspecialchars($actividad['centro_nombre']) ?> · <?= htmlspecialchars($actividad['instalacion_nombre']) ?>
+                    <?php
+                        $hIni = isset($actividad['hora_inicio']) && $actividad['hora_inicio'] ? substr($actividad['hora_inicio'], 0, 5) : null;
+                        $hFin = isset($actividad['hora_fin']) && $actividad['hora_fin'] ? substr($actividad['hora_fin'], 0, 5) : null;
+                        if ($hIni || $hFin) {
+                            echo ' · ' . htmlspecialchars(trim(($hIni ?: '') . ($hFin ? '–' . $hFin : '')));
+                        }
+                    ?>
                 </p>
             </div>
             <div class="center-header-right">
