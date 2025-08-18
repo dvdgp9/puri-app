@@ -243,6 +243,11 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 - [x] Quitar doble inicialización en `app.js`
 - [ ] Validar `check_session.php` sin ruidos en JSON
 - [ ] Probar login/logout end-to-end
+ 
+### Empleado: desactivar CRUD en frontend
+- [x] Ocultar botón "Crear Nueva Instalación" y menú de 3 puntos (editar/borrar) en `instalaciones.php`
+- [x] Ocultar botón "Crear Nueva Actividad" y menú de 3 puntos (editar/borrar) en `actividades.php`
+- [x] Eliminar funciones JS y modales asociados a edición/borrado en ambas páginas
   
 ### Infra: Acceso /admin
 - [x] Crear `admin/index.php` con redirección: si `admin_logged_in` → `dashboard.php`, si no → `login.php` (soluciona 403 en `/admin`)
@@ -356,10 +361,3 @@ Como superadmin necesito gestionar administradores/superadmins desde el propio D
 - [x] JS: Crear admin (API `create.php`, validación, loading, notificación)
 - [x] JS: Editar admin (rol + reset password opcional, API `update.php`)
 - [x] JS: Eliminar admin (confirmación + reglas del backend, notificación)
-- [ ] Pruebas E2E básicas (crear→editar rol→eliminar)
-
-### Progreso reciente (Superadmin – Admins)
-- Añadidos modales de Crear/Editar en `admin/dashboard.php` y handlers en `admin/assets/js/dashboard.js`.
-- Implementado `AdminAPI.create/update` y flujos de validación, loading y notificaciones.
-- Integrado acción "Editar" en el dropdown de cada admin para abrir el modal precargado.
-- Pendiente: pruebas E2E y decidir si migrar a una vista dedicada `admin/admins.php` en lugar del panel en el dashboard.

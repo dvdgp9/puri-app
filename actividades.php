@@ -137,29 +137,6 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
       }
     });
 
-    function showOptionsModal(actividadId) {
-      const modal = document.getElementById('optionsModal-' + actividadId);
-      modal.style.display = 'flex';
-      modal.offsetHeight;
-      modal.classList.add('show');
-    }
-
-    function hideOptionsModal(actividadId) {
-      const modal = document.getElementById('optionsModal-' + actividadId);
-      modal.classList.remove('show');
-      setTimeout(() => {
-        modal.style.display = 'none';
-      }, 300);
-    }
-
-    // Cerrar modal al hacer clic fuera
-    document.querySelectorAll('[id^="optionsModal-"]').forEach(modal => {
-      modal.addEventListener('click', function(e) {
-        if (e.target === this) {
-          hideOptionsModal(this.id.split('-')[1]);
-        }
-      });
-    });
   </script>
 
   <div class="content-wrapper">
@@ -233,11 +210,6 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
                     </div>
                   </div>
                 </a>
-                <div class="item-actions">
-                  <button class="options-button" onclick="showOptionsModal(<?php echo $actividad['id']; ?>)">
-                    <i class="fas fa-ellipsis-h"></i>
-                  </button>
-                </div>
               </div>
             </li>
           <?php endforeach; ?>
@@ -285,11 +257,6 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
                     </div>
                   </div>
                 </a>
-                <div class="item-actions">
-                  <button class="options-button" onclick="showOptionsModal(<?php echo $actividad['id']; ?>)">
-                    <i class="fas fa-ellipsis-h"></i>
-                  </button>
-                </div>
               </div>
             </li>
           <?php endforeach; ?>
@@ -333,11 +300,6 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
                     </div>
                   </div>
                 </a>
-                <div class="item-actions">
-                  <button class="options-button" onclick="showOptionsModal(<?php echo $actividad['id']; ?>)">
-                    <i class="fas fa-ellipsis-h"></i>
-                  </button>
-                </div>
               </div>
             </li>
           <?php endforeach; ?>
@@ -345,26 +307,6 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
       <?php endif; ?>
     </div>
     
-    <a href="crear_actividad.php?instalacion_id=<?php echo $instalacion_id; ?>" class="button btn-outline btn-rounded">
-        <i class="fas fa-plus"></i> Crear Nueva Actividad
-    </a>
   </div>
 
-  <!-- Modales de opciones (fuera del list-container) -->
-  <?php foreach($todas_actividades as $actividad): ?>
-    <div class="modal-backdrop options-modal" id="optionsModal-<?php echo $actividad['id']; ?>">
-        <div class="modal">
-            <button class="modal-close" onclick="hideOptionsModal(<?php echo $actividad['id']; ?>)">×</button>
-            <h3>Opciones de la actividad</h3>
-            <div class="modal-options">
-                <a href="editar_actividad.php?id=<?php echo $actividad['id']; ?>" class="button btn-edit btn-sm">
-                    <i class="fas fa-pencil-alt"></i> Editar
-                </a>
-                <a href="borrar_actividad.php?id=<?php echo $actividad['id']; ?>" class="button btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que quieres borrar esta actividad?');">
-                    <i class="fas fa-times"></i> Borrar
-                </a>
-            </div>
-        </div>
-    </div>
-  <?php endforeach; ?>
-<?php require_once 'includes/footer.php'; ?>
+  <?php require_once 'includes/footer.php'; ?>

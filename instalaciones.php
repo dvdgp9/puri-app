@@ -68,20 +68,11 @@ require_once 'includes/header.php';
               <a href="actividades.php?instalacion_id=<?php echo $instalacion['id']; ?>">
                 <span class="item-title"><?php echo html_entity_decode(htmlspecialchars($instalacion['nombre'])); ?></span>
               </a>
-              <div class="item-actions">
-                <button class="options-button" onclick="showOptionsModal(<?php echo $instalacion['id']; ?>)">
-                  <i class="fas fa-ellipsis-h"></i>
-                </button>
-              </div>
             </div>
           </li>
         <?php endforeach; ?>
       </ul>
     </div>
-    
-    <a href="crear_instalacion.php?centro_id=<?php echo $centro_id; ?>" class="button btn-outline btn-rounded">
-        <i class="fas fa-plus"></i> Crear Nueva Instalación
-    </a>
   </div>
 
   <script>
@@ -108,47 +99,5 @@ require_once 'includes/header.php';
         hideModal();
       }
     });
-
-    function showOptionsModal(instalacionId) {
-      const modal = document.getElementById('optionsModal-' + instalacionId);
-      modal.style.display = 'flex';
-      modal.offsetHeight;
-      modal.classList.add('show');
-    }
-
-    function hideOptionsModal(instalacionId) {
-      const modal = document.getElementById('optionsModal-' + instalacionId);
-      modal.classList.remove('show');
-      setTimeout(() => {
-        modal.style.display = 'none';
-      }, 300);
-    }
-
-    // Cerrar modal al hacer clic fuera
-    document.querySelectorAll('[id^="optionsModal-"]').forEach(modal => {
-      modal.addEventListener('click', function(e) {
-        if (e.target === this) {
-          hideOptionsModal(this.id.split('-')[1]);
-        }
-      });
-    });
   </script>
-
-  <!-- Modales de opciones (fuera del list-container) -->
-  <?php foreach($instalaciones as $instalacion): ?>
-    <div class="modal-backdrop options-modal" id="optionsModal-<?php echo $instalacion['id']; ?>">
-      <div class="modal">
-          <button class="modal-close" onclick="hideOptionsModal(<?php echo $instalacion['id']; ?>)">×</button>
-          <h3>Opciones de la instalación</h3>
-          <div class="modal-options">
-              <a href="editar_instalacion.php?id=<?php echo $instalacion['id']; ?>" class="edit-button">
-                  <i class="fas fa-pencil-alt"></i> Editar
-              </a>
-              <a href="borrar_instalacion.php?id=<?php echo $instalacion['id']; ?>" class="delete-button" onclick="return confirm('¿Estás seguro? Se borrarán también sus actividades.');">
-                  <i class="fas fa-times"></i> Borrar
-              </a>
-          </div>
-      </div>
-    </div>
-  <?php endforeach; ?>
 <?php require_once 'includes/footer.php'; ?>
