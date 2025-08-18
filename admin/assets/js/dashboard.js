@@ -22,6 +22,146 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDashboardData();
 });
 
+// ====== Superadmin: Gestión de Administradores ======
+
+const AdminAPI = {
+    async list(params = {}) {
+        const { search = '' } = params;
+        const qs = search ? `?search=${encodeURIComponent(search)}` : '';
+        const resp = await fetch(`api/superadmin/admins/list.php${qs}`);
+        return resp.json();
+    },
+    async remove(id) {
+        const resp = await fetch('api/superadmin/admins/delete.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        return resp.json();
+    }
+};
+
+async function loadAdmins({ q = '', sort = 'created_at_desc' } = {}) {
+    try {
+        const data = await AdminAPI.list({ search: q });
+        if (data.success) {
+            let list = data.data || [];
+            list = sortAdminsList(list, sort);
+            Dashboard.admins = list;
+            renderAdmins();
+        } else {
+            showNotification?.('Error al cargar administradores: ' + (data.error || 'Desconocido'), 'error');
+            renderAdminsError();
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification?.('Error de conexión al cargar administradores', 'error');
+        renderAdminsError();
+    }
+}
+
+function sortAdminsList(items, sort) {
+    const arr = [...items];
+    switch (sort) {
+        case 'created_at_asc':
+            return arr.sort((a,b) => (a.created_at > b.created_at ? 1 : -1));
+        case 'username_asc':
+            return arr.sort((a,b) => String(a.username).localeCompare(String(b.username)));
+        case 'username_desc':
+            return arr.sort((a,b) => String(b.username).localeCompare(String(a.username)));
+        case 'created_at_desc':
+        default:
+            return arr.sort((a,b) => (a.created_at < b.created_at ? 1 : -1));
+    }
+}
+
+function renderAdmins() {
+    const container = document.getElementById('admins-list');
+    if (!container) return;
+    const admins = Dashboard.admins || [];
+    if (admins.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M17 20h5V4H2v16h5m10 0V10m0 10H7m10-10H7"/>
+                    </svg>
+                </div>
+                <h3>No hay administradores</h3>
+                <p>Crea tu primer administrador para comenzar</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = admins.map(a => `
+        <div class="center-item" style="cursor: default;">
+            <div class="center-main">
+                <div class="center-header">
+                    <h3 class="center-name">${escapeHtml(a.username)}</h3>
+                    <span class="center-status ${a.role === 'superadmin' ? 'active' : ''}">${escapeHtml(a.role)}</span>
+                </div>
+                <div class="center-details">
+                    <span class="center-address">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M6 8a4 4 0 118 0 4 4 0 01-8 0z"/>
+                        </svg>
+                        Creado: ${escapeHtml(a.created_at || '')}
+                    </span>
+                    <span class="center-stat">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                        </svg>
+                        ID: ${a.id}
+                    </span>
+                </div>
+            </div>
+            <div class="center-actions">
+                <div class="dropdown" onclick="event.stopPropagation()">
+                    <button class="more-btn" onclick="event.stopPropagation(); toggleDropdown('adm-${a.id}', this); return false;">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu" id="dropdown-adm-${a.id}" onclick="event.stopPropagation()">
+                        <a href="#" onclick="event.preventDefault(); alert('Editar - próximamente');">Editar</a>
+                        <a href="#" onclick="event.preventDefault(); confirmDeleteAdmin(${a.id});">Eliminar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderAdminsError() {
+    const container = document.getElementById('admins-list');
+    if (!container) return;
+    container.innerHTML = `
+        <div class="error-card">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Error cargando administradores
+        </div>
+    `;
+}
+
+function confirmDeleteAdmin(id) {
+    if (!confirm('¿Eliminar este administrador?')) return;
+    AdminAPI.remove(id).then(result => {
+        if (result.success) {
+            showNotification?.('Administrador eliminado', 'success');
+            Dashboard.admins = (Dashboard.admins || []).filter(a => String(a.id) !== String(id));
+            renderAdmins();
+        } else {
+            showNotification?.(result.error || 'No se pudo eliminar', 'error');
+        }
+    }).catch(err => {
+        console.error(err);
+        showNotification?.('Error de conexión eliminando admin', 'error');
+    });
+}
+
 // Mostrar modal de edición de centro
 function showEditCenterModal() {
     const modal = document.getElementById('editCenterModal');
