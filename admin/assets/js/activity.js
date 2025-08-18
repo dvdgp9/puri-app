@@ -46,7 +46,7 @@ async function loadParticipants() {
     const resp = await fetch(`api/participantes/list_by_activity.php?actividad_id=${ActivityPage.id}`);
     const data = await resp.json();
     if (!data.success) throw new Error(data.message || 'Error');
-    ActivityPage.participants = data.participantes || [];
+    ActivityPage.participants = data.participants || [];
     renderParticipants();
   } catch (e) {
     console.error(e);
