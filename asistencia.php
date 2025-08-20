@@ -54,20 +54,6 @@ $extraStyles = "
     .no-asiste { background-color: red; color: white; padding: 5px 10px; border: none; cursor: pointer; }
     .selected { opacity: 0.8; }
     
-    /* Estilos para el botón de eliminar */
-    .delete-btn {
-      color: red;
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1.2rem;
-      padding: 5px;
-      transition: transform 0.2s;
-    }
-    .delete-btn:hover {
-      transform: scale(1.2);
-    }
-    
     /* Estilos para los mensajes de confirmación y error */
     .mensaje-exito, .mensaje-error {
       padding: 10px 15px;
@@ -94,37 +80,6 @@ $extraStyles = "
       0% { opacity: 1; }
       70% { opacity: 1; }
       100% { opacity: 0; }
-    }
-    
-    /* Estilos para swipe-to-delete en móvil */
-    .attendance-row {
-      position: relative;
-      transition: transform 0.2s ease; /* Faster transition for better responsiveness */
-      touch-action: pan-y;
-      width: 100%;
-      display: table-row;
-    }
-    
-    .delete-action {
-      position: absolute;
-      right: -80px;
-      top: 0;
-      bottom: 0;
-      width: 80px;
-      background-color: red;
-      color: white;
-      display: flex; /* Always display but will be off-screen */
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      z-index: 1;
-    }
-    
-    /* Mostrar el botón de eliminar en móvil cuando se hace swipe */
-    @media (max-width: 768px) {
-      .delete-btn {
-        display: none;
-      }
     }
     
     /* Estilos para la sección de observaciones */
@@ -155,23 +110,8 @@ $extraStyles = "
       box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
     }
     
-    /* Asegurar que no hay transformación en desktop */
-    @media (min-width: 769px) {
-      .attendance-row {
-        transform: none !important;
-      }
-      
-      .delete-action {
-        display: none;
-      }
-    }
-    
     td {
       position: relative;
-    }
-    
-    .swiped {
-      transform: translateX(-80px);
     }
   </style>
 ";
@@ -217,154 +157,9 @@ require_once 'includes/header.php';
         }, 5000);
       });
     });
-    
-    // Función para eliminar un inscrito
-    function eliminarInscrito(inscritoId) {
-      if (confirm('¿Estás seguro de que deseas eliminar este inscrito de esta actividad? Esta acción no se puede deshacer y solo afectará a la participación en esta actividad.')) {
-        const formData = new FormData();
-        formData.append('inscrito_id', inscritoId);
-        formData.append('actividad_id', <?php echo $actividad_id; ?>);
-        
-        fetch('eliminar_inscrito.php', {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            // Eliminar la fila de la tabla
-            const row = document.getElementById('row_' + inscritoId);
-            row.parentNode.removeChild(row);
-            
-            // Mostrar mensaje de éxito
-            alert(data.message);
-          } else {
-            // Mostrar mensaje de error
-            alert(data.message);
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Error al eliminar el inscrito.');
-        });
-      }
-    }
-    
-    // Variables para el swipe
-    let touchStartX = 0;
-    let touchEndX = 0;
-    let currentSwipedRow = null;
-    let currentTouchingRow = null;
-    
-    // Inicializar eventos de swipe cuando el DOM esté listo
-    document.addEventListener('DOMContentLoaded', function() {
-      // Obtener todas las filas de asistencia
-      const rows = document.querySelectorAll('.attendance-row');
-      
-      // Añadir eventos de touch a cada fila
-      rows.forEach(row => {
-        row.addEventListener('touchstart', function(e) {
-          touchStartX = e.changedTouches[0].screenX;
-          currentTouchingRow = this;
-          
-          // Si hay una fila con swipe activo que no es esta, resetearla
-          if (currentSwipedRow && currentSwipedRow !== this) {
-            currentSwipedRow.classList.remove('swiped');
-            currentSwipedRow = null;
-          }
-        }, { passive: true });
-        
-        row.addEventListener('touchmove', function(e) {
-          if (currentTouchingRow !== this) return;
-          
-          const touchMoveX = e.changedTouches[0].screenX;
-          const swipeDistance = touchStartX - touchMoveX;
-          
-          // Limitar el desplazamiento entre 0 y 80px
-          let translateX = Math.min(Math.max(swipeDistance, 0), 80);
-          
-          // Aplicar la transformación en tiempo real durante el swipe
-          this.style.transform = `translateX(-${translateX}px)`;
-          
-          // Prevenir el scroll vertical si estamos haciendo swipe horizontal
-          if (Math.abs(swipeDistance) > 10) {
-            e.preventDefault();
-          }
-        }, { passive: false });
-        
-        row.addEventListener('touchend', function(e) {
-          if (currentTouchingRow !== this) return;
-          
-          touchEndX = e.changedTouches[0].screenX;
-          const swipeDistance = touchStartX - touchEndX;
-          
-          // Resetear el estilo inline para usar las clases CSS
-          this.style.transform = '';
-          
-          handleSwipe(this, swipeDistance);
-          currentTouchingRow = null;
-        }, { passive: true });
-        
-        row.addEventListener('touchcancel', function(e) {
-          if (currentTouchingRow !== this) return;
-          
-          // Resetear el estilo inline
-          this.style.transform = '';
-          currentTouchingRow = null;
-          
-          touchEndX = e.changedTouches[0].screenX;
-          handleSwipe(this, touchStartX - touchEndX);
-        }, { passive: true });
-      });
-      
-      // Añadir evento para cerrar swipe al hacer clic en cualquier parte
-      document.addEventListener('click', function(e) {
-        if (currentSwipedRow && !currentSwipedRow.contains(e.target) && !e.target.closest('.delete-action')) {
-          currentSwipedRow.classList.remove('swiped');
-          currentSwipedRow = null;
-        }
-      });
-      
-      // Añadir evento de resize para resetear filas desplazadas al cambiar a desktop
-      window.addEventListener('resize', function() {
-        if (window.innerWidth >= 769) {
-          // Si estamos en desktop, resetear cualquier fila desplazada
-          if (currentSwipedRow) {
-            currentSwipedRow.classList.remove('swiped');
-            currentSwipedRow = null;
-          }
-          
-          // También resetear cualquier transformación inline
-          rows.forEach(row => {
-            row.style.transform = '';
-          });
-        }
-      });
-    });
-    
-    // Función para manejar el swipe
-    function handleSwipe(row, swipeDistance) {
-      const swipeThreshold = 40; // Umbral mínimo para considerar un swipe (reducido para mejor respuesta)
-      
-      if (swipeDistance > swipeThreshold) {
-        // Swipe hacia la izquierda
-        row.classList.add('swiped');
-        currentSwipedRow = row;
-      } else if (swipeDistance < -swipeThreshold) {
-        // Swipe hacia la derecha (cerrar)
-        row.classList.remove('swiped');
-        currentSwipedRow = null;
-      } else {
-        // Si el swipe no fue suficiente, volver al estado anterior
-        if (currentSwipedRow === row) {
-          row.classList.add('swiped');
-        } else {
-          row.classList.remove('swiped');
-        }
-      }
-    }
   </script>
-    <button class="menu-button" onclick="showModal()">Volver a...</button>
+  
+  <button class="menu-button" onclick="showModal()">Volver a...</button>
   
   <div class="modal-backdrop" id="menuModal">
     <div class="modal">
@@ -452,7 +247,6 @@ require_once 'includes/header.php';
             <tr>
               <th>Apellido, Nombre</th>
               <th>Asistencia</th>
-              <th></th> <!-- Columna para el botón de eliminar -->
             </tr>
           </thead>
           <tbody>
@@ -480,15 +274,6 @@ require_once 'includes/header.php';
                   </button>
                 </div>
               </td>
-              <td>
-                <button type="button" class="delete-btn" onclick="eliminarInscrito(<?php echo $usuario['id']; ?>)">
-                  <i class="fas fa-trash-alt"></i>
-                </button>
-                <!-- Elemento para swipe-to-delete en móvil -->
-                <div class="delete-action" onclick="eliminarInscrito(<?php echo $usuario['id']; ?>)">
-                  <i class="fas fa-trash-alt"></i>
-                </div>
-              </td>
             </tr>
             <?php endforeach; ?>
           </tbody>
@@ -512,59 +297,7 @@ require_once 'includes/header.php';
       </form>
     </div>
 
-    <a href="crear_inscrito.php?actividad_id=<?php echo $actividad_id; ?>" class="button btn-outline btn-rounded">
-      <i class="fas fa-plus"></i> Añadir Inscrita/o
-    </a>
+    <!-- Enlace para añadir inscritos eliminado para evitar modificaciones desde esta vista -->
   </div>
 
-  <!-- Barra inferior fija -->
-  <div class="bottom-bar">
-    <div class="excel-buttons">
-      <a href="public/assets/plantilla-asistentes.csv" class="excel-button" download>
-        <i class="fas fa-download"></i> Descargar plantilla CSV
-      </a>
-      <label class="excel-button">
-        <i class="fas fa-upload"></i> Subir archivo CSV
-        <input type="file" id="excelFile" accept=".csv" style="display: none;" onchange="subirExcel(this)">
-      </label>
-    </div>
-  </div>
-
-  <script>
-    function subirExcel(input) {
-      if (input.files.length > 0) {
-        // Verificar que sea un archivo CSV
-        if (!input.files[0].name.toLowerCase().endsWith('.csv')) {
-          alert('Por favor, selecciona un archivo CSV');
-          return;
-        }
-
-        const formData = new FormData();
-        formData.append('excel', input.files[0]);
-        formData.append('actividad_id', <?php echo $actividad_id; ?>);
-
-        fetch('procesar_excel.php', {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          // Siempre mostrar el mensaje del servidor
-          alert(data.message);
-          
-          // Solo recargar si hubo importaciones exitosas
-          if (data.imported > 0) {
-            window.location.reload();
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Error al procesar el archivo. Por favor, verifica el formato y contenido del archivo CSV.');
-        });
-
-        // Limpiar el input file después de la subida
-        input.value = '';
-      }
-    }
-  </script>
-<?php require_once 'includes/footer.php'; ?>
+  <?php require_once 'includes/footer.php'; ?>

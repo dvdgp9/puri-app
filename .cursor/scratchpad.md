@@ -248,6 +248,8 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 - [x] Ocultar botón "Crear Nueva Instalación" y menú de 3 puntos (editar/borrar) en `instalaciones.php`
 - [x] Ocultar botón "Crear Nueva Actividad" y menú de 3 puntos (editar/borrar) en `actividades.php`
 - [x] Eliminar funciones JS y modales asociados a edición/borrado en ambas páginas
+ - [x] Asistencia: eliminar "+ Añadir Inscrita/o" y UI de borrado (papelera y swipe-to-delete) en `asistencia.php` para impedir modificar participantes; mantener marcaje de asistencia, observaciones y CSV.
+ - [x] Asistencia: eliminar barra inferior CSV y función `subirExcel()` en `asistencia.php` para impedir import/export desde esta vista.
   
 ### Infra: Acceso /admin
 - [x] Crear `admin/index.php` con redirección: si `admin_logged_in` → `dashboard.php`, si no → `login.php` (soluciona 403 en `/admin`)
