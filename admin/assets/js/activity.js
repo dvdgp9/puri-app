@@ -108,6 +108,7 @@ function renderParticipants() {
             </button>
             <div class="dropdown-menu" id="participant-dropdown-${p.id}" onclick="event.stopPropagation()">
               <a href="#" onclick="event.preventDefault(); editParticipant(${p.id});">Editar</a>
+              <a href="#" onclick="event.preventDefault(); confirmDeleteParticipant(${p.id});">Eliminar</a>
             </div>
           </div>
         </div>
@@ -417,6 +418,44 @@ function editParticipant(id) {
     menu.style.bottom = '';
   }
   openModal('editParticipantModal');
+}
+
+function confirmDeleteParticipant(id) {
+  // close dropdown if open
+  const menu = document.getElementById(`participant-dropdown-${id}`);
+  if (menu) {
+    menu.classList.remove('show', 'open', 'dropup');
+    menu.style.top = '';
+    menu.style.left = '';
+    menu.style.right = '';
+    menu.style.bottom = '';
+  }
+  const p = (ActivityPage.participants || []).find(x => String(x.id) === String(id));
+  const nombre = p ? `${p.apellidos || ''}, ${p.nombre || ''}`.trim() : '';
+  const ok = window.confirm(`¿Eliminar al participante${nombre ? ' "' + nombre + '"' : ''}?\n\nSe eliminará también su historial de asistencia para esta actividad.\n\nEsta acción no se puede deshacer.`);
+  if (ok) {
+    deleteParticipant(id);
+  }
+}
+
+async function deleteParticipant(id) {
+  try {
+    const resp = await fetch('api/participantes/delete.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: Number(id) })
+    });
+    const result = await resp.json();
+    if (result.success) {
+      await loadParticipants();
+      showNotification('Participante eliminado', 'success');
+    } else {
+      showNotification(result.message || 'No se pudo eliminar el participante', 'error');
+    }
+  } catch (e) {
+    console.error(e);
+    showNotification('Error eliminando participante', 'error');
+  }
 }
 
 async function handleEditParticipantSubmit(e) {

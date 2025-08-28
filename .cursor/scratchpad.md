@@ -287,6 +287,7 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 - [x] Modal "Añadir Participantes": pestañas Manual y CSV con `actividad_id` fijado y campos de contexto bloqueados
 - [x] Wire Manual → `admin/api/participantes/create.php`
 - [x] Wire CSV → `admin/api/participantes/upload_csv.php`
+- [x] Acción "Eliminar participante" en desplegable (confirmación), endpoint `admin/api/participantes/delete.php` y refresco del listado
 - [ ] Notificaciones y manejo de errores consistente con centros/instalaciones
 - [ ] Pruebas E2E de flujo completo
 
