@@ -275,8 +275,14 @@ require_once 'includes/header.php';
   <div class="content-wrapper">
     <div class="content-container">
       <div class="actions-row">
-        <button type="button" class="btn-primary" onclick="copyActivityLink()" aria-label="Copiar enlace a actividad">Copiar enlace a actividad</button>
-        <button type="button" class="btn-outline" disabled title="Próximamente">Añadir a favoritos</button>
+        <button type="button" class="btn-primary btn-action" onclick="copyActivityLink()" aria-label="Copiar enlace a actividad">
+          <i class="fas fa-link"></i>
+          Copiar enlace a actividad
+        </button>
+        <button type="button" class="btn-outline btn-action" disabled title="Próximamente disponible">
+          <i class="fas fa-heart"></i>
+          Añadir a favoritos
+        </button>
       </div>
       <h1>Pasa lista, que yo vigilo</h1>
       <div class="breadcrumbs">

@@ -46,14 +46,17 @@ require_once 'includes/header.php';
                 ?>
                 <?php if ($preselected): ?>
                   <div class="confirmed-centro">
-                    <div>
+                    <div class="pill-container">
                       <span class="pill">
                         <i class="fas fa-check-circle" aria-hidden="true"></i>
                         <span>Centro seleccionado:</span>
-                        <span><?php echo htmlspecialchars($preNombre ?: $preId); ?></span>
+                        <strong><?php echo htmlspecialchars($preNombre ?: $preId); ?></strong>
                       </span>
                     </div>
-                    <button type="button" class="btn-outline" onclick="enableCentroSelect()" aria-label="Cambiar centro">Cambiar centro</button>
+                    <button type="button" class="btn-outline btn-action" onclick="enableCentroSelect()" aria-label="Cambiar centro">
+                      <i class="fas fa-edit"></i>
+                      Cambiar centro
+                    </button>
                   </div>
                   <input type="hidden" name="centro_id" id="centro_id_hidden" value="<?php echo htmlspecialchars($preId); ?>">
                 <?php endif; ?>
