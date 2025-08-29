@@ -52,7 +52,6 @@ require_once 'includes/header.php';
                         <strong><?php echo htmlspecialchars($preNombre ?: $preId); ?></strong>
                         <button type="button" class="btn-ghost btn-action btn-icon-mobile" onclick="enableCentroSelect()" aria-label="Cambiar centro">
                           <i class="fas fa-edit" aria-hidden="true"></i>
-                          <span class="btn-label">Editar</span>
                         </button>
                       </span>
                     </div>
