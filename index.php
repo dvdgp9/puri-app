@@ -35,7 +35,29 @@ require_once 'includes/header.php';
                 <label for="centro_id">
                     <i class="fas fa-building"></i> Centro
                 </label>
-                <select name="centro_id" id="centro_id" required>
+                <?php
+                  $preselected = isset($_GET['centro_id']) && $_GET['centro_id'] !== '';
+                  $preId = $preselected ? (string)$_GET['centro_id'] : '';
+                  // Encontrar nombre del centro preseleccionado para mostrar en la píldora
+                  $preNombre = '';
+                  if ($preselected) {
+                    foreach ($centros as $c) { if ((string)$c['id'] === $preId) { $preNombre = $c['nombre']; break; } }
+                  }
+                ?>
+                <?php if ($preselected): ?>
+                  <div class="confirmed-centro" style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <span class="pill" style="display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:#e6f7fa; color:#086b78; font-weight:600;">
+                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                        <span>Centro seleccionado:</span>
+                        <span><?php echo htmlspecialchars($preNombre ?: $preId); ?></span>
+                      </span>
+                    </div>
+                    <button type="button" class="btn-outline" onclick="enableCentroSelect()" aria-label="Cambiar centro">Cambiar centro</button>
+                  </div>
+                  <input type="hidden" name="centro_id" id="centro_id_hidden" value="<?php echo htmlspecialchars($preId); ?>">
+                <?php endif; ?>
+                <select name="centro_id" id="centro_id" required <?php echo $preselected ? 'disabled' : ''; ?> style="<?php echo $preselected ? 'opacity:0.6;' : ''; ?>">
                     <option value="">Oye, y tú, ¿de quién eres?</option>
                     <?php foreach($centros as $centro): ?>
                         <option value="<?php echo $centro['id']; ?>" <?php echo (isset($_GET['centro_id']) && (string)$_GET['centro_id'] === (string)$centro['id']) ? 'selected' : ''; ?>>
@@ -56,5 +78,13 @@ require_once 'includes/header.php';
                 <i class="fas fa-sign-in-alt"></i> Acceder
             </button>
         </form>
+        <script>
+          function enableCentroSelect() {
+            const sel = document.getElementById('centro_id');
+            const hidden = document.getElementById('centro_id_hidden');
+            if (sel) { sel.disabled = false; sel.style.opacity = ''; sel.focus(); }
+            if (hidden) { hidden.parentNode.removeChild(hidden); }
+          }
+        </script>
     </div>
 <?php require_once 'includes/footer.php'; ?>
