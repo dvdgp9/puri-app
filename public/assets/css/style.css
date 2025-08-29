@@ -263,6 +263,9 @@
   /* Botón con icono solo en móvil */
   .btn-action .btn-label { display: none; }
   .btn-action.btn-icon-mobile { padding: 10px; min-width: 40px; min-height: 40px; }
+  /* Acciones: permitir salto de línea y botón a ancho completo cuando se requiera */
+  .actions-row { flex-wrap: wrap; }
+  .btn-block-mobile { width: 100%; justify-content: center; }
 }
 
 * {
