@@ -45,9 +45,9 @@ require_once 'includes/header.php';
                   }
                 ?>
                 <?php if ($preselected): ?>
-                  <div class="confirmed-centro" style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                      <span class="pill" style="display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:#e6f7fa; color:#086b78; font-weight:600;">
+                  <div class="confirmed-centro">
+                    <div>
+                      <span class="pill">
                         <i class="fas fa-check-circle" aria-hidden="true"></i>
                         <span>Centro seleccionado:</span>
                         <span><?php echo htmlspecialchars($preNombre ?: $preId); ?></span>
@@ -57,7 +57,7 @@ require_once 'includes/header.php';
                   </div>
                   <input type="hidden" name="centro_id" id="centro_id_hidden" value="<?php echo htmlspecialchars($preId); ?>">
                 <?php endif; ?>
-                <select name="centro_id" id="centro_id" required <?php echo $preselected ? 'disabled' : ''; ?> style="<?php echo $preselected ? 'opacity:0.6;' : ''; ?>">
+                <select name="centro_id" id="centro_id" required <?php echo $preselected ? 'disabled' : ''; ?>>
                     <option value="">Oye, y tú, ¿de quién eres?</option>
                     <?php foreach($centros as $centro): ?>
                         <option value="<?php echo $centro['id']; ?>" <?php echo (isset($_GET['centro_id']) && (string)$_GET['centro_id'] === (string)$centro['id']) ? 'selected' : ''; ?>>

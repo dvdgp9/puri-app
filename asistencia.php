@@ -274,7 +274,7 @@ require_once 'includes/header.php';
 
   <div class="content-wrapper">
     <div class="content-container">
-      <div class="actions-row" style="display:flex; gap:10px; align-items:center; justify-content:flex-end;">
+      <div class="actions-row">
         <button type="button" class="btn-primary" onclick="copyActivityLink()" aria-label="Copiar enlace a actividad">Copiar enlace a actividad</button>
         <button type="button" class="btn-outline" disabled title="Próximamente">Añadir a favoritos</button>
       </div>
