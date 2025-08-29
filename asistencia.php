@@ -3,7 +3,10 @@ require_once 'config/config.php';
 
 // Verifica sesión y parámetro
 if(!isset($_SESSION['centro_id'])){
-    header("Location: index.php");
+    // Redirigir a login conservando la URL actual como return_to para volver tras autenticación
+    $currentUrl = $_SERVER['REQUEST_URI'] ?? 'asistencia.php';
+    $location = 'index.php?return_to=' . urlencode($currentUrl);
+    header("Location: $location");
     exit;
 }
 if(!isset($_GET['actividad_id'])){
@@ -158,6 +161,63 @@ require_once 'includes/header.php';
       });
     });
   </script>
+  <script>
+    function showTempMessage(text, isError) {
+      const msg = document.createElement('div');
+      msg.className = isError ? 'mensaje-error' : 'mensaje-exito';
+      msg.textContent = text;
+      // Cerrar manual
+      const closeBtn = document.createElement('span');
+      closeBtn.innerHTML = '×';
+      closeBtn.style.position = 'absolute';
+      closeBtn.style.right = '10px';
+      closeBtn.style.top = '5px';
+      closeBtn.style.cursor = 'pointer';
+      closeBtn.style.fontSize = '20px';
+      closeBtn.style.fontWeight = 'bold';
+      closeBtn.onclick = function() { msg.remove(); };
+      msg.appendChild(closeBtn);
+      // Insertar arriba del contenido
+      const container = document.querySelector('.content-container') || document.body;
+      container.insertBefore(msg, container.firstChild);
+      // Autocierre a los 5s
+      setTimeout(() => { msg.remove(); }, 5000);
+    }
+
+    function copyActivityLink() {
+      try {
+        const actividadId = '<?php echo htmlspecialchars($actividad_id); ?>';
+        const absolute = new URL('asistencia.php?actividad_id=' + encodeURIComponent(actividadId), window.location.href).toString();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(absolute).then(() => {
+            showTempMessage('Enlace copiado');
+          }).catch(() => {
+            fallbackCopyText(absolute);
+          });
+        } else {
+          fallbackCopyText(absolute);
+        }
+      } catch (e) {
+        showTempMessage('No se pudo copiar el enlace', true);
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const input = document.createElement('input');
+      input.value = text;
+      document.body.appendChild(input);
+      input.select();
+      input.setSelectionRange(0, 99999);
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(input);
+      if (ok) {
+        showTempMessage('Enlace copiado');
+      } else {
+        showTempMessage('No se pudo copiar el enlace', true);
+      }
+    }
+  </script>
   
   <button class="menu-button" onclick="showModal()">Volver a...</button>
   
@@ -201,6 +261,10 @@ require_once 'includes/header.php';
 
   <div class="content-wrapper">
     <div class="content-container">
+      <div class="actions-row" style="display:flex; gap:10px; align-items:center; justify-content:flex-end;">
+        <button type="button" class="btn-primary" onclick="copyActivityLink()" aria-label="Copiar enlace a actividad">Copiar enlace a actividad</button>
+        <button type="button" class="btn-outline" disabled title="Próximamente">Añadir a favoritos</button>
+      </div>
       <h1>Pasa lista, que yo vigilo</h1>
       <div class="breadcrumbs">
         <a href="instalaciones.php"><?php echo htmlspecialchars(html_entity_decode($actividad['centro_nombre'])); ?></a>

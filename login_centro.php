@@ -13,7 +13,13 @@ if(isset($_POST['centro_id']) && isset($_POST['password'])){
     // Validación simple de contraseña (en producción, considerar hashing)
     if($centro && $centro['password'] === $password){
         $_SESSION['centro_id'] = $centro_id;
-        header("Location: instalaciones.php");
+        // Redirección segura a return_to si existe y es relativa (misma app)
+        $returnTo = isset($_POST['return_to']) ? $_POST['return_to'] : '';
+        if ($returnTo && !preg_match('/^https?:\/\//i', $returnTo)) {
+            header("Location: " . $returnTo);
+        } else {
+            header("Location: instalaciones.php");
+        }
         exit;
     } else {
         $_SESSION['error'] = "Credenciales incorrectas.";

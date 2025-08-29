@@ -416,3 +416,60 @@ Los filtros actuales funcionan pero pueden ser más claros y eficientes. Buscamo
 ### Executor's Feedback or Assistance Requests
 - Confirmar si prefieres que los chips de días apliquen condición "cualquiera" (OR, actual) o "todos" (AND).
 - Confirmar si el sticky debe quedar bajo el header global y su offset exacto (px).
+
+---
+
+## Planner: Flujo trabajadores — Deep links y Favoritos (hasta 3)
+
+### Background and Motivation
+Trabajadores repiten muchos pasos para pasar lista. Objetivo: reducir fricción diaria sin comprometer seguridad. Mantener el estilo actual (tipografía, botones, dropdowns, toasts) ya usado en las vistas recientes.
+
+### Key Decisions
+- Deep link con auth requerida: `asistencia.php?centro={id}&instalacion={id}&actividad={id}`
+  - Con sesión válida del centro → ir directo a la asistencia de esa actividad (saltando selectores).
+  - Sin sesión → pedir contraseña del centro y, tras login, redirigir de vuelta al deep link (y luego a asistencia).
+  - No se usa token en esta fase; el enlace solo pre-rellena/dirige, no salta auth.
+
+- Favoritos por dispositivo (hasta 3):
+  - UI: estrella (outline → filled) para marcar/desmarcar en:
+    - Listado previo de actividades.
+    - Encabezado de `asistencia.php` (participantes) para la actividad abierta.
+  - Almacenamiento: `localStorage` clave `puri.favs.v1` con array limitado a 3 entradas `{centro_id, instalacion_id, actividad_id, nombre}`.
+  - Home/portada: sección “Favoritos” con hasta 3 botones grandes “Continuar” (deep links). Opción “Gestionar” para quitar.
+
+- Consistencia visual:
+  - Icono estrella SVG (outline/filled) coherente con iconografía actual.
+  - Botones primarios/secundarios existentes; toasts ya usados para feedback.
+
+- QR/Compartir (opcional Fase 2):
+  - Botón “Copiar enlace” y “Mostrar QR” (cliente) para colocar en sala.
+  - El QR apunta al deep link sin token; mantiene requisito de contraseña si no hay sesión.
+
+### High-level Task Breakdown (Plan)
+1) Deep link routing (sin token)
+   - `asistencia.php`: leer `centro/instalacion/actividad` por GET, validar y navegar directo a la actividad si hay sesión; si no, guardar `return_to` y pedir login.
+   - Tras login del centro: redirigir a `return_to` y completar flujo.
+
+2) Favoritos (máx. 3)
+   - JS util `favorites` (add/remove/list, enforce limit 3, desduplicar por `{centro,instalacion,actividad}`).
+   - Estrella en listado de actividades y en `asistencia.php` header.
+   - Portada: render de sección “Favoritos” (orden: más reciente primero) → deep link.
+   - Estados: si una actividad ya no existe/ya no está activa, mostrar opción para quitar.
+
+3) QR/Compartir (Fase 2)
+   - Botón copiar URL + modal QR (lib ligera cliente) desde `asistencia.php` y/o listado de actividades.
+
+4) Copy y mensajes
+   - "Añadir a favoritos"/"Quitar de favoritos".
+   - "Continuar" en tarjetas de favoritos.
+   - Avisos breves si una actividad favorita dejó de estar disponible.
+
+### Success Criteria
+- Abrir un deep link con sesión válida entra directo a la asistencia de esa actividad; sin sesión, pide contraseña y regresa automáticamente.
+- El usuario puede marcar hasta 3 favoritos; aparecen en portada como accesos directos con 1 toque.
+- Estrella visible y coherente con el estilo; feedback por toast al añadir/quitar.
+- En caso de actividad inválida, el sistema no rompe y permite limpiar el favorito.
+
+### Open Questions
+- ¿El límite de 3 favoritos es global por dispositivo o por centro? (Propuesta: global por dispositivo)
+- ¿Mostramos favoritos solo en la portada o también como bloque superior en el listado de actividades?

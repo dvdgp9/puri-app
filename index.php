@@ -28,6 +28,9 @@ require_once 'includes/header.php';
         <?php endif; ?>
 
         <form action="login_centro.php" method="post">
+            <?php if (isset($_GET['return_to']) && $_GET['return_to'] !== ''): ?>
+                <input type="hidden" name="return_to" value="<?php echo htmlspecialchars($_GET['return_to']); ?>">
+            <?php endif; ?>
             <div class="form-group">
                 <label for="centro_id">
                     <i class="fas fa-building"></i> Centro
