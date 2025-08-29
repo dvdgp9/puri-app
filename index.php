@@ -53,9 +53,9 @@ require_once 'includes/header.php';
                         <strong><?php echo htmlspecialchars($preNombre ?: $preId); ?></strong>
                       </span>
                     </div>
-                    <button type="button" class="btn-outline btn-action" onclick="enableCentroSelect()" aria-label="Cambiar centro">
-                      <i class="fas fa-edit"></i>
-                      Cambiar centro
+                    <button type="button" class="btn-outline btn-action btn-icon-mobile" onclick="enableCentroSelect()" aria-label="Cambiar centro">
+                      <i class="fas fa-edit" aria-hidden="true"></i>
+                      <span class="btn-label">Cambiar centro</span>
                     </button>
                   </div>
                   <input type="hidden" name="centro_id" id="centro_id_hidden" value="<?php echo htmlspecialchars($preId); ?>">

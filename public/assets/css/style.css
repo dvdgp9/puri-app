@@ -222,6 +222,15 @@
   }
 }
 
+/* ===== Responsive ajustes específicos ===== */
+@media (max-width: 480px) {
+  /* Evitar recorte en contenedor de confirmado */
+  .confirmed-centro { flex-wrap: wrap; gap: 12px; }
+  /* Botón con icono solo en móvil */
+  .btn-action .btn-label { display: none; }
+  .btn-action.btn-icon-mobile { padding: 10px; min-width: 40px; min-height: 40px; }
+}
+
 * {
     margin: 0;
     padding: 0;
