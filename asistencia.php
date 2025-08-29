@@ -278,9 +278,9 @@ require_once 'includes/header.php';
         <button type="button" class="btn-primary btn-action" onclick="copyActivityLink()" aria-label="Copiar enlace a actividad">
           <i class="fas fa-link" aria-hidden="true"></i>
         </button>
-        <button type="button" class="btn-outline btn-action" disabled title="Próximamente disponible" aria-label="Añadir a favoritos">
-          <i class="fas fa-heart" aria-hidden="true"></i>
-          Añadir a favoritos
+        <button type="button" class="btn-outline btn-action" id="favoritoBtn" onclick="toggleFavorito()" aria-label="Añadir a favoritos">
+          <i class="fas fa-heart" aria-hidden="true" id="favoritoIcon"></i>
+          <span id="favoritoText">Añadir a favoritos</span>
         </button>
       </div>
       <h1>Pasa lista, que yo vigilo</h1>
@@ -381,5 +381,110 @@ require_once 'includes/header.php';
 
     <!-- Enlace para añadir inscritos eliminado para evitar modificaciones desde esta vista -->
   </div>
+
+  <script>
+    // Device ID único por navegador
+    function getDeviceId() {
+      let deviceId = localStorage.getItem('puri_device_id');
+      if (!deviceId) {
+        deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('puri_device_id', deviceId);
+      }
+      return deviceId;
+    }
+
+    // Datos de la actividad actual
+    const actividadData = {
+      actividad_id: <?php echo $actividad_id; ?>,
+      centro_id: <?php echo $actividad['centro_id']; ?>,
+      instalacion_id: <?php echo $actividad['instalacion_id']; ?>
+    };
+
+    // Verificar estado de favorito al cargar
+    document.addEventListener('DOMContentLoaded', function() {
+      checkFavoritoStatus();
+    });
+
+    async function checkFavoritoStatus() {
+      try {
+        const response = await fetch(`ajax/favoritos.php?action=check&device_id=${encodeURIComponent(getDeviceId())}&actividad_id=${actividadData.actividad_id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          updateFavoritoUI(data.is_favorite);
+        }
+      } catch (error) {
+        console.error('Error verificando favorito:', error);
+      }
+    }
+
+    function updateFavoritoUI(isFavorite) {
+      const btn = document.getElementById('favoritoBtn');
+      const icon = document.getElementById('favoritoIcon');
+      const text = document.getElementById('favoritoText');
+      
+      if (isFavorite) {
+        btn.classList.remove('btn-outline');
+        btn.classList.add('btn-primary');
+        icon.className = 'fas fa-heart';
+        text.textContent = 'Quitar de favoritos';
+        btn.setAttribute('aria-label', 'Quitar de favoritos');
+      } else {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-outline');
+        icon.className = 'far fa-heart';
+        text.textContent = 'Añadir a favoritos';
+        btn.setAttribute('aria-label', 'Añadir a favoritos');
+      }
+    }
+
+    async function toggleFavorito() {
+      const btn = document.getElementById('favoritoBtn');
+      const isFavorite = btn.classList.contains('btn-primary');
+      
+      try {
+        btn.disabled = true;
+        
+        const action = isFavorite ? 'remove' : 'add';
+        const payload = {
+          action: action,
+          device_id: getDeviceId(),
+          actividad_id: actividadData.actividad_id
+        };
+        
+        if (action === 'add') {
+          payload.centro_id = actividadData.centro_id;
+          payload.instalacion_id = actividadData.instalacion_id;
+        }
+        
+        const response = await fetch('ajax/favoritos.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          updateFavoritoUI(!isFavorite);
+          showToast(isFavorite ? 'Favorito eliminado' : 'Favorito añadido', 'success');
+        } else {
+          showToast(data.error || 'Error al actualizar favorito', 'error');
+        }
+      } catch (error) {
+        showToast('Error al actualizar favorito', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function showToast(message, type) {
+      const toast = document.createElement('div');
+      toast.className = `mensaje-${type === 'error' ? 'error' : 'exito'}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+  </script>
 
   <?php require_once 'includes/footer.php'; ?>
