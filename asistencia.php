@@ -274,7 +274,7 @@ require_once 'includes/header.php';
 
   <div class="content-wrapper">
     <div class="content-container">
-      <div class="actions-row">
+      <div class="actions-row actions-between">
         <button type="button" class="btn-primary btn-action" onclick="copyActivityLink()" aria-label="Copiar enlace a actividad">
           <i class="fas fa-link" aria-hidden="true"></i>
         </button>
