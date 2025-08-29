@@ -59,6 +59,29 @@
   gap: 12px;
 }
 
+/* Botón compacto dentro de la pill */
+.pill .btn-action {
+  padding: 6px 10px;
+  min-height: 32px;
+  border-radius: 8px;
+}
+
+.btn-ghost.btn-action {
+  background: transparent;
+  color: var(--primary-color);
+  border: 1px solid rgba(35, 170, 197, 0.5);
+  box-shadow: none;
+}
+
+.btn-ghost.btn-action:hover {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+@media (max-width: 480px) {
+  .pill .btn-action.btn-icon-mobile { padding: 8px; min-width: 36px; min-height: 36px; }
+}
+
 /* Enhanced Button Styles - Más profesionales */
 .btn-action {
   display: inline-flex;

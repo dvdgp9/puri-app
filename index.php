@@ -48,15 +48,14 @@ require_once 'includes/header.php';
                   <div class="confirmed-centro">
                     <div class="pill-container">
                       <span class="pill">
-                        <i class="fas fa-check-circle" aria-hidden="true"></i>
                         <span>Centro seleccionado:</span>
                         <strong><?php echo htmlspecialchars($preNombre ?: $preId); ?></strong>
+                        <button type="button" class="btn-ghost btn-action btn-icon-mobile" onclick="enableCentroSelect()" aria-label="Cambiar centro">
+                          <i class="fas fa-edit" aria-hidden="true"></i>
+                          <span class="btn-label">Editar</span>
+                        </button>
                       </span>
                     </div>
-                    <button type="button" class="btn-outline btn-action btn-icon-mobile" onclick="enableCentroSelect()" aria-label="Cambiar centro">
-                      <i class="fas fa-edit" aria-hidden="true"></i>
-                      <span class="btn-label">Cambiar centro</span>
-                    </button>
                   </div>
                   <input type="hidden" name="centro_id" id="centro_id_hidden" value="<?php echo htmlspecialchars($preId); ?>">
                 <?php endif; ?>
