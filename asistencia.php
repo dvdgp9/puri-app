@@ -1,19 +1,32 @@
 <?php
 require_once 'config/config.php';
 
-// Verifica sesión y parámetro
-if(!isset($_SESSION['centro_id'])){
-    // Redirigir a login conservando la URL actual como return_to para volver tras autenticación
-    $currentUrl = $_SERVER['REQUEST_URI'] ?? 'asistencia.php';
-    $location = 'index.php?return_to=' . urlencode($currentUrl);
-    header("Location: $location");
-    exit;
-}
+// Primero, validar parámetro de actividad
 if(!isset($_GET['actividad_id'])){
     header("Location: actividades.php");
     exit;
 }
 $actividad_id = $_GET['actividad_id'];
+
+// Si no hay sesión, redirigir a login con centro preseleccionado (si se puede resolver)
+if(!isset($_SESSION['centro_id'])){
+    // Resolver centro_id de la actividad para preseleccionar en login
+    $centroIdForLogin = null;
+    try {
+        $stmtCentro = $pdo->prepare("SELECT c.id AS centro_id\n                                     FROM actividades a\n                                     JOIN instalaciones i ON a.instalacion_id = i.id\n                                     JOIN centros c ON i.centro_id = c.id\n                                     WHERE a.id = ?");
+        $stmtCentro->execute([$actividad_id]);
+        $centroRow = $stmtCentro->fetch(PDO::FETCH_ASSOC);
+        if ($centroRow) { $centroIdForLogin = $centroRow['centro_id']; }
+    } catch (Exception $e) {
+        // Silencioso: si falla, seguimos sin centro_id
+    }
+    $currentUrl = $_SERVER['REQUEST_URI'] ?? ('asistencia.php?actividad_id=' . urlencode($actividad_id));
+    $params = ['return_to' => $currentUrl];
+    if ($centroIdForLogin) { $params['centro_id'] = $centroIdForLogin; }
+    $location = 'index.php?' . http_build_query($params);
+    header("Location: $location");
+    exit;
+}
 
 // Consultar datos de la actividad, instalación y centro
 $stmtActividad = $pdo->prepare("

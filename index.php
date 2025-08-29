@@ -38,7 +38,7 @@ require_once 'includes/header.php';
                 <select name="centro_id" id="centro_id" required>
                     <option value="">Oye, y tú, ¿de quién eres?</option>
                     <?php foreach($centros as $centro): ?>
-                        <option value="<?php echo $centro['id']; ?>">
+                        <option value="<?php echo $centro['id']; ?>" <?php echo (isset($_GET['centro_id']) && (string)$_GET['centro_id'] === (string)$centro['id']) ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($centro['nombre']); ?>
                         </option>
                     <?php endforeach; ?>
@@ -49,7 +49,7 @@ require_once 'includes/header.php';
                 <label for="password">
                     <i class="fas fa-lock"></i> Contraseña
                 </label>
-                <input type="password" name="password" id="password" required>
+                <input type="password" name="password" id="password" required autofocus>
             </div>
 
             <button type="submit">
