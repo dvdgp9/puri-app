@@ -27,41 +27,53 @@ if (isset($_SESSION['admin_role']) && $_SESSION['admin_role'] === 'superadmin') 
     $stmt->execute([$_SESSION['admin_id']]);
 }
 $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$pageTitle = "Generador de Informes";
-// Cargar estilos del header admin dentro del <head>
-$extraStyles = (
-    '<link rel="stylesheet" href="admin/assets/css/admin.css">' .
-    '<link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">'
-);
-require_once 'includes/header.php';
+
+// Funciones auxiliares para el header admin
+function getAdminInfo() {
+    return [
+        'id' => $_SESSION['admin_id'],
+        'username' => $_SESSION['admin_username'],
+        'role' => $_SESSION['admin_role']
+    ];
+}
+
+function isSuperAdmin() {
+    return isset($_SESSION['admin_role']) && $_SESSION['admin_role'] === 'superadmin';
+}
+
+$admin_info = getAdminInfo();
 ?>
-    <!-- Admin Header (reutilizado) -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Informes - Admin Puri</title>
+    <link rel="stylesheet" href="admin/assets/css/admin.css">
+    <link rel="stylesheet" href="public/assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header Admin -->
     <header class="admin-header">
         <div class="logo-section">
             <div class="logo">P</div>
             <div class="title">Puri: Gestión de centros deportivos</div>
         </div>
         <div class="actions">
-            <?php if (isset($_SESSION['admin_role']) && $_SESSION['admin_role'] === 'superadmin') { ?>
-            <a class="btn btn-secondary" href="admin/dashboard.php#admins">
+            <a href="admin/dashboard.php" class="btn btn-secondary">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0V10m0 10H7m10-10H7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v0M8 5a2 2 0 012 2h4a2 2 0 012-2v0"/>
                 </svg>
-                Administradores
-            </a>
-            <?php } ?>
-            <a class="btn btn-primary" href="admin/dashboard.php">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-                Ir al Dashboard
+                Dashboard
             </a>
             <div class="dropdown">
                 <button class="btn btn-secondary" id="profile-dropdown-btn">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
-                    <?php echo htmlspecialchars($_SESSION['admin_username']); ?>
+                    <?php echo htmlspecialchars($admin_info['username']); ?>
                 </button>
                 <div class="dropdown-content" id="profile-dropdown">
                     <a href="admin/account.php" class="dropdown-item">
@@ -81,7 +93,10 @@ require_once 'includes/header.php';
             </div>
         </div>
     </header>
-    <div class="container">
+
+    <!-- Main Content -->
+    <main class="admin-content">
+        <div class="container" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
         <img src="public/assets/images/logo.png" alt="Logo" class="logo">
         <h1>Generador de Informes</h1>
         <span class="subtitle">Selecciona los criterios para generar el informe</span>
@@ -135,21 +150,6 @@ require_once 'includes/header.php';
     </div>
 
     <script>
-    // Dropdown perfil (comportamiento admin)
-    (function(){
-        const btn = document.getElementById('profile-dropdown-btn');
-        const menu = document.getElementById('profile-dropdown');
-        if (btn && menu) {
-            btn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                menu.classList.toggle('active');
-            });
-            document.addEventListener('click', function () {
-                menu.classList.remove('active');
-            });
-        }
-    })();
-
     document.getElementById('centro').addEventListener('change', function() {
         const centroId = this.value;
         const instalacionSelect = document.getElementById('instalacion');
@@ -212,4 +212,25 @@ require_once 'includes/header.php';
         }
     });
     </script>
-<?php require_once 'includes/footer.php'; ?> 
+
+    <script>
+    // Dropdown functionality
+    document.getElementById('profile-dropdown-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        const dropdown = document.getElementById('profile-dropdown');
+        dropdown.classList.toggle('active');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('profile-dropdown');
+        const button = document.getElementById('profile-dropdown-btn');
+        
+        if (!button.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('active');
+        }
+    });
+    </script>
+    </main>
+</body>
+</html> 
