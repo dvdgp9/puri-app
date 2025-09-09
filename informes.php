@@ -53,14 +53,21 @@ $admin_info = getAdminInfo();
     <link rel="stylesheet" href="public/assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-      /* Overrides para usar ancho completo como el admin */
-      .admin-content { max-width: none; width: 100%; }
-      .admin-content .container { max-width: none; width: 100%; padding: 24px; }
+        /* Solo para esta página: forzar header admin a ocupar todo el ancho de la ventana */
+        .admin-header.fullbleed {
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
     <!-- Header Admin -->
-    <header class="admin-header">
+    <header class="admin-header fullbleed">
         <div class="logo-section">
             <div class="logo">P</div>
             <div class="title">Puri: Gestión de centros deportivos</div>
@@ -101,7 +108,7 @@ $admin_info = getAdminInfo();
 
     <!-- Main Content -->
     <main class="admin-content">
-        <div class="container">
+        <div class="container" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
         <img src="public/assets/images/logo.png" alt="Logo" class="logo">
         <h1>Generador de Informes</h1>
         <span class="subtitle">Selecciona los criterios para generar el informe</span>
