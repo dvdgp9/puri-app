@@ -424,6 +424,51 @@ function closeEditCenterModal() {
     }
 }
 
+// ====== Helpers to load centers into Create/Edit Admin modals ======
+async function loadCentersForCreateAdmin() {
+    const list = document.getElementById('createAdminCentersList');
+    if (!list) return; // not visible for non-superadmin
+    try {
+        // Use selector endpoint which returns active centers filtered by role (superadmin gets all)
+        const resp = await fetch('api/centros/list_for_selector.php');
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.message || 'Error cargando centros');
+        renderCentersCheckboxes(list, data.centros || [], 'ca-center');
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = '<div class="error-card">Error cargando centros</div>';
+    }
+}
+
+async function loadCentersForEditAdmin(adminId) {
+    const list = document.getElementById('editAdminCentersList');
+    if (!list) return; // not visible for non-superadmin
+    try {
+        const res = await AdminAPI.centersList(adminId);
+        if (!res.success) throw new Error(res.error || 'Error cargando centros');
+        // Map result to centros-like structure {id, nombre, asignado}
+        const items = (res.data || []).map(c => ({ id: c.id, nombre: c.nombre, asignado: !!c.asignado }));
+        renderCentersCheckboxes(list, items, 'ea-center');
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = '<div class="error-card">Error cargando centros</div>';
+    }
+}
+
+function renderCentersCheckboxes(containerEl, items, checkboxClass) {
+    if (!containerEl) return;
+    if (!items.length) {
+        containerEl.innerHTML = '<div class="empty-state">No hay centros</div>';
+        return;
+    }
+    containerEl.innerHTML = items.map(c => `
+        <label class="checkbox-inline" style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+            <input type="checkbox" class="${checkboxClass}" value="${c.id}" ${c.asignado ? 'checked' : ''}>
+            <span>${escapeHtml(c.nombre)}</span>
+        </label>
+    `).join('');
+}
+
 /**
  * Configurar todos los event listeners
  */
@@ -610,51 +655,6 @@ function setupEventListeners() {
             }
         });
     }
-
-// ====== Helpers to load centers into Create/Edit Admin modals ======
-async function loadCentersForCreateAdmin() {
-    const list = document.getElementById('createAdminCentersList');
-    if (!list) return; // not visible for non-superadmin
-    try {
-        // Use selector endpoint which returns active centers filtered by role (superadmin gets all)
-        const resp = await fetch('api/centros/list_for_selector.php');
-        const data = await resp.json();
-        if (!data.success) throw new Error(data.message || 'Error cargando centros');
-        renderCentersCheckboxes(list, data.centros || [], 'ca-center');
-    } catch (e) {
-        console.error(e);
-        list.innerHTML = '<div class="error-card">Error cargando centros</div>';
-    }
-}
-
-async function loadCentersForEditAdmin(adminId) {
-    const list = document.getElementById('editAdminCentersList');
-    if (!list) return; // not visible for non-superadmin
-    try {
-        const res = await AdminAPI.centersList(adminId);
-        if (!res.success) throw new Error(res.error || 'Error cargando centros');
-        // Map result to centros-like structure {id, nombre, asignado}
-        const items = (res.data || []).map(c => ({ id: c.id, nombre: c.nombre, asignado: !!c.asignado }));
-        renderCentersCheckboxes(list, items, 'ea-center');
-    } catch (e) {
-        console.error(e);
-        list.innerHTML = '<div class="error-card">Error cargando centros</div>';
-    }
-}
-
-function renderCentersCheckboxes(containerEl, items, checkboxClass) {
-    if (!containerEl) return;
-    if (!items.length) {
-        containerEl.innerHTML = '<div class="empty-state">No hay centros</div>';
-        return;
-    }
-    containerEl.innerHTML = items.map(c => `
-        <label class="checkbox-inline" style="display:flex;align-items:center;gap:8px;padding:6px 0;">
-            <input type="checkbox" class="${checkboxClass}" value="${c.id}" ${c.asignado ? 'checked' : ''}>
-            <span>${escapeHtml(c.nombre)}</span>
-        </label>
-    `).join('');
-}
     
     // Formulario crear centro
     const createCenterForm = document.getElementById('createCenterForm');
