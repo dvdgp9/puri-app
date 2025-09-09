@@ -675,11 +675,14 @@ $admin_info = getAdminInfo();
                     <?php if (isSuperAdmin()) { ?>
                     <div class="form-group">
                         <label class="form-label" for="createAdminCentersSearch">Centros asignados</label>
-                        <input type="text" id="createAdminCentersSearch" class="form-input" placeholder="Buscar centros..." oninput="filterCentersList('createAdminCentersList', 'createAdminCentersNoResults', this.value)">
-                        <div id="createAdminCentersList" class="checkbox-group" style="max-height: 240px; overflow: auto; padding-right: 4px;">
-                            <!-- Centros para asignar (solo superadmin) -->
+                        <div id="createAdminCentersWrapper">
+                            <input type="text" id="createAdminCentersSearch" class="form-input" placeholder="Buscar centros..." oninput="filterCentersList('createAdminCentersList', 'createAdminCentersNoResults', this.value)">
+                            <div id="createAdminCentersList" class="checkbox-group" style="max-height: 240px; overflow: auto; padding-right: 4px;">
+                                <!-- Centros para asignar (solo superadmin) -->
+                            </div>
+                            <div id="createAdminCentersNoResults" class="empty-state" style="display:none;">No hay centros que coincidan</div>
                         </div>
-                        <div id="createAdminCentersNoResults" class="empty-state" style="display:none;">No hay centros que coincidan</div>
+                        <div id="createAdminCentersInfo" class="form-hint" hidden>Los usuarios con permisos de Superadmin tienen acceso a todos los centros, instalaciones y actividades.</div>
                     </div>
                     <?php } ?>
                 </div>
@@ -728,11 +731,14 @@ $admin_info = getAdminInfo();
                     <?php if (isSuperAdmin()) { ?>
                     <div class="form-group">
                         <label class="form-label" for="editAdminCentersSearch">Centros asignados</label>
-                        <input type="text" id="editAdminCentersSearch" class="form-input" placeholder="Buscar centros..." oninput="filterCentersList('editAdminCentersList', 'editAdminCentersNoResults', this.value)">
-                        <div id="editAdminCentersList" class="checkbox-group" style="max-height: 240px; overflow: auto; padding-right: 4px;">
-                            <!-- Centros asignados se cargarán aquí -->
+                        <div id="editAdminCentersWrapper">
+                            <input type="text" id="editAdminCentersSearch" class="form-input" placeholder="Buscar centros..." oninput="filterCentersList('editAdminCentersList', 'editAdminCentersNoResults', this.value)">
+                            <div id="editAdminCentersList" class="checkbox-group" style="max-height: 240px; overflow: auto; padding-right: 4px;">
+                                <!-- Centros asignados se cargarán aquí -->
+                            </div>
+                            <div id="editAdminCentersNoResults" class="empty-state" style="display:none;">No hay centros que coincidan</div>
                         </div>
-                        <div id="editAdminCentersNoResults" class="empty-state" style="display:none;">No hay centros que coincidan</div>
+                        <div id="editAdminCentersInfo" class="form-hint" hidden>Los usuarios con permisos de Superadmin tienen acceso a todos los centros, instalaciones y actividades.</div>
                     </div>
                     <?php } ?>
                 </div>

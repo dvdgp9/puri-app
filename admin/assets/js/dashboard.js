@@ -72,6 +72,35 @@ const AdminAPI = {
     }
 };
 
+// ====== Toggle centers UI based on role selection ======
+function updateCreateAdminCentersUI() {
+    const roleSel = document.getElementById('adminRole');
+    const wrapper = document.getElementById('createAdminCentersWrapper');
+    const info = document.getElementById('createAdminCentersInfo');
+    if (!roleSel || (!wrapper && !info)) return;
+    const isSuper = String(roleSel.value) === 'superadmin';
+    if (wrapper) wrapper.hidden = isSuper;
+    if (info) info.hidden = !isSuper;
+    if (!isSuper) {
+        // Ensure list is loaded when switching from superadmin to admin
+        loadCentersForCreateAdmin();
+    }
+}
+
+async function updateEditAdminCentersUI(adminId) {
+    const roleSel = document.getElementById('editAdminRole');
+    const wrapper = document.getElementById('editAdminCentersWrapper');
+    const info = document.getElementById('editAdminCentersInfo');
+    if (!roleSel || (!wrapper && !info)) return Promise.resolve();
+    const isSuper = String(roleSel.value) === 'superadmin';
+    if (wrapper) wrapper.hidden = isSuper;
+    if (info) info.hidden = !isSuper;
+    if (!isSuper) {
+        return loadCentersForEditAdmin(adminId);
+    }
+    return Promise.resolve();
+}
+
 // Generic filter for centers checkbox lists within modals
 function filterCentersList(listId, noResultsId, term) {
     const container = document.getElementById(listId);
@@ -238,8 +267,14 @@ function showCreateAdminModal() {
             const first = modal.querySelector('input,select');
             if (first) first.focus();
         }, 50);
-        // Load centers list for superadmin if the container exists
-        loadCentersForCreateAdmin();
+        // Init UI visibility and load list if needed
+        updateCreateAdminCentersUI();
+        // Bind change listener on role select to toggle UI
+        const roleSel = document.getElementById('adminRole');
+        if (roleSel && !roleSel._centersHooked) {
+            roleSel.addEventListener('change', () => updateCreateAdminCentersUI());
+            roleSel._centersHooked = true;
+        }
     }
 }
 
@@ -275,10 +310,15 @@ function openEditAdmin(id) {
     if (userInput) userInput.value = admin.username || '';
     if (roleSelect) roleSelect.value = admin.role || 'admin';
     if (passInput) passInput.value = '';
-    // Load centers assigned to this admin (if superadmin UI is present)
-    loadCentersForEditAdmin(id).finally(() => {
+    // Toggle UI and load centers if needed (if superadmin UI is present)
+    updateEditAdminCentersUI(id).finally(() => {
         showEditAdminModal();
     });
+    // Bind change listener on role select to toggle UI in edit modal
+    if (roleSelect && !roleSelect._centersHooked) {
+        roleSelect.addEventListener('change', () => updateEditAdminCentersUI(id));
+        roleSelect._centersHooked = true;
+    }
 }
 
 function showEditAdminModal() {
@@ -462,7 +502,7 @@ function renderCentersCheckboxes(containerEl, items, checkboxClass) {
         return;
     }
     containerEl.innerHTML = items.map(c => `
-        <label class="checkbox-inline" style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+        <label class="checkbox-inline">
             <input type="checkbox" class="${checkboxClass}" value="${c.id}" ${c.asignado ? 'checked' : ''}>
             <span>${escapeHtml(c.nombre)}</span>
         </label>
@@ -549,17 +589,19 @@ function setupEventListeners() {
                 const res = await AdminAPI.create({ username: data.username.trim(), password: String(data.password), role: data.role });
                 if (res.success) {
                     const newId = res.data?.id;
-                    // If centers list exists (superadmin), collect selected and save
-                    const centersContainer = document.getElementById('createAdminCentersList');
-                    if (newId && centersContainer) {
-                        const selected = Array.from(centersContainer.querySelectorAll('input[type="checkbox"]:checked'))
-                            .map(ch => parseInt(ch.value, 10))
-                            .filter(n => n > 0);
-                        try {
-                            await AdminAPI.centersSave(newId, selected);
-                        } catch (err) {
-                            console.error(err);
-                            showNotification?.('Admin creado, pero fallo guardando centros', 'warning');
+                    // If role is NOT superadmin and centers UI exists, save selected centers
+                    if (String(data.role) !== 'superadmin') {
+                        const centersContainer = document.getElementById('createAdminCentersList');
+                        if (newId && centersContainer) {
+                            const selected = Array.from(centersContainer.querySelectorAll('input[type="checkbox"]:checked'))
+                                .map(ch => parseInt(ch.value, 10))
+                                .filter(n => n > 0);
+                            try {
+                                await AdminAPI.centersSave(newId, selected);
+                            } catch (err) {
+                                console.error(err);
+                                showNotification?.('Admin creado, pero fallo guardando centros', 'warning');
+                            }
                         }
                     }
                     showNotification?.('Administrador creado', 'success');
@@ -616,17 +658,19 @@ function setupEventListeners() {
             if (btn) btn.disabled = true;
             try {
                 const res = await AdminAPI.update(payload);
-                // Save centers assignments if the UI exists
-                const centersContainer = document.getElementById('editAdminCentersList');
-                if (centersContainer) {
-                    const selected = Array.from(centersContainer.querySelectorAll('input[type="checkbox"]:checked'))
-                        .map(ch => parseInt(ch.value, 10))
-                        .filter(n => n > 0);
-                    try {
-                        await AdminAPI.centersSave(id, selected);
-                    } catch (err) {
-                        console.error(err);
-                        showNotification?.('Cambios aplicados, pero fallo guardando centros', 'warning');
+                // Save centers assignments only if role is not superadmin and the UI exists
+                if (String(data.role || '') !== 'superadmin') {
+                    const centersContainer = document.getElementById('editAdminCentersList');
+                    if (centersContainer) {
+                        const selected = Array.from(centersContainer.querySelectorAll('input[type="checkbox"]:checked'))
+                            .map(ch => parseInt(ch.value, 10))
+                            .filter(n => n > 0);
+                        try {
+                            await AdminAPI.centersSave(id, selected);
+                        } catch (err) {
+                            console.error(err);
+                            showNotification?.('Cambios aplicados, pero fallo guardando centros', 'warning');
+                        }
                     }
                 }
                 if (res.success) {
