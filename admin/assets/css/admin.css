@@ -1110,7 +1110,7 @@ body {
     font-weight: normal;
     cursor: pointer;
     transition: color 0.2s ease;
-    margin-bottom: 0px;
+    margin-bottom: 0px !important;
 }
 
 .checkbox-inline:hover {
