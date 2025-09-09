@@ -37,9 +37,20 @@ try {
         $_SESSION['admin_role'] = $admin['role'];
         $_SESSION['admin_logged_in'] = true;
         
-        // Redirigir al nuevo dashboard PHP
-        header("Location: dashboard.php");
-        exit;
+        // Redirigir a la ruta de retorno si existe; si no, al dashboard
+        if (isset($_SESSION['admin_return_to']) && is_string($_SESSION['admin_return_to'])) {
+            $returnTo = $_SESSION['admin_return_to'];
+            unset($_SESSION['admin_return_to']);
+            // Saneado básico: permitir solo rutas internas
+            if (strpos($returnTo, 'http://') === 0 || strpos($returnTo, 'https://') === 0) {
+                $returnTo = 'dashboard.php';
+            }
+            header("Location: " . $returnTo);
+            exit;
+        } else {
+            header("Location: dashboard.php");
+            exit;
+        }
     } else {
         // Credenciales incorrectas
         $_SESSION['admin_error'] = "Usuario o contraseña incorrectos.";

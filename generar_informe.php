@@ -1,23 +1,31 @@
 <?php
 require_once 'config/config.php';
 
+// Requiere sesión de administrador para generar informes
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    $_SESSION['error'] = 'Debes iniciar sesión como administrador para generar informes';
+    header('Location: admin/login.php');
+    exit;
+}
+
 // Verificar que se enviaron todos los datos necesarios
-if (!isset($_POST['centro_id'], $_POST['password'], $_POST['instalacion_id'], 
+if (!isset($_POST['centro_id'], $_POST['instalacion_id'], 
            $_POST['actividad_id'], $_POST['fecha_inicio'], $_POST['fecha_fin'])) {
     $_SESSION['error'] = 'Faltan datos requeridos';
     header('Location: informes.php');
     exit;
 }
 
-// Validar la contraseña del centro
-$stmt = $pdo->prepare("SELECT password FROM centros WHERE id = ?");
-$stmt->execute([$_POST['centro_id']]);
-$centro = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$centro || $centro['password'] !== $_POST['password']) {
-    $_SESSION['error'] = 'Contraseña incorrecta';
-    header('Location: informes.php');
-    exit;
+// Verificar permisos del admin sobre el centro (excepto superadmin)
+if (!isset($_SESSION['admin_role']) || $_SESSION['admin_role'] !== 'superadmin') {
+    $stmt = $pdo->prepare("SELECT 1 FROM admin_asignaciones WHERE admin_id = ? AND centro_id = ? LIMIT 1");
+    $stmt->execute([$_SESSION['admin_id'], $_POST['centro_id']]);
+    $hasAccess = (bool)$stmt->fetchColumn();
+    if (!$hasAccess) {
+        $_SESSION['error'] = 'No tienes permisos para generar informes de este centro';
+        header('Location: informes.php');
+        exit;
+    }
 }
 
 // Obtener información de la actividad

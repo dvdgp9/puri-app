@@ -1,14 +1,31 @@
 <?php
 require_once 'config/config.php';
 
+// Requiere sesión de administrador: si no, guardar retorno y redirigir a login admin
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    $_SESSION['admin_return_to'] = '/informes.php';
+    header('Location: admin/login.php');
+    exit;
+}
+
 // Si hay una sesión activa de centro, la eliminamos para este módulo
 if(isset($_SESSION['centro_id'])) {
     unset($_SESSION['centro_id']);
 }
 
-// Consultamos los centros desde la tabla
-$sql = "SELECT id, nombre FROM centros";
-$stmt = $pdo->query($sql);
+// Consultamos los centros según permisos del admin
+if (isset($_SESSION['admin_role']) && $_SESSION['admin_role'] === 'superadmin') {
+    $sql = "SELECT id, nombre FROM centros ORDER BY nombre";
+    $stmt = $pdo->query($sql);
+} else {
+    $sql = "SELECT c.id, c.nombre
+            FROM centros c
+            INNER JOIN admin_asignaciones aa ON aa.centro_id = c.id
+            WHERE aa.admin_id = ?
+            ORDER BY c.nombre";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$_SESSION['admin_id']]);
+}
 $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $pageTitle = "Generador de Informes";
 require_once 'includes/header.php';
@@ -36,11 +53,6 @@ require_once 'includes/header.php';
                         <option value="<?php echo $centro['id']; ?>"><?php echo htmlspecialchars($centro['nombre']); ?></option>
                     <?php endforeach; ?>
                 </select>
-            </div>
-
-            <div id="passwordSection" style="display: none;" class="form-group">
-                <label for="password">Contraseña del centro:</label>
-                <input type="password" id="password" name="password" required>
             </div>
 
             <div class="form-group">
@@ -74,13 +86,9 @@ require_once 'includes/header.php';
     <script>
     document.getElementById('centro').addEventListener('change', function() {
         const centroId = this.value;
-        const passwordSection = document.getElementById('passwordSection');
         const instalacionSelect = document.getElementById('instalacion');
         const actividadSelect = document.getElementById('actividad');
 
-        // Mostrar/ocultar sección de contraseña
-        passwordSection.style.display = centroId ? 'block' : 'none';
-        
         // Resetear y deshabilitar selectores dependientes
         instalacionSelect.innerHTML = '<option value="">Primero selecciona un centro</option>';
         actividadSelect.innerHTML = '<option value="">Primero selecciona una instalación</option>';
