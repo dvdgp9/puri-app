@@ -72,6 +72,23 @@ const AdminAPI = {
     }
 };
 
+// Generic filter for centers checkbox lists within modals
+function filterCentersList(listId, noResultsId, term) {
+    const container = document.getElementById(listId);
+    const noRes = document.getElementById(noResultsId);
+    if (!container) return;
+    const t = (term || '').toLowerCase().trim();
+    const items = Array.from(container.querySelectorAll('label.checkbox-inline'));
+    let visible = 0;
+    items.forEach(label => {
+        const text = label.textContent.toLowerCase();
+        const show = !t || text.includes(t);
+        label.style.display = show ? 'flex' : 'none';
+        if (show) visible++;
+    });
+    if (noRes) noRes.style.display = visible === 0 ? 'block' : 'none';
+}
+
 async function loadAdmins({ q = '', sort = 'created_at_desc' } = {}) {
     try {
         const data = await AdminAPI.list({ search: q });
@@ -221,6 +238,8 @@ function showCreateAdminModal() {
             const first = modal.querySelector('input,select');
             if (first) first.focus();
         }, 50);
+        // Load centers list for superadmin if the container exists
+        loadCentersForCreateAdmin();
     }
 }
 
@@ -256,7 +275,10 @@ function openEditAdmin(id) {
     if (userInput) userInput.value = admin.username || '';
     if (roleSelect) roleSelect.value = admin.role || 'admin';
     if (passInput) passInput.value = '';
-    showEditAdminModal();
+    // Load centers assigned to this admin (if superadmin UI is present)
+    loadCentersForEditAdmin(id).finally(() => {
+        showEditAdminModal();
+    });
 }
 
 function showEditAdminModal() {
@@ -481,6 +503,20 @@ function setupEventListeners() {
             try {
                 const res = await AdminAPI.create({ username: data.username.trim(), password: String(data.password), role: data.role });
                 if (res.success) {
+                    const newId = res.data?.id;
+                    // If centers list exists (superadmin), collect selected and save
+                    const centersContainer = document.getElementById('createAdminCentersList');
+                    if (newId && centersContainer) {
+                        const selected = Array.from(centersContainer.querySelectorAll('input[type="checkbox"]:checked'))
+                            .map(ch => parseInt(ch.value, 10))
+                            .filter(n => n > 0);
+                        try {
+                            await AdminAPI.centersSave(newId, selected);
+                        } catch (err) {
+                            console.error(err);
+                            showNotification?.('Admin creado, pero fallo guardando centros', 'warning');
+                        }
+                    }
                     showNotification?.('Administrador creado', 'success');
                     closeCreateAdminModal();
                     // recargar lista
@@ -535,6 +571,19 @@ function setupEventListeners() {
             if (btn) btn.disabled = true;
             try {
                 const res = await AdminAPI.update(payload);
+                // Save centers assignments if the UI exists
+                const centersContainer = document.getElementById('editAdminCentersList');
+                if (centersContainer) {
+                    const selected = Array.from(centersContainer.querySelectorAll('input[type="checkbox"]:checked'))
+                        .map(ch => parseInt(ch.value, 10))
+                        .filter(n => n > 0);
+                    try {
+                        await AdminAPI.centersSave(id, selected);
+                    } catch (err) {
+                        console.error(err);
+                        showNotification?.('Cambios aplicados, pero fallo guardando centros', 'warning');
+                    }
+                }
                 if (res.success) {
                     showNotification?.('Administrador actualizado', 'success');
                     closeEditAdminModal();
@@ -561,6 +610,51 @@ function setupEventListeners() {
             }
         });
     }
+
+// ====== Helpers to load centers into Create/Edit Admin modals ======
+async function loadCentersForCreateAdmin() {
+    const list = document.getElementById('createAdminCentersList');
+    if (!list) return; // not visible for non-superadmin
+    try {
+        // Use selector endpoint which returns active centers filtered by role (superadmin gets all)
+        const resp = await fetch('api/centros/list_for_selector.php');
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.message || 'Error cargando centros');
+        renderCentersCheckboxes(list, data.centros || [], 'ca-center');
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = '<div class="error-card">Error cargando centros</div>';
+    }
+}
+
+async function loadCentersForEditAdmin(adminId) {
+    const list = document.getElementById('editAdminCentersList');
+    if (!list) return; // not visible for non-superadmin
+    try {
+        const res = await AdminAPI.centersList(adminId);
+        if (!res.success) throw new Error(res.error || 'Error cargando centros');
+        // Map result to centros-like structure {id, nombre, asignado}
+        const items = (res.data || []).map(c => ({ id: c.id, nombre: c.nombre, asignado: !!c.asignado }));
+        renderCentersCheckboxes(list, items, 'ea-center');
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = '<div class="error-card">Error cargando centros</div>';
+    }
+}
+
+function renderCentersCheckboxes(containerEl, items, checkboxClass) {
+    if (!containerEl) return;
+    if (!items.length) {
+        containerEl.innerHTML = '<div class="empty-state">No hay centros</div>';
+        return;
+    }
+    containerEl.innerHTML = items.map(c => `
+        <label class="checkbox-inline" style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+            <input type="checkbox" class="${checkboxClass}" value="${c.id}" ${c.asignado ? 'checked' : ''}>
+            <span>${escapeHtml(c.nombre)}</span>
+        </label>
+    `).join('');
+}
     
     // Formulario crear centro
     const createCenterForm = document.getElementById('createCenterForm');

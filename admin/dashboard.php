@@ -672,6 +672,16 @@ $admin_info = getAdminInfo();
                         </select>
                         <div class="form-error" id="adminRole-error"></div>
                     </div>
+                    <?php if (isSuperAdmin()) { ?>
+                    <div class="form-group">
+                        <label class="form-label" for="createAdminCentersSearch">Centros asignados</label>
+                        <input type="text" id="createAdminCentersSearch" class="form-input" placeholder="Buscar centros..." oninput="filterCentersList('createAdminCentersList', 'createAdminCentersNoResults', this.value)">
+                        <div id="createAdminCentersList" class="checkbox-group" style="max-height: 240px; overflow: auto; padding-right: 4px;">
+                            <!-- Centros para asignar (solo superadmin) -->
+                        </div>
+                        <div id="createAdminCentersNoResults" class="empty-state" style="display:none;">No hay centros que coincidan</div>
+                    </div>
+                    <?php } ?>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeCreateAdminModal()">Cancelar</button>
@@ -715,6 +725,16 @@ $admin_info = getAdminInfo();
                         <input type="password" id="editAdminNewPassword" name="new_password" class="form-input" placeholder="dejar vacío si no cambia">
                         <div class="form-error" id="editAdminNewPassword-error"></div>
                     </div>
+                    <?php if (isSuperAdmin()) { ?>
+                    <div class="form-group">
+                        <label class="form-label" for="editAdminCentersSearch">Centros asignados</label>
+                        <input type="text" id="editAdminCentersSearch" class="form-input" placeholder="Buscar centros..." oninput="filterCentersList('editAdminCentersList', 'editAdminCentersNoResults', this.value)">
+                        <div id="editAdminCentersList" class="checkbox-group" style="max-height: 240px; overflow: auto; padding-right: 4px;">
+                            <!-- Centros asignados se cargarán aquí -->
+                        </div>
+                        <div id="editAdminCentersNoResults" class="empty-state" style="display:none;">No hay centros que coincidan</div>
+                    </div>
+                    <?php } ?>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeEditAdminModal()">Cancelar</button>
