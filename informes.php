@@ -52,6 +52,11 @@ $admin_info = getAdminInfo();
     <link rel="stylesheet" href="admin/assets/css/admin.css">
     <link rel="stylesheet" href="public/assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      /* Overrides para usar ancho completo como el admin */
+      .admin-content { max-width: none; width: 100%; }
+      .admin-content .container { max-width: none; width: 100%; padding: 24px; }
+    </style>
 </head>
 <body>
     <!-- Header Admin -->
@@ -96,7 +101,7 @@ $admin_info = getAdminInfo();
 
     <!-- Main Content -->
     <main class="admin-content">
-        <div class="container" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+        <div class="container">
         <img src="public/assets/images/logo.png" alt="Logo" class="logo">
         <h1>Generador de Informes</h1>
         <span class="subtitle">Selecciona los criterios para generar el informe</span>
