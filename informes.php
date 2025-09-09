@@ -52,22 +52,10 @@ $admin_info = getAdminInfo();
     <link rel="stylesheet" href="admin/assets/css/admin.css">
     <link rel="stylesheet" href="public/assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* Solo para esta página: forzar header admin a ocupar todo el ancho de la ventana */
-        .admin-header.fullbleed {
-            width: 100vw;
-            position: relative;
-            left: 50%;
-            right: 50%;
-            margin-left: -50vw;
-            margin-right: -50vw;
-            box-sizing: border-box;
-        }
-    </style>
 </head>
 <body>
     <!-- Header Admin -->
-    <header class="admin-header fullbleed">
+    <header class="admin-header">
         <div class="logo-section">
             <div class="logo">P</div>
             <div class="title">Puri: Gestión de centros deportivos</div>
