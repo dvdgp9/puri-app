@@ -95,6 +95,9 @@ body {
     align-items: center;
     justify-content: space-between;
     box-shadow: var(--admin-shadow);
+    width: 100%;
+    position: absolute;
+    top: 0;
 }
 
 .admin-header .logo-section {
@@ -217,7 +220,7 @@ body {
 
 /* Contenido principal */
 .admin-content {
-    padding: 24px;
+    padding: 66px 24px 24px 24px;
     max-width: 1200px;
     margin: 0 auto;
 }
