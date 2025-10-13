@@ -7,6 +7,13 @@ try {
     // Cargar configuración y autenticación
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    // Forzar desactivación de salida HTML de errores para mantener JSON válido
+    ini_set('display_errors', 0);
+    ini_set('html_errors', 0);
+    set_error_handler(function($errno, $errstr, $errfile, $errline) {
+        error_log("Upload CSV error [$errno] $errstr en $errfile:$errline");
+        return true; // impedir salida al cliente
+    });
     
     // Verificar autenticación de admin
     $admin_info = getAdminInfo();
