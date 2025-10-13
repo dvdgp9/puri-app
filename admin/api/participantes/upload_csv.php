@@ -92,21 +92,28 @@ try {
     // Leer el contenido del archivo
     $content = file_get_contents($_FILES['csv']['tmp_name']);
     
-    // Detectar y manejar diferentes encodings
-    $encoding = mb_detect_encoding($content, ['UTF-8', 'UTF-16', 'ISO-8859-1', 'Windows-1252'], true);
-    
     // Detectar BOM UTF-8 y removerlo si existe
+    $hasBOM = false;
     if (substr($content, 0, 3) === "\xEF\xBB\xBF") {
         $content = substr($content, 3);
-        $encoding = 'UTF-8';
+        $hasBOM = true;
     }
     
-    // Convertir a UTF-8 si es necesario
-    if ($encoding && $encoding !== 'UTF-8') {
-        $content = mb_convert_encoding($content, 'UTF-8', $encoding);
-    } elseif (!$encoding) {
-        // Fallback: intentar con Windows-1252 (común en Excel)
-        $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
+    // Detectar problema específico de Excel Mac: UTF-8 guardado como ISO-8859-1
+    if (strpos($content, 'Ã') !== false && (strpos($content, 'Ã©') !== false || strpos($content, 'Ã¡') !== false || strpos($content, 'Ã­') !== false)) {
+        // Excel Mac guardó UTF-8 como ISO-8859-1, necesitamos reconvertir
+        $content = mb_convert_encoding($content, 'UTF-8', 'ISO-8859-1');
+    } elseif (!$hasBOM) {
+        // Detectar encoding si no hay BOM
+        $encoding = mb_detect_encoding($content, ['UTF-8', 'UTF-16', 'ISO-8859-1', 'Windows-1252', 'MacRoman'], true);
+        
+        // Convertir a UTF-8 si es necesario
+        if ($encoding && $encoding !== 'UTF-8') {
+            $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+        } elseif (!$encoding) {
+            // Fallback: intentar con Windows-1252 (común en Excel)
+            $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
+        }
     }
     
     // Determinar el delimitador

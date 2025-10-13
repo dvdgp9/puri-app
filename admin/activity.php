@@ -347,6 +347,10 @@ try {
                                 <p>1. Descarga la plantilla CSV</p>
                                 <p>2. Completa con los datos de los participantes</p>
                                 <p>3. Sube el archivo completado</p>
+                                <div style="background:#f8f9fa;border-left:4px solid #007bff;padding:10px;margin-top:10px;font-size:13px;">
+                                    <strong>💡 Para Excel en Mac:</strong><br>
+                                    Al guardar, usa "Archivo → Guardar como → CSV (separado por comas)" para mejores resultados con acentos.
+                                </div>
                             </div>
                             <div class="csv-actions">
                                 <a class="btn btn-secondary" href="../public/assets/plantilla-asistentes.csv" download>
