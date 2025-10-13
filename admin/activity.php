@@ -180,6 +180,9 @@ try {
                     <button class="btn btn-primary" onclick="openAddParticipantsModal()">
                         + Añadir Participantes
                     </button>
+                    <button class="btn btn-secondary" style="background:#e53e3e;border-color:#e53e3e" onclick="confirmDeleteAllParticipants()">
+                        Eliminar listado
+                    </button>
                 </div>
             </div>
             <div class="centers-content">

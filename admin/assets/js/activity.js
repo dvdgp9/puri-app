@@ -458,6 +458,33 @@ async function deleteParticipant(id) {
   }
 }
 
+function confirmDeleteAllParticipants() {
+  const count = (ActivityPage.participants || []).length;
+  if (!count) { showNotification('No hay participantes para eliminar', 'info'); return; }
+  const ok = window.confirm(`¿Eliminar el listado completo de participantes (${count})?\n\nSe eliminarán también todas las asistencias asociadas a esta actividad.\n\nEsta acción no se puede deshacer.`);
+  if (ok) deleteAllParticipants();
+}
+
+async function deleteAllParticipants() {
+  try {
+    const resp = await fetch('api/participantes/delete_by_activity.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ actividad_id: Number(ActivityPage.id) })
+    });
+    const result = await resp.json();
+    if (result.success) {
+      await loadParticipants();
+      showNotification('Listado eliminado correctamente', 'success');
+    } else {
+      showNotification(result.message || 'No se pudo eliminar el listado', 'error');
+    }
+  } catch (e) {
+    console.error(e);
+    showNotification('Error eliminando el listado', 'error');
+  }
+}
+
 async function handleEditParticipantSubmit(e) {
   e.preventDefault();
   const id = Number(document.getElementById('editParticipantId').value);
