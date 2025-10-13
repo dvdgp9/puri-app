@@ -590,13 +590,23 @@ $admin_info = getAdminInfo();
                             </div>
                         </div>
 
+                        <!-- Modo de importación -->
+                        <div class="form-group" style="margin-top:12px">
+                            <label for="dashCsvImportMode">Modo de importación</label>
+                            <select id="dashCsvImportMode" name="mode" class="form-control">
+                                <option value="append">Añadir al listado actual</option>
+                                <option value="replace">Reemplazar listado (borrar todos los participantes actuales)</option>
+                            </select>
+                        </div>
+
                         <!-- Descarga de plantilla y subida de archivo -->
                         <div class="csv-section">
                             <div class="csv-info">
                                 <h4><i class="fas fa-info-circle"></i> Instrucciones</h4>
                                 <p>1. Descarga la plantilla CSV</p>
-                                <p>2. Completa con los datos de los participantes</p>
-                                <p>3. Sube el archivo completado</p>
+                                <p>2. Completa con los datos de los participantes (Nombre, Apellidos)</p>
+                                <p>3. En Excel (Mac): usa “Guardar como…” → “CSV UTF-8 (delimitado por comas)”</p>
+                                <p>4. Sube el archivo completado</p>
                             </div>
                             
                             <div class="csv-actions">

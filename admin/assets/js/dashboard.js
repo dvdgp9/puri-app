@@ -2745,6 +2745,9 @@ async function uploadParticipantCsv() {
         const formData = new FormData();
         formData.append('csv', fileInput.files[0]);
         formData.append('actividad_id', activityId);
+        const modeSel = document.getElementById('dashCsvImportMode');
+        const mode = modeSel ? String(modeSel.value || 'append') : 'append';
+        formData.append('mode', mode);
         
         // Enviar archivo
         const response = await fetch('api/participantes/upload_csv.php', {
