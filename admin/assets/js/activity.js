@@ -485,6 +485,12 @@ async function deleteAllParticipants() {
   }
 }
 
+// Expose handlers globally for inline onclick
+if (typeof window !== 'undefined') {
+  window.confirmDeleteAllParticipants = confirmDeleteAllParticipants;
+  window.deleteAllParticipants = deleteAllParticipants;
+}
+
 async function handleEditParticipantSubmit(e) {
   e.preventDefault();
   const id = Number(document.getElementById('editParticipantId').value);
