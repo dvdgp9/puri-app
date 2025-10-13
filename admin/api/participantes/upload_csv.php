@@ -92,14 +92,21 @@ try {
     // Leer el contenido del archivo
     $content = file_get_contents($_FILES['csv']['tmp_name']);
     
+    // Detectar y manejar diferentes encodings
+    $encoding = mb_detect_encoding($content, ['UTF-8', 'UTF-16', 'ISO-8859-1', 'Windows-1252'], true);
+    
     // Detectar BOM UTF-8 y removerlo si existe
     if (substr($content, 0, 3) === "\xEF\xBB\xBF") {
         $content = substr($content, 3);
+        $encoding = 'UTF-8';
     }
     
     // Convertir a UTF-8 si es necesario
-    if (!mb_check_encoding($content, 'UTF-8')) {
-        $content = mb_convert_encoding($content, 'UTF-8', 'ISO-8859-1');
+    if ($encoding && $encoding !== 'UTF-8') {
+        $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+    } elseif (!$encoding) {
+        // Fallback: intentar con Windows-1252 (común en Excel)
+        $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
     }
     
     // Determinar el delimitador
@@ -161,6 +168,12 @@ try {
 
         $nombre = isset($data[$colNombre]) ? trim($data[$colNombre]) : '';
         $apellidos = isset($data[$colApellidos]) ? trim($data[$colApellidos]) : '';
+        
+        // Normalizar datos (limpiar espacios múltiples y asegurar UTF-8)
+        $nombre = preg_replace('/\s+/', ' ', $nombre);
+        $apellidos = preg_replace('/\s+/', ' ', $apellidos);
+        $nombre = mb_convert_encoding($nombre, 'UTF-8', 'UTF-8'); // Limpiar encoding
+        $apellidos = mb_convert_encoding($apellidos, 'UTF-8', 'UTF-8');
         
         // Verificar que la línea tiene datos
         if (!empty($nombre) && !empty($apellidos)) {
