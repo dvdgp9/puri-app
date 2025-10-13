@@ -109,54 +109,87 @@ try {
     fwrite($handle, $content);
     rewind($handle);
 
+    // Modo de importación: append (por defecto) o replace
+    $import_mode = isset($_POST['import_mode']) && $_POST['import_mode'] === 'replace' ? 'replace' : 'append';
+
+    // Helpers para normalizar encabezados
+    $normalize = function($s) {
+        $s = trim((string)$s);
+        if ($s === '') return '';
+        $s = iconv('UTF-8', 'ASCII//TRANSLIT', $s);
+        $s = strtolower($s);
+        $s = preg_replace('/[^a-z0-9]+/', ' ', $s);
+        $s = trim(preg_replace('/\s+/', ' ', $s));
+        return $s;
+    };
+
+    $mapHeader = function($raw) use ($normalize) {
+        $n = $normalize($raw);
+        // Posibles alias
+        $nombreAliases = ['nombre', 'name', 'first name', 'first', 'given name'];
+        $apellidosAliases = ['apellidos', 'apellido', 'last name', 'last', 'surname', 'family name'];
+        if (in_array($n, $nombreAliases, true)) return 'nombre';
+        if (in_array($n, $apellidosAliases, true)) return 'apellidos';
+        return null; // columna ignorada
+    };
+
     // Comenzar transacción
     $pdo->beginTransaction();
-    
-    // Preparar la consulta de inserción
+
+    // Si es reemplazo, borrar primero asistencias e inscritos de la actividad
+    if ($import_mode === 'replace') {
+        $stmtDelA = $pdo->prepare('DELETE FROM asistencias WHERE actividad_id = ?');
+        $stmtDelA->execute([$actividad_id]);
+        $stmtDelI = $pdo->prepare('DELETE FROM inscritos WHERE actividad_id = ?');
+        $stmtDelI->execute([$actividad_id]);
+    }
+
+    // Preparar la inserción
     $stmt = $pdo->prepare("INSERT INTO inscritos (actividad_id, nombre, apellidos) VALUES (?, ?, ?)");
-    
+
     $rowCount = 0;
     $errors = [];
     $lineNumber = 0;
     $total_registros = 0;
+    $nombreIdx = null; $apellidosIdx = null;
 
     // Leer el archivo CSV línea por línea
     while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
         $lineNumber++;
-        
-        // Verificar los encabezados en la primera línea
+        // Encabezados (primera fila): detectar posiciones de nombre y apellidos de forma flexible
         if ($lineNumber === 1) {
-            $encabezados_esperados = ['Nombre', 'Apellidos'];
-            if (count($data) < 2 || $data[0] !== $encabezados_esperados[0] || $data[1] !== $encabezados_esperados[1]) {
-                throw new Exception('El formato del archivo no es correcto. Los encabezados deben ser: ' . implode(', ', $encabezados_esperados));
+            if (!$data || count($data) < 2) {
+                throw new Exception('El archivo CSV debe contener al menos las columnas Nombre y Apellidos en la primera fila.');
+            }
+            foreach ($data as $idx => $h) {
+                $mapped = $mapHeader((string)$h);
+                if ($mapped === 'nombre' && $nombreIdx === null) $nombreIdx = $idx;
+                if ($mapped === 'apellidos' && $apellidosIdx === null) $apellidosIdx = $idx;
+            }
+            if ($nombreIdx === null || $apellidosIdx === null) {
+                throw new Exception('No se han encontrado las columnas requeridas (Nombre y Apellidos) en la cabecera.');
             }
             continue;
         }
 
         // Verificar que tenemos todos los datos necesarios
-        if (count($data) < 2) {
+        if (!is_array($data) || count($data) <= max($nombreIdx, $apellidosIdx)) {
             $errors[] = "Línea $lineNumber: no tiene todas las columnas requeridas";
             continue;
         }
 
-        // Verificar que la línea tiene datos
-        if (!empty(trim($data[0])) && !empty(trim($data[1]))) {
-            $total_registros++;
-            
-            $nombre = trim($data[0]);
-            $apellidos = trim($data[1]);
-            
-            // Verificar duplicados
-            $checkStmt = $pdo->prepare("SELECT id FROM inscritos WHERE actividad_id = ? AND nombre = ? AND apellidos = ?");
-            $checkStmt->execute([$actividad_id, $nombre, $apellidos]);
-            
-            if (!$checkStmt->fetch()) {
-                $stmt->execute([$actividad_id, $nombre, $apellidos]);
-                $rowCount++;
-            } else {
-                $errors[] = "Línea $lineNumber: $nombre $apellidos ya está inscrito";
-            }
+        // Verificar que la línea tiene datos (nombre y apellidos no vacíos)
+        $nombre = isset($data[$nombreIdx]) ? trim($data[$nombreIdx]) : '';
+        $apellidos = isset($data[$apellidosIdx]) ? trim($data[$apellidosIdx]) : '';
+        if ($nombre === '' && $apellidos === '') { continue; } // saltar filas vacías
+        if ($nombre === '' || $apellidos === '') {
+            $errors[] = "Línea $lineNumber: faltan Nombre o Apellidos";
+            continue;
         }
+        $total_registros++;
+        // Insertar sin verificación de duplicados (según decisión actual)
+        $stmt->execute([$actividad_id, $nombre, $apellidos]);
+        $rowCount++;
     }
     
     fclose($handle);

@@ -302,6 +302,8 @@ async function handleUploadCsvSubmit(e) {
     const fd = new FormData();
     fd.append('csv', file);
     fd.append('actividad_id', String(ActivityPage.id));
+    const modeEl = document.querySelector('input[name="import_mode"]:checked');
+    fd.append('import_mode', modeEl ? String(modeEl.value) : 'append');
     const resp = await fetch('api/participantes/upload_csv.php', { method: 'POST', body: fd });
     const result = await resp.json();
     if (result.success) {

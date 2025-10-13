@@ -345,6 +345,15 @@ try {
                                     Descargar plantilla
                                 </a>
                                 <input type="file" id="participantsCsv" name="csv" accept=".csv">
+                                <div class="form-group" style="margin-top:8px">
+                                    <label style="display:block;margin-bottom:4px">Modo de importación</label>
+                                    <label class="checkbox-inline" style="margin-right:12px">
+                                        <input type="radio" name="import_mode" value="append" checked> Añadir al listado actual
+                                    </label>
+                                    <label class="checkbox-inline">
+                                        <input type="radio" name="import_mode" value="replace"> Reemplazar listado (borra y crea de cero)
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </form>
