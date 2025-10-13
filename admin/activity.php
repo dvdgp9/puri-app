@@ -146,6 +146,14 @@ try {
                         if ($hIni || $hFin) {
                             echo ' · ' . htmlspecialchars(trim(($hIni ?: '') . ($hFin ? '–' . $hFin : '')));
                         }
+                        $fi = isset($actividad['fecha_inicio']) && $actividad['fecha_inicio'] ? substr($actividad['fecha_inicio'], 0, 10) : null;
+                        $ff = isset($actividad['fecha_fin']) && $actividad['fecha_fin'] ? substr($actividad['fecha_fin'], 0, 10) : null;
+                        if ($fi || $ff) {
+                            $formatDate = function($d) { $p = explode('-', $d); return count($p) === 3 ? ($p[2] . '/' . $p[1] . '/' . $p[0]) : $d; };
+                            $fi_fmt = $fi ? $formatDate($fi) : '';
+                            $ff_fmt = $ff ? $formatDate($ff) : '';
+                            echo ' · ' . htmlspecialchars(trim(($fi_fmt ?: '') . ($ff_fmt ? ' → ' . $ff_fmt : '')));
+                        }
                     ?>
                 </p>
             </div>
