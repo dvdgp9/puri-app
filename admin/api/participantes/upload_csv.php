@@ -90,15 +90,17 @@ try {
 
     // Leer el contenido del archivo
     $content = file_get_contents($_FILES['csv']['tmp_name']);
-    
     // Detectar BOM UTF-8 y removerlo si existe
     if (substr($content, 0, 3) === "\xEF\xBB\xBF") {
         $content = substr($content, 3);
     }
-    
-    // Convertir a UTF-8 si es necesario
-    if (!mb_check_encoding($content, 'UTF-8')) {
-        $content = mb_convert_encoding($content, 'UTF-8', 'ISO-8859-1');
+    // Detectar y convertir la codificación a UTF-8 (soporte UTF-8, ISO-8859-1, Windows-1252)
+    $detectedEnc = mb_detect_encoding($content, ['UTF-8', 'ISO-8859-1', 'Windows-1252'], true);
+    if ($detectedEnc && strtoupper($detectedEnc) !== 'UTF-8') {
+        $content = mb_convert_encoding($content, 'UTF-8', $detectedEnc);
+    } elseif (!$detectedEnc && !mb_check_encoding($content, 'UTF-8')) {
+        // Fallback conservador
+        $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
     }
     
     // Determinar el delimitador
@@ -179,8 +181,11 @@ try {
         }
 
         // Verificar que la línea tiene datos (nombre y apellidos no vacíos)
-        $nombre = isset($data[$nombreIdx]) ? trim($data[$nombreIdx]) : '';
-        $apellidos = isset($data[$apellidosIdx]) ? trim($data[$apellidosIdx]) : '';
+        $nombre = isset($data[$nombreIdx]) ? trim((string)$data[$nombreIdx]) : '';
+        $apellidos = isset($data[$apellidosIdx]) ? trim((string)$data[$apellidosIdx]) : '';
+        // Asegurar UTF-8 válido por campo (por si fgetcsv retornó en otra codificación)
+        if (!mb_check_encoding($nombre, 'UTF-8')) { $nombre = mb_convert_encoding($nombre, 'UTF-8', 'Windows-1252'); }
+        if (!mb_check_encoding($apellidos, 'UTF-8')) { $apellidos = mb_convert_encoding($apellidos, 'UTF-8', 'Windows-1252'); }
         if ($nombre === '' && $apellidos === '') { continue; } // saltar filas vacías
         if ($nombre === '' || $apellidos === '') {
             $errors[] = "Línea $lineNumber: faltan Nombre o Apellidos";
