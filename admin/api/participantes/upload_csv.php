@@ -95,7 +95,7 @@ try {
         $content = substr($content, 3);
     }
     // Detectar y convertir la codificación a UTF-8 (soporte UTF-8, ISO-8859-1, Windows-1252)
-    $detectedEnc = mb_detect_encoding($content, ['UTF-8', 'ISO-8859-1', 'Windows-1252'], true);
+    $detectedEnc = mb_detect_encoding($content, ['UTF-8', 'UTF-16LE', 'UTF-16BE', 'ISO-8859-1', 'ISO-8859-15', 'Windows-1252', 'Macintosh'], true);
     if ($detectedEnc && strtoupper($detectedEnc) !== 'UTF-8') {
         $content = mb_convert_encoding($content, 'UTF-8', $detectedEnc);
     } elseif (!$detectedEnc && !mb_check_encoding($content, 'UTF-8')) {
