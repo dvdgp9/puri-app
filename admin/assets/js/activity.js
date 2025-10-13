@@ -299,11 +299,11 @@ async function handleUploadCsvSubmit(e) {
   try {
     const btn = document.getElementById('uploadParticipantsCsvBtn');
     setBtnLoading(btn, true);
+    const mode = document.getElementById('csvImportMode') ? document.getElementById('csvImportMode').value : 'append';
     const fd = new FormData();
     fd.append('csv', file);
     fd.append('actividad_id', String(ActivityPage.id));
-    const modeEl = document.querySelector('input[name="import_mode"]:checked');
-    fd.append('import_mode', modeEl ? String(modeEl.value) : 'append');
+    fd.append('mode', mode);
     const resp = await fetch('api/participantes/upload_csv.php', { method: 'POST', body: fd });
     const result = await resp.json();
     if (result.success) {

@@ -333,6 +333,14 @@ try {
                         </div>
                         <input type="hidden" id="csvLockedActivityId" name="actividad_id" required>
 
+                        <div class="form-group">
+                            <label for="csvImportMode">Modo de importación</label>
+                            <select id="csvImportMode" name="mode" class="form-control">
+                                <option value="append">Añadir al listado actual</option>
+                                <option value="replace">Reemplazar listado (borrar todos los participantes actuales)</option>
+                            </select>
+                        </div>
+
                         <div class="csv-section">
                             <div class="csv-info">
                                 <h4>Instrucciones</h4>
@@ -345,15 +353,6 @@ try {
                                     Descargar plantilla
                                 </a>
                                 <input type="file" id="participantsCsv" name="csv" accept=".csv">
-                                <div class="form-group" style="margin-top:8px">
-                                    <label style="display:block;margin-bottom:4px">Modo de importación</label>
-                                    <label class="checkbox-inline" style="margin-right:12px">
-                                        <input type="radio" name="import_mode" value="append" checked> Añadir al listado actual
-                                    </label>
-                                    <label class="checkbox-inline">
-                                        <input type="radio" name="import_mode" value="replace"> Reemplazar listado (borra y crea de cero)
-                                    </label>
-                                </div>
                             </div>
                         </div>
                     </form>

@@ -7,13 +7,6 @@ try {
     // Cargar configuración y autenticación
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
-    // Forzar desactivación de salida HTML de errores para mantener JSON válido
-    ini_set('display_errors', 0);
-    ini_set('html_errors', 0);
-    set_error_handler(function($errno, $errstr, $errfile, $errline) {
-        error_log("Upload CSV error [$errno] $errstr en $errfile:$errline");
-        return true; // impedir salida al cliente
-    });
     
     // Verificar autenticación de admin
     $admin_info = getAdminInfo();
@@ -33,6 +26,7 @@ try {
     }
 
     $actividad_id = intval($_POST['actividad_id']);
+    $mode = isset($_POST['mode']) ? trim($_POST['mode']) : 'append'; // 'append' o 'replace'
 
     // Verificar que la actividad existe
     $stmt = $pdo->prepare("SELECT id FROM actividades WHERE id = ?");
@@ -97,17 +91,15 @@ try {
 
     // Leer el contenido del archivo
     $content = file_get_contents($_FILES['csv']['tmp_name']);
+    
     // Detectar BOM UTF-8 y removerlo si existe
     if (substr($content, 0, 3) === "\xEF\xBB\xBF") {
         $content = substr($content, 3);
     }
-    // Detectar y convertir la codificación a UTF-8 (soporte UTF-8, ISO-8859-1, Windows-1252)
-    $detectedEnc = mb_detect_encoding($content, ['UTF-8', 'UTF-16LE', 'UTF-16BE', 'ISO-8859-1', 'ISO-8859-15', 'Windows-1252', 'Macintosh'], true);
-    if ($detectedEnc && strtoupper($detectedEnc) !== 'UTF-8') {
-        $content = mb_convert_encoding($content, 'UTF-8', $detectedEnc);
-    } elseif (!$detectedEnc && !mb_check_encoding($content, 'UTF-8')) {
-        // Fallback conservador
-        $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
+    
+    // Convertir a UTF-8 si es necesario
+    if (!mb_check_encoding($content, 'UTF-8')) {
+        $content = mb_convert_encoding($content, 'UTF-8', 'ISO-8859-1');
     }
     
     // Determinar el delimitador
@@ -118,98 +110,66 @@ try {
     fwrite($handle, $content);
     rewind($handle);
 
-    // Modo de importación: append (por defecto) o replace
-    $import_mode = isset($_POST['import_mode']) && $_POST['import_mode'] === 'replace' ? 'replace' : 'append';
-
-    // Helpers para normalizar encabezados
-    $normalize = function($s) {
-        $s = trim((string)$s);
-        if ($s === '') return '';
-        $s = mb_strtolower($s, 'UTF-8');
-        // Reemplazo simple de acentos y eñe para normalizar sin iconv
-        $s = strtr($s, [
-            'á'=>'a','à'=>'a','ä'=>'a','â'=>'a','ã'=>'a','å'=>'a',
-            'é'=>'e','è'=>'e','ë'=>'e','ê'=>'e',
-            'í'=>'i','ì'=>'i','ï'=>'i','î'=>'i',
-            'ó'=>'o','ò'=>'o','ö'=>'o','ô'=>'o','õ'=>'o',
-            'ú'=>'u','ù'=>'u','ü'=>'u','û'=>'u',
-            'ñ'=>'n','ç'=>'c'
-        ]);
-        $s = preg_replace('/[^a-z0-9]+/u', ' ', $s);
-        $s = trim(preg_replace('/\s+/', ' ', $s));
-        return $s;
-    };
-
-    $mapHeader = function($raw) use ($normalize) {
-        $n = $normalize($raw);
-        // Posibles alias
-        $nombreAliases = ['nombre', 'name', 'first name', 'first', 'given name'];
-        $apellidosAliases = ['apellidos', 'apellido', 'last name', 'last', 'surname', 'family name'];
-        if (in_array($n, $nombreAliases, true)) return 'nombre';
-        if (in_array($n, $apellidosAliases, true)) return 'apellidos';
-        return null; // columna ignorada
-    };
-
     // Comenzar transacción
     $pdo->beginTransaction();
-
-    // Si es reemplazo, borrar primero asistencias e inscritos de la actividad
-    if ($import_mode === 'replace') {
-        $stmtDelA = $pdo->prepare('DELETE FROM asistencias WHERE actividad_id = ?');
-        $stmtDelA->execute([$actividad_id]);
-        $stmtDelI = $pdo->prepare('DELETE FROM inscritos WHERE actividad_id = ?');
-        $stmtDelI->execute([$actividad_id]);
+    
+    // Si modo es 'replace', eliminar todos los participantes y asistencias de la actividad
+    if ($mode === 'replace') {
+        $stmtDelAsist = $pdo->prepare('DELETE FROM asistencias WHERE actividad_id = ?');
+        $stmtDelAsist->execute([$actividad_id]);
+        $stmtDelInsc = $pdo->prepare('DELETE FROM inscritos WHERE actividad_id = ?');
+        $stmtDelInsc->execute([$actividad_id]);
     }
-
-    // Preparar la inserción
+    
+    // Preparar la consulta de inserción
     $stmt = $pdo->prepare("INSERT INTO inscritos (actividad_id, nombre, apellidos) VALUES (?, ?, ?)");
-
+    
     $rowCount = 0;
     $errors = [];
     $lineNumber = 0;
     $total_registros = 0;
-    $nombreIdx = null; $apellidosIdx = null;
 
+    // Mapeo de columnas detectado automáticamente
+    $colNombre = null;
+    $colApellidos = null;
+    
     // Leer el archivo CSV línea por línea
     while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
         $lineNumber++;
-        // Encabezados (primera fila): detectar posiciones de nombre y apellidos de forma flexible
+        
+        // Verificar los encabezados en la primera línea y mapear columnas
         if ($lineNumber === 1) {
-            if (!$data || count($data) < 2) {
-                throw new Exception('El archivo CSV debe contener al menos las columnas Nombre y Apellidos en la primera fila.');
+            for ($i = 0; $i < count($data); $i++) {
+                $header = mb_strtolower(trim($data[$i]), 'UTF-8');
+                if (in_array($header, ['nombre', 'name', 'nombres'])) {
+                    $colNombre = $i;
+                } elseif (in_array($header, ['apellidos', 'apellido', 'surname', 'last name', 'lastname'])) {
+                    $colApellidos = $i;
+                }
             }
-            foreach ($data as $idx => $h) {
-                $mapped = $mapHeader((string)$h);
-                if ($mapped === 'nombre' && $nombreIdx === null) $nombreIdx = $idx;
-                if ($mapped === 'apellidos' && $apellidosIdx === null) $apellidosIdx = $idx;
-            }
-            if ($nombreIdx === null || $apellidosIdx === null) {
-                throw new Exception('No se han encontrado las columnas requeridas (Nombre y Apellidos) en la cabecera.');
+            if ($colNombre === null || $colApellidos === null) {
+                throw new Exception('El archivo CSV debe contener columnas "Nombre" y "Apellidos" (o variantes reconocidas)');
             }
             continue;
         }
 
         // Verificar que tenemos todos los datos necesarios
-        if (!is_array($data) || count($data) <= max($nombreIdx, $apellidosIdx)) {
+        if (count($data) <= max($colNombre, $colApellidos)) {
             $errors[] = "Línea $lineNumber: no tiene todas las columnas requeridas";
             continue;
         }
 
-        // Verificar que la línea tiene datos (nombre y apellidos no vacíos)
-        $nombre = isset($data[$nombreIdx]) ? trim((string)$data[$nombreIdx]) : '';
-        $apellidos = isset($data[$apellidosIdx]) ? trim((string)$data[$apellidosIdx]) : '';
-        // Asegurar UTF-8 válido por campo (por si fgetcsv retornó en otra codificación)
-        if (!mb_check_encoding($nombre, 'UTF-8')) { $nombre = mb_convert_encoding($nombre, 'UTF-8', 'Windows-1252'); }
-        if (!mb_check_encoding($apellidos, 'UTF-8')) { $apellidos = mb_convert_encoding($apellidos, 'UTF-8', 'Windows-1252'); }
-        if ($nombre === '' && $apellidos === '') { continue; } // saltar filas vacías
-        if ($nombre === '' || $apellidos === '') {
-            $errors[] = "Línea $lineNumber: faltan Nombre o Apellidos";
-            continue;
+        $nombre = isset($data[$colNombre]) ? trim($data[$colNombre]) : '';
+        $apellidos = isset($data[$colApellidos]) ? trim($data[$colApellidos]) : '';
+        
+        // Verificar que la línea tiene datos
+        if (!empty($nombre) && !empty($apellidos)) {
+            $total_registros++;
+            
+            // Insertar sin verificar duplicados (decisión administrativa)
+            $stmt->execute([$actividad_id, $nombre, $apellidos]);
+            $rowCount++;
         }
-        $total_registros++;
-        // Insertar sin verificación de duplicados (según decisión actual)
-        $stmt->execute([$actividad_id, $nombre, $apellidos]);
-        $rowCount++;
     }
     
     fclose($handle);
@@ -221,9 +181,10 @@ try {
     // Confirmar transacción
     $pdo->commit();
     
-    $message = "Importación completada: $rowCount participantes inscritos";
+    $action = $mode === 'replace' ? 'Listado reemplazado' : 'Importación completada';
+    $message = "$action: $rowCount participantes inscritos";
     if (!empty($errors)) {
-        $message .= ". Errores: " . implode(', ', array_slice($errors, 0, 3));
+        $message .= ". Avisos: " . implode(', ', array_slice($errors, 0, 3));
         if (count($errors) > 3) {
             $message .= " y " . (count($errors) - 3) . " más";
         }
