@@ -4,6 +4,7 @@ require_once 'config/config.php';
 // Consultamos los centros desde la tabla
 $sql = "SELECT id, nombre FROM centros";
 $stmt = $pdo->query($sql);
+$centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $pageTitle = "Sistema de Asistencia";
 require_once 'includes/header.php';
@@ -54,32 +55,33 @@ require_once 'includes/header.php';
                      </div>
                      <input type="hidden" name="centro_id" id="centro_id_hidden" value="<?php echo htmlspecialchars($preId); ?>">
                  <?php endif; ?>
-    61                     <option value="">Oye, y tú, ¿de quién eres?</option>
-    62                     <?php foreach($centros as $centro): ?>
-    63                         <option value="<?php echo $centro['id']; ?>" <?php echo (isset($_GET['centro_id']) && (string)$_GET['centro_id'] === (string)$centro['id']) ? 'selected' : ''; ?>>
-    64                             <?php echo htmlspecialchars($centro['nombre']); ?>
-    65                         </option>
-    66                     <?php endforeach; ?>
-    67                 </select>
-    68             </div>
-    69 
-    70             <div class="form-group">
-    71                 <label for="password">
-    72                     <i class="fas fa-lock"></i> Contraseña
-    73                 </label>
-    74                 <input type="password" name="password" id="password" required autofocus>
-    75             </div>
-    76 
-    77             <button type="submit">
-    78                 <i class="fas fa-sign-in-alt"></i> Acceder
-    79             </button>
-    80         </form>
+                 <select name="centro_id" id="centro_id" <?php echo $preselected ? 'disabled style="opacity:.6"' : ''; ?>>
+                     <option value="">Oye, y tú, ¿de quién eres?</option>
+                     <?php foreach ($centros as $centro): ?>
+                         <option value="<?php echo htmlspecialchars($centro['id']); ?>" <?php echo ($preselected && (string)$preId === (string)$centro['id']) ? 'selected' : ''; ?>>
+                             <?php echo htmlspecialchars($centro['nombre']); ?>
+                         </option>
+                     <?php endforeach; ?>
+                 </select>
+            </div>
+
+            <div class="form-group">
+                <label for="password">
+                    <i class="fas fa-lock"></i> Contraseña
+                </label>
+                <input type="password" name="password" id="password" required autofocus>
+            </div>
+
+            <button type="submit">
+                <i class="fas fa-sign-in-alt"></i> Acceder
+            </button>
+        </form>
         <script>
           function enableCentroSelect() {
             const sel = document.getElementById('centro_id');
             const hidden = document.getElementById('centro_id_hidden');
             if (sel) { sel.disabled = false; sel.style.opacity = ''; sel.focus(); }
-{{ ... }}
+            if (hidden) { hidden.remove(); }
           }
         </script>
     </div>
