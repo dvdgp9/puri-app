@@ -125,9 +125,17 @@ try {
     $normalize = function($s) {
         $s = trim((string)$s);
         if ($s === '') return '';
-        $s = iconv('UTF-8', 'ASCII//TRANSLIT', $s);
-        $s = strtolower($s);
-        $s = preg_replace('/[^a-z0-9]+/', ' ', $s);
+        $s = mb_strtolower($s, 'UTF-8');
+        // Reemplazo simple de acentos y eñe para normalizar sin iconv
+        $s = strtr($s, [
+            'á'=>'a','à'=>'a','ä'=>'a','â'=>'a','ã'=>'a','å'=>'a',
+            'é'=>'e','è'=>'e','ë'=>'e','ê'=>'e',
+            'í'=>'i','ì'=>'i','ï'=>'i','î'=>'i',
+            'ó'=>'o','ò'=>'o','ö'=>'o','ô'=>'o','õ'=>'o',
+            'ú'=>'u','ù'=>'u','ü'=>'u','û'=>'u',
+            'ñ'=>'n','ç'=>'c'
+        ]);
+        $s = preg_replace('/[^a-z0-9]+/u', ' ', $s);
         $s = trim(preg_replace('/\s+/', ' ', $s));
         return $s;
     };
