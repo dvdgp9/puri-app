@@ -32,10 +32,33 @@ if (!is_array($participantes)) {
 }
 
 try {
-    $pdo = getPDO();
-    $pdo->beginTransaction();
+    // Autenticación y autorización
+    $admin_info = getAdminInfo();
 
-    $stmt = $pdo->prepare('INSERT INTO participantes (actividad_id, nombre, apellidos) VALUES (?, ?, ?)');
+    // Verificar que la actividad existe
+    $stmt = $pdo->prepare('SELECT a.id, i.centro_id FROM actividades a INNER JOIN instalaciones i ON i.id = a.instalacion_id WHERE a.id = ?');
+    $stmt->execute([$actividad_id]);
+    $actividad = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$actividad) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Actividad no encontrada']);
+        exit;
+    }
+
+    // Si no es superadmin, validar que el centro esté asignado
+    if ($admin_info['role'] !== 'superadmin') {
+        $stmt = $pdo->prepare('SELECT 1 FROM admin_asignaciones WHERE admin_id = ? AND centro_id = ?');
+        $stmt->execute([$admin_info['id'], $actividad['centro_id']]);
+        if (!$stmt->fetchColumn()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'No autorizado para esta actividad']);
+            exit;
+        }
+    }
+
+    // Transacción e inserciones
+    $pdo->beginTransaction();
+    $stmtIns = $pdo->prepare('INSERT INTO inscritos (actividad_id, nombre, apellidos) VALUES (?, ?, ?)');
 
     $inserted = 0;
     $errors = [];
@@ -45,7 +68,7 @@ try {
         $apellidos = isset($p['apellidos']) ? trim((string)$p['apellidos']) : '';
 
         if ($nombre === '' && $apellidos === '') {
-            continue;
+            continue; // fila vacía
         }
         if ($nombre === '' || $apellidos === '') {
             $errors[] = ['row' => $idx, 'message' => 'Faltan nombre o apellidos'];
@@ -54,7 +77,8 @@ try {
 
         $nombre = preg_replace('/\s+/', ' ', $nombre);
         $apellidos = preg_replace('/\s+/', ' ', $apellidos);
-        $stmt->execute([$actividad_id, $nombre, $apellidos]);
+
+        $stmtIns->execute([$actividad_id, $nombre, $apellidos]);
         $inserted++;
     }
 
@@ -68,6 +92,7 @@ try {
     ]);
 } catch (Throwable $e) {
     if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
+    error_log('create_multiple error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error del servidor']);
 }
