@@ -19,6 +19,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Prefill locked fields in add participant modal
   prefillLockedFields();
+  
+  // Initialize participants table
+  initActivityParticipantsTable();
 
   // Load participants
   loadParticipants();
@@ -33,7 +36,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const editForm = document.getElementById('editActivityForm');
   if (editForm) editForm.addEventListener('submit', handleEditActivitySubmit);
   const createForm = document.getElementById('createParticipantForm');
-  if (createForm) createForm.addEventListener('submit', handleCreateParticipantSubmit);
+  if (createForm) createForm.addEventListener('submit', handleCreateMultipleParticipantsSubmit);
   const uploadCsvForm = document.getElementById('uploadParticipantCsvForm');
   if (uploadCsvForm) uploadCsvForm.addEventListener('submit', handleUploadCsvSubmit);
 
@@ -524,6 +527,229 @@ async function handleEditParticipantSubmit(e) {
     showNotification('Error actualizando participante', 'error');
   } finally {
     const btn = document.getElementById('saveEditParticipantBtn');
+    setBtnLoading(btn, false);
+  }
+}
+
+// ===== FUNCIONES PARA TABLA DE PARTICIPANTES =====
+
+/**
+ * Inicializar tabla de participantes con filas vacías
+ */
+function initActivityParticipantsTable() {
+  const tbody = document.getElementById('activityParticipantsTableBody');
+  if (!tbody) return;
+  
+  // Limpiar tabla
+  tbody.innerHTML = '';
+  
+  // Añadir 3 filas iniciales
+  for (let i = 0; i < 3; i++) {
+    addActivityParticipantRow();
+  }
+}
+
+/**
+ * Añadir nueva fila a la tabla de participantes
+ */
+function addActivityParticipantRow() {
+  const tbody = document.getElementById('activityParticipantsTableBody');
+  if (!tbody) return;
+  
+  const rowIndex = tbody.children.length;
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td>
+      <input type="text" class="form-input activity-participant-nombre" placeholder="Nombre" 
+             data-row="${rowIndex}" onkeydown="handleActivityParticipantKeyDown(event)">
+    </td>
+    <td>
+      <input type="text" class="form-input activity-participant-apellidos" placeholder="Apellidos" 
+             data-row="${rowIndex}" onkeydown="handleActivityParticipantKeyDown(event)">
+    </td>
+    <td>
+      <button type="button" class="btn-remove-row" onclick="removeActivityParticipantRow(this)" 
+              title="Eliminar fila">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </td>
+  `;
+  
+  tbody.appendChild(row);
+  
+  // Enfocar el primer input de la nueva fila
+  const firstInput = row.querySelector('.activity-participant-nombre');
+  if (firstInput) {
+    setTimeout(() => firstInput.focus(), 50);
+  }
+}
+
+/**
+ * Eliminar fila de participante
+ */
+function removeActivityParticipantRow(button) {
+  const row = button.closest('tr');
+  const tbody = document.getElementById('activityParticipantsTableBody');
+  
+  // No permitir eliminar si solo queda una fila
+  if (tbody.children.length <= 1) {
+    showNotification('Debe mantener al menos una fila', 'warning');
+    return;
+  }
+  
+  row.remove();
+  
+  // Actualizar índices de las filas restantes
+  Array.from(tbody.children).forEach((row, index) => {
+    const inputs = row.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.setAttribute('data-row', index);
+    });
+  });
+}
+
+/**
+ * Manejar teclas especiales en inputs de participantes
+ */
+function handleActivityParticipantKeyDown(event) {
+  const input = event.target;
+  const row = input.closest('tr');
+  
+  // Enter: mover al siguiente campo o añadir nueva fila
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    
+    if (input.classList.contains('activity-participant-nombre')) {
+      // Mover a apellidos de la misma fila
+      const apellidosInput = row.querySelector('.activity-participant-apellidos');
+      if (apellidosInput) apellidosInput.focus();
+    } else if (input.classList.contains('activity-participant-apellidos')) {
+      // Mover a nombre de la siguiente fila o crear nueva
+      const nextRow = row.nextElementSibling;
+      if (nextRow) {
+        const nextNombreInput = nextRow.querySelector('.activity-participant-nombre');
+        if (nextNombreInput) nextNombreInput.focus();
+      } else {
+        // Añadir nueva fila si ambos campos están llenos
+        const nombreInput = row.querySelector('.activity-participant-nombre');
+        if (nombreInput.value.trim() && input.value.trim()) {
+          addActivityParticipantRow();
+        }
+      }
+    }
+  }
+  
+  // Escape: limpiar campo actual
+  if (event.key === 'Escape') {
+    input.value = '';
+  }
+}
+
+/**
+ * Recopilar datos de la tabla de participantes
+ */
+function collectActivityParticipantsData() {
+  const tbody = document.getElementById('activityParticipantsTableBody');
+  if (!tbody) return [];
+  
+  const participantes = [];
+  const rows = Array.from(tbody.children);
+  
+  rows.forEach((row, index) => {
+    const nombreInput = row.querySelector('.activity-participant-nombre');
+    const apellidosInput = row.querySelector('.activity-participant-apellidos');
+    
+    if (nombreInput && apellidosInput) {
+      const nombre = nombreInput.value.trim();
+      const apellidos = apellidosInput.value.trim();
+      
+      // Solo incluir filas con ambos campos llenos
+      if (nombre && apellidos) {
+        participantes.push({
+          nombre: nombre,
+          apellidos: apellidos,
+          fila: index + 1
+        });
+      }
+    }
+  });
+  
+  return participantes;
+}
+
+/**
+ * Manejar envío del formulario de múltiples participantes
+ */
+async function handleCreateMultipleParticipantsSubmit(e) {
+  e.preventDefault();
+  
+  const btn = document.getElementById('createParticipantBtn');
+  setBtnLoading(btn, true);
+  
+  try {
+    // Limpiar errores previos
+    clearFormErrors();
+    
+    // Verificar que tenemos actividad
+    const activityId = document.getElementById('lockedActivityId').value;
+    if (!activityId) {
+      showNotification('Error: No se encontró la actividad', 'error');
+      return;
+    }
+    
+    // Recopilar datos de la tabla
+    const participantes = collectActivityParticipantsData();
+    
+    if (participantes.length === 0) {
+      showFieldError('activityParticipantsTable', 'Debe añadir al menos un participante');
+      return;
+    }
+    
+    // Enviar datos
+    const response = await fetch('api/participantes/create_multiple.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        actividad_id: parseInt(activityId),
+        participantes: participantes
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      const { exitosos, errores } = result.summary;
+      let message = `${exitosos} participantes añadidos`;
+      if (errores > 0) {
+        message += `, ${errores} errores`;
+      }
+      
+      showNotification(message, exitosos > 0 ? 'success' : 'warning');
+      
+      // Limpiar tabla y reinicializar
+      initActivityParticipantsTable();
+      
+      // Recargar lista de participantes
+      await loadParticipants();
+      
+      // Si todos fueron exitosos, cerrar modal
+      if (errores === 0) {
+        closeModal('addParticipantsModal');
+      } else {
+        // Mostrar detalles de errores en consola
+        console.log('Detalles de errores:', result.resultados.filter(r => !r.success));
+      }
+    } else {
+      showNotification('Error: ' + result.message, 'error');
+    }
+  } catch (error) {
+    console.error('Error creating multiple participants:', error);
+    showNotification('Error al crear los participantes', 'error');
+  } finally {
     setBtnLoading(btn, false);
   }
 }
