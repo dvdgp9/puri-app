@@ -39,6 +39,18 @@ $stmtActividad = $pdo->prepare("
 $stmtActividad->execute([$actividad_id]);
 $actividad = $stmtActividad->fetch(PDO::FETCH_ASSOC);
 
+// Calcular estado de la actividad y formato de fechas
+$hoy = date('Y-m-d');
+$fi = isset($actividad['fecha_inicio']) && $actividad['fecha_inicio'] ? substr($actividad['fecha_inicio'], 0, 10) : null;
+$ff = isset($actividad['fecha_fin']) && $actividad['fecha_fin'] ? substr($actividad['fecha_fin'], 0, 10) : null;
+$status_label = 'Activa';
+$status_class = 'status-active';
+if ($fi && $hoy < $fi) { $status_label = 'Programada'; $status_class = 'status-scheduled'; }
+if ($ff && $hoy > $ff) { $status_label = 'Finalizada'; $status_class = 'status-ended'; }
+$formatDate = function($d) { $p = explode('-', $d); return count($p) === 3 ? ($p[2] . '/' . $p[1] . '/' . $p[0]) : $d; };
+$fi_fmt = $fi ? $formatDate($fi) : '';
+$ff_fmt = $ff ? $formatDate($ff) : '';
+
 // Consultar los inscritos en la actividad
 $stmtUsuarios = $pdo->prepare("
     SELECT id, nombre, apellidos 
@@ -129,6 +141,43 @@ $extraStyles = "
     td {
       position: relative;
     }
+
+    .activity-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 10px 0 16px;
+      padding: 12px 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #fff;
+    }
+    .activity-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 0;
+      color: #111827;
+    }
+    .activity-subinfo {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .status-active { color: #065f46; background: #ecfdf5; border-color: #a7f3d0; }
+    .status-scheduled { color: #92400e; background: #fffbeb; border-color: #fcd34d; }
+    .status-ended { color: #991b1b; background: #fef2f2; border-color: #fecaca; }
+    .dates-chip { font-size: 0.85rem; color: #374151; }
   </style>
 ";
 require_once 'includes/header.php';
@@ -280,13 +329,28 @@ require_once 'includes/header.php';
           Copiar enlace a actividad
         </button>
       </div>
-      <h1>Pasa lista, que yo vigilo</h1>
       <div class="breadcrumbs">
         <a href="instalaciones.php"><?php echo htmlspecialchars(html_entity_decode($actividad['centro_nombre'])); ?></a>
         <span class="separator">›</span>
         <a href="actividades.php?instalacion_id=<?php echo htmlspecialchars($actividad['instalacion_id']); ?>"><?php echo htmlspecialchars(html_entity_decode($actividad['instalacion_nombre'])); ?></a>
         <span class="separator">›</span>
         <span class="current"><?php echo htmlspecialchars(html_entity_decode($actividad['nombre'])); ?></span>
+      </div>
+      <div class="activity-header">
+        <div>
+          <h2 class="activity-title"><?php echo htmlspecialchars(html_entity_decode($actividad['nombre'])); ?></h2>
+          <div class="activity-subinfo">
+            <?php echo htmlspecialchars(html_entity_decode($actividad['centro_nombre'])); ?> · <?php echo htmlspecialchars(html_entity_decode($actividad['instalacion_nombre'])); ?>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+          <span class="status-badge <?php echo $status_class; ?>"><?php echo $status_label; ?></span>
+          <span class="dates-chip">
+            <?php if ($fi_fmt || $ff_fmt): ?>
+              <?php echo htmlspecialchars(trim(($fi_fmt ?: '') . ($ff_fmt ? ' → ' . $ff_fmt : ''))); ?>
+            <?php endif; ?>
+          </span>
+        </div>
       </div>
       
       <?php 
