@@ -51,6 +51,30 @@ $formatDate = function($d) { $p = explode('-', $d); return count($p) === 3 ? ($p
 $fi_fmt = $fi ? $formatDate($fi) : '';
 $ff_fmt = $ff ? $formatDate($ff) : '';
 
+// Días de la semana (letras) y horario
+$dias_letters = '';
+if (!empty($actividad['dias_semana'])) {
+    $map = [
+        'lunes' => 'L', 'martes' => 'M', 'miércoles' => 'X', 'miercoles' => 'X',
+        'jueves' => 'J', 'viernes' => 'V', 'sábado' => 'S', 'sabado' => 'S', 'domingo' => 'D',
+        'l' => 'L', 'm' => 'M', 'x' => 'X', 'j' => 'J', 'v' => 'V', 's' => 'S', 'd' => 'D'
+    ];
+    $dias = trim((string)$actividad['dias_semana']);
+    $parts = preg_split('/\s*,\s*/u', $dias, -1, PREG_SPLIT_NO_EMPTY);
+    if (count($parts) <= 1) {
+        $parts = preg_split('/\s*y\s*/iu', $dias, -1, PREG_SPLIT_NO_EMPTY);
+    }
+    $letters = [];
+    foreach ($parts as $p) {
+        $key = mb_strtolower(trim($p), 'UTF-8');
+        $letters[] = $map[$key] ?? mb_strtoupper(mb_substr($key, 0, 1, 'UTF-8'), 'UTF-8');
+    }
+    $dias_letters = implode(', ', $letters);
+}
+$hora_ini = isset($actividad['hora_inicio']) && $actividad['hora_inicio'] ? substr($actividad['hora_inicio'], 0, 5) : '';
+$hora_fin = isset($actividad['hora_fin']) && $actividad['hora_fin'] ? substr($actividad['hora_fin'], 0, 5) : '';
+$hora_range = trim(($hora_ini ?: '') . ($hora_fin ? '–' . $hora_fin : ''));
+
 // Consultar los inscritos en la actividad
 $stmtUsuarios = $pdo->prepare("
     SELECT id, nombre, apellidos 
@@ -341,6 +365,8 @@ require_once 'includes/header.php';
           <h2 class="activity-title"><?php echo htmlspecialchars(html_entity_decode($actividad['nombre'])); ?></h2>
           <div class="activity-subinfo">
             <?php echo htmlspecialchars(html_entity_decode($actividad['centro_nombre'])); ?> · <?php echo htmlspecialchars(html_entity_decode($actividad['instalacion_nombre'])); ?>
+            <?php if ($dias_letters): ?> · <?php echo htmlspecialchars($dias_letters); ?><?php endif; ?>
+            <?php if ($hora_range): ?> · <?php echo htmlspecialchars($hora_range); ?><?php endif; ?>
           </div>
         </div>
         <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
