@@ -296,6 +296,7 @@ function initializeQuickEntryRows() {
   if (!tbody) return;
   tbody.innerHTML = '';
   for (let i = 0; i < 3; i++) addQuickEntryRow();
+  enableQuickEntryPaste();
 }
 
 function addQuickEntryRow() {
@@ -328,6 +329,66 @@ function collectQuickEntries() {
 // expose for onclick
 if (typeof window !== 'undefined') {
   window.addQuickEntryRow = addQuickEntryRow;
+}
+
+// Paste-from-Excel support
+function enableQuickEntryPaste() {
+  const tbody = document.getElementById('quickEntryBody');
+  if (!tbody) return;
+  // Delegate paste to inputs within the table body
+  tbody.addEventListener('paste', handleQuickEntryPaste);
+}
+
+function handleQuickEntryPaste(e) {
+  const target = e.target;
+  if (!target || target.tagName !== 'INPUT') return; // only handle pastes in inputs
+  const tbody = document.getElementById('quickEntryBody');
+  if (!tbody) return;
+  const clip = e.clipboardData || window.clipboardData;
+  if (!clip) return;
+  const text = (clip.getData('text/plain') || '').trim();
+  if (!text || text.indexOf('\n') === -1 && text.indexOf('\t') === -1) return; // let normal paste if single cell
+
+  e.preventDefault();
+
+  // Determine start row index based on target row
+  const rowEl = target.closest('tr');
+  const startIndex = Array.from(tbody.querySelectorAll('tr')).indexOf(rowEl);
+
+  // Parse rows and columns (Excel uses tabs) - also support ; or ,
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+
+  // Ensure enough rows exist
+  const needed = startIndex + lines.length;
+  while (tbody.querySelectorAll('tr').length < needed) addQuickEntryRow();
+
+  lines.forEach((line, i) => {
+    const cols = line.split(/\t|;|,/);
+    let nombre = '';
+    let apellidos = '';
+    if (cols.length >= 2) {
+      nombre = String(cols[0] || '').trim();
+      // join remaining cols as apellidos to be safe
+      apellidos = cols.slice(1).join(' ').trim();
+    } else if (cols.length === 1) {
+      const one = String(cols[0] || '').trim();
+      // split by last space: Nombre [Apellidos]
+      const parts = one.split(/\s+/);
+      if (parts.length >= 2) {
+        nombre = parts[0];
+        apellidos = parts.slice(1).join(' ');
+      } else {
+        // if only one token, put into nombre and leave apellidos empty
+        nombre = one;
+      }
+    }
+
+    const row = tbody.querySelectorAll('tr')[startIndex + i];
+    if (!row) return;
+    const inputs = row.querySelectorAll('input');
+    if (inputs[0]) inputs[0].value = nombre;
+    if (inputs[1]) inputs[1].value = apellidos;
+  });
 }
 
 // Upload CSV
