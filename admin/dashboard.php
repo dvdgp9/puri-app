@@ -517,30 +517,21 @@ $admin_info = getAdminInfo();
                             </div>
                         </div>
                         
-                        <!-- Tabla de participantes -->
-                        <div class="form-group">
-                            <label>Participantes *</label>
-                            <div class="participants-table-container">
-                                <table class="participants-table" id="participantsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Nombre</th>
-                                            <th>Apellidos</th>
-                                            <th width="50"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="participantsTableBody">
-                                        <!-- Las filas se generan dinámicamente -->
-                                    </tbody>
-                                </table>
-                                <button type="button" class="btn btn-outline btn-sm" onclick="addParticipantRow()" style="margin-top: 8px;">
-                                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                    </svg>
-                                    Añadir fila
-                                </button>
+                        <!-- Datos del participante -->
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="participantName">Nombre *</label>
+                                <input type="text" id="participantName" name="nombre" required 
+                                       placeholder="Ej: Juan">
+                                <span class="field-error" id="participantName-error"></span>
                             </div>
-                            <span class="field-error" id="participantsTable-error"></span>
+                            
+                            <div class="form-group col-md-6">
+                                <label for="participantLastName">Apellidos *</label>
+                                <input type="text" id="participantLastName" name="apellidos" required 
+                                       placeholder="Ej: Pérez García">
+                                <span class="field-error" id="participantLastName-error"></span>
+                            </div>
                         </div>
                     </form>
                 </div>
