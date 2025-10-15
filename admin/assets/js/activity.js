@@ -276,8 +276,8 @@ async function handleCreateParticipantSubmit(e) {
       const inserted = Number(result.inserted || 0);
       const errs = (result.errors || []).length;
       showNotification(`Añadidos ${inserted} participante(s)${errs ? `, ${errs} con error` : ''}`, inserted ? 'success' : 'warning');
-      // Reset rows for siguiente carga rápida
-      initializeQuickEntryRows();
+      // Cerrar modal tras completar correctamente
+      closeCreateParticipantModal();
     } else {
       showNotification(result.message || 'No se pudo añadir el participante', 'error');
     }

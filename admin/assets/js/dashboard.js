@@ -2672,8 +2672,8 @@ async function createParticipant() {
             const inserted = Number(result.inserted || 0);
             const errs = (result.errors || []).length;
             showNotification(`Añadidos ${inserted} participante(s)${errs ? `, ${errs} con error` : ''}`, inserted ? 'success' : 'warning');
-            // Reset de filas para continuar añadiendo
-            initializeDashQuickEntryRows();
+            // Cerrar modal tras completar correctamente
+            closeCreateParticipantModal();
             // Actualizar estadísticas si aplica
             if (typeof loadStats === 'function') { await loadStats(); }
         } else {
