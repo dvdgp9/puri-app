@@ -2136,6 +2136,11 @@ function setupParticipantModal() {
         });
     }
     
+    // Inicializar tabla rápida (si existe)
+    if (document.getElementById('dashQuickEntryBody')) {
+        initializeDashQuickEntryRows();
+    }
+
     // Configurar selector de archivo CSV
     const csvFileInput = document.getElementById('participantCsvFile');
     if (csvFileInput) {
@@ -2640,61 +2645,39 @@ async function createParticipant() {
         // Limpiar errores previos
         clearFormErrors();
         
-        // Obtener datos del formulario
-        const form = document.getElementById('createParticipantForm');
-        const formData = new FormData(form);
-        
-        // Preparar datos
-        const data = {
-            nombre: formData.get('nombre'),
-            apellidos: formData.get('apellidos'),
-            actividad_id: formData.get('actividad_id')
-        };
-        
-        // Validaciones básicas
-        if (!data.nombre.trim()) {
-            showFieldError('participantName', 'El nombre es obligatorio');
-            return;
-        }
-        
-        if (!data.apellidos.trim()) {
-            showFieldError('participantLastName', 'Los apellidos son obligatorios');
-            return;
-        }
-        
-        if (!data.actividad_id) {
+        // Validar actividad seleccionada
+        const actividadId = document.getElementById('participantActivity').value;
+        if (!actividadId) {
             showFieldError('participantActivity', 'Debe seleccionar una actividad');
             return;
         }
         
-        // Enviar datos
-        const response = await fetch('api/participantes/create.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        });
+        // Recopilar filas de entrada rápida
+        const participantes = collectDashQuickEntries();
+        if (!participantes.length) {
+            const err = document.getElementById('dashQuickEntryError');
+            if (err) err.textContent = 'Añade al menos una fila con Nombre y Apellidos';
+            return;
+        }
         
+        // Enviar datos en bloque
+        const response = await fetch('api/participantes/create_multiple.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ actividad_id: Number(actividadId), participantes })
+        });
         const result = await response.json();
         
         if (result.success) {
-            showNotification('Participante inscrito exitosamente', 'success');
-            closeCreateParticipantModal();
-            
-            // Actualizar estadísticas
-            await loadStats();
+            const inserted = Number(result.inserted || 0);
+            const errs = (result.errors || []).length;
+            showNotification(`Añadidos ${inserted} participante(s)${errs ? `, ${errs} con error` : ''}`, inserted ? 'success' : 'warning');
+            // Reset de filas para continuar añadiendo
+            initializeDashQuickEntryRows();
+            // Actualizar estadísticas si aplica
+            if (typeof loadStats === 'function') { await loadStats(); }
         } else {
-            // Mostrar información de debug si está disponible
-            if (result.debug) {
-                console.log('DEBUG INFO:', result.debug);
-                console.log('Input nombre:', result.debug.input_nombre);
-                console.log('Input apellidos:', result.debug.input_apellidos);
-                console.log('Existing nombre:', result.debug.existing_nombre);
-                console.log('Existing apellidos:', result.debug.existing_apellidos);
-                console.log('Actividad ID:', result.debug.actividad_id);
-            }
-            showNotification('Error: ' + result.message, 'error');
+            showNotification('Error: ' + (result.message || 'No se pudo añadir'), 'error');
         }
     } catch (error) {
         console.error('Error creating participant:', error);
@@ -2708,6 +2691,123 @@ async function createParticipant() {
         btnText.style.display = 'inline';
         btnLoading.style.display = 'none';
     }
+}
+
+// Quick entry helpers (Dashboard)
+function initializeDashQuickEntryRows() {
+    const tbody = document.getElementById('dashQuickEntryBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    for (let i = 0; i < 3; i++) addDashQuickEntryRow();
+    enableDashQuickEntryPaste();
+    enableDashQuickEntryAutoAdvance();
+}
+
+function addDashQuickEntryRow() {
+    const tbody = document.getElementById('dashQuickEntryBody');
+    if (!tbody) return;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" class="form-input" placeholder="Nombre"></td>
+      <td><input type="text" class="form-input" placeholder="Apellidos"></td>
+      <td style="text-align:right">
+        <button type="button" class="btn btn-secondary" title="Eliminar" onclick="this.closest('tr').remove()">&times;</button>
+      </td>`;
+    tbody.appendChild(tr);
+}
+
+function collectDashQuickEntries() {
+    const rows = Array.from(document.querySelectorAll('#dashQuickEntryBody tr'));
+    const items = [];
+    rows.forEach(r => {
+        const inputs = r.querySelectorAll('input');
+        const nombre = (inputs[0]?.value || '').trim();
+        const apellidos = (inputs[1]?.value || '').trim();
+        if (nombre || apellidos) {
+            if (nombre && apellidos) items.push({ nombre, apellidos });
+        }
+    });
+    return items;
+}
+
+function enableDashQuickEntryPaste() {
+    const tbody = document.getElementById('dashQuickEntryBody');
+    if (!tbody) return;
+    tbody.addEventListener('paste', handleDashQuickEntryPaste);
+}
+
+function handleDashQuickEntryPaste(e) {
+    const target = e.target;
+    if (!target || target.tagName !== 'INPUT') return;
+    const tbody = document.getElementById('dashQuickEntryBody');
+    if (!tbody) return;
+    const clip = e.clipboardData || window.clipboardData;
+    if (!clip) return;
+    const text = (clip.getData('text/plain') || '').trim();
+    if (!text || (text.indexOf('\n') === -1 && text.indexOf('\t') === -1)) return;
+
+    e.preventDefault();
+
+    const rowEl = target.closest('tr');
+    const startIndex = Array.from(tbody.querySelectorAll('tr')).indexOf(rowEl);
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+
+    const needed = startIndex + lines.length;
+    while (tbody.querySelectorAll('tr').length < needed) addDashQuickEntryRow();
+
+    lines.forEach((line, i) => {
+        const cols = line.split(/\t|;|,/);
+        let nombre = '';
+        let apellidos = '';
+        if (cols.length >= 2) {
+            nombre = String(cols[0] || '').trim();
+            apellidos = cols.slice(1).join(' ').trim();
+        } else if (cols.length === 1) {
+            const one = String(cols[0] || '').trim();
+            const parts = one.split(/\s+/);
+            if (parts.length >= 2) { nombre = parts[0]; apellidos = parts.slice(1).join(' '); }
+            else { nombre = one; }
+        }
+        const row = tbody.querySelectorAll('tr')[startIndex + i];
+        if (!row) return;
+        const inputs = row.querySelectorAll('input');
+        if (inputs[0]) inputs[0].value = nombre;
+        if (inputs[1]) inputs[1].value = apellidos;
+    });
+
+    const nextIndex = startIndex + lines.length;
+    while (tbody.querySelectorAll('tr').length <= nextIndex) addDashQuickEntryRow();
+    const nextRow = tbody.querySelectorAll('tr')[nextIndex];
+    const nextInputs = nextRow ? nextRow.querySelectorAll('input') : null;
+    if (nextInputs && nextInputs[0]) { nextInputs[0].focus(); nextInputs[0].select(); }
+}
+
+function enableDashQuickEntryAutoAdvance() {
+    const tbody = document.getElementById('dashQuickEntryBody');
+    if (!tbody) return;
+    tbody.addEventListener('keydown', function(ev) {
+        if (ev.key !== 'Enter') return;
+        const target = ev.target;
+        if (!target || target.tagName !== 'INPUT') return;
+        ev.preventDefault();
+        const row = target.closest('tr');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const idx = rows.indexOf(row);
+        const inputs = row ? row.querySelectorAll('input') : null;
+        const nombre = (inputs && inputs[0] ? inputs[0].value.trim() : '');
+        const apellidos = (inputs && inputs[1] ? inputs[1].value.trim() : '');
+        if (!nombre && !apellidos) return;
+        const nextIdx = idx + 1;
+        while (tbody.querySelectorAll('tr').length <= nextIdx) addDashQuickEntryRow();
+        const nextRow = tbody.querySelectorAll('tr')[nextIdx];
+        const nextInputs = nextRow ? nextRow.querySelectorAll('input') : null;
+        if (nextInputs && nextInputs[0]) { nextInputs[0].focus(); nextInputs[0].select(); }
+    });
+}
+
+// expose add row for onclick
+if (typeof window !== 'undefined') {
+    window.addDashQuickEntryRow = addDashQuickEntryRow;
 }
 
 /**

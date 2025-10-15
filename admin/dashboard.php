@@ -517,21 +517,30 @@ $admin_info = getAdminInfo();
                             </div>
                         </div>
                         
-                        <!-- Datos del participante -->
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="participantName">Nombre *</label>
-                                <input type="text" id="participantName" name="nombre" required 
-                                       placeholder="Ej: Juan">
-                                <span class="field-error" id="participantName-error"></span>
+                        <!-- Entrada rápida en tabla editable -->
+                        <div class="form-group">
+                            <label>Entrada rápida</label>
+                            <div class="table-wrapper">
+                                <table class="editable-table" id="dashQuickEntryTable">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:48%">Nombre</th>
+                                            <th style="width:48%">Apellidos</th>
+                                            <th style="width:4%"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashQuickEntryBody">
+                                        <!-- filas dinámicas -->
+                                    </tbody>
+                                </table>
                             </div>
-                            
-                            <div class="form-group col-md-6">
-                                <label for="participantLastName">Apellidos *</label>
-                                <input type="text" id="participantLastName" name="apellidos" required 
-                                       placeholder="Ej: Pérez García">
-                                <span class="field-error" id="participantLastName-error"></span>
+                            <div style="margin-top:8px">
+                                <button type="button" class="btn btn-outline" onclick="addDashQuickEntryRow()">+ Añadir fila</button>
                             </div>
+                            <div style="margin-top:6px; font-size:12px; color:#6b7280;">
+                                Consejo: puedes pegar directamente desde Excel (Nombre y Apellidos en columnas)
+                            </div>
+                            <div class="form-error" id="dashQuickEntryError"></div>
                         </div>
                     </form>
                 </div>
