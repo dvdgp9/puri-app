@@ -297,6 +297,7 @@ function initializeQuickEntryRows() {
   tbody.innerHTML = '';
   for (let i = 0; i < 3; i++) addQuickEntryRow();
   enableQuickEntryPaste();
+  enableQuickEntryAutoAdvance();
 }
 
 function addQuickEntryRow() {
@@ -388,6 +389,43 @@ function handleQuickEntryPaste(e) {
     const inputs = row.querySelectorAll('input');
     if (inputs[0]) inputs[0].value = nombre;
     if (inputs[1]) inputs[1].value = apellidos;
+  });
+
+  // Focus next row first input and create one if needed
+  const nextIndex = startIndex + lines.length;
+  while (tbody.querySelectorAll('tr').length <= nextIndex) addQuickEntryRow();
+  const nextRow = tbody.querySelectorAll('tr')[nextIndex];
+  const nextInputs = nextRow ? nextRow.querySelectorAll('input') : null;
+  if (nextInputs && nextInputs[0]) {
+    nextInputs[0].focus();
+    nextInputs[0].select();
+  }
+}
+
+function enableQuickEntryAutoAdvance() {
+  const tbody = document.getElementById('quickEntryBody');
+  if (!tbody) return;
+  tbody.addEventListener('keydown', function(ev) {
+    if (ev.key !== 'Enter') return;
+    const target = ev.target;
+    if (!target || target.tagName !== 'INPUT') return;
+    ev.preventDefault();
+    const row = target.closest('tr');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const idx = rows.indexOf(row);
+    const inputs = row ? row.querySelectorAll('input') : null;
+    const nombre = (inputs && inputs[0] ? inputs[0].value.trim() : '');
+    const apellidos = (inputs && inputs[1] ? inputs[1].value.trim() : '');
+    // Only advance if current row has some content
+    if (!nombre && !apellidos) return;
+    const nextIdx = idx + 1;
+    while (tbody.querySelectorAll('tr').length <= nextIdx) addQuickEntryRow();
+    const nextRow = tbody.querySelectorAll('tr')[nextIdx];
+    const nextInputs = nextRow ? nextRow.querySelectorAll('input') : null;
+    if (nextInputs && nextInputs[0]) {
+      nextInputs[0].focus();
+      nextInputs[0].select();
+    }
   });
 }
 

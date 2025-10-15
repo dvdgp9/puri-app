@@ -318,6 +318,9 @@ try {
                             <div style="margin-top:8px">
                                 <button type="button" class="btn btn-outline" onclick="addQuickEntryRow()">+ Añadir fila</button>
                             </div>
+                            <div style="margin-top:6px; font-size:12px; color:#6b7280;">
+                                Consejo: puedes pegar directamente desde Excel (Nombre y Apellidos en columnas)
+                            </div>
                             <div class="form-error" id="quickEntryError"></div>
                         </div>
                     </form>
