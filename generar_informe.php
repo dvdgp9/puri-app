@@ -204,6 +204,12 @@ foreach ($fecha_headers as $fecha_header) {
 echo '<th class="total-column">Total</th>
         </tr>';
 
+// Inicializar array para contar asistencias por fecha
+$asistencias_por_fecha = [];
+foreach ($fechas as $fecha) {
+    $asistencias_por_fecha[$fecha] = 0;
+}
+
 // Añadir filas de asistencias
 foreach ($inscritos as $inscrito) {
     echo '<tr>
@@ -215,12 +221,27 @@ foreach ($inscritos as $inscrito) {
                   $asistencias_por_usuario[$inscrito['id']][$fecha] == 1;
         
         echo '<td>' . ($asistio ? 'X' : '') . '</td>';
-        if ($asistio) $total_asistencias++;
+        if ($asistio) {
+            $total_asistencias++;
+            $asistencias_por_fecha[$fecha]++;
+        }
     }
     
     echo '<td>' . $total_asistencias . '</td>
         </tr>';
 }
+
+// Añadir fila de sumatorios por columna
+echo '<tr style="font-weight: bold; background-color: #f9f9f9;">
+        <td>Total asistentes:</td>';
+
+foreach ($fechas as $fecha) {
+    echo '<td>' . $asistencias_por_fecha[$fecha] . '</td>';
+}
+
+// Celda vacía para la columna de total
+echo '<td></td>
+    </tr>';
 
 // Añadir fila de observaciones
 echo '<tr>
