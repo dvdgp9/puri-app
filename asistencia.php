@@ -80,6 +80,7 @@ $stmtUsuarios = $pdo->prepare("
     SELECT id, nombre, apellidos 
     FROM inscritos 
     WHERE actividad_id = ?
+    ORDER BY apellidos ASC, nombre ASC
 ");
 $stmtUsuarios->execute([$actividad_id]);
 $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);

@@ -53,7 +53,7 @@ try {
     }
 
     // Listado de participantes (inscritos) de la actividad
-    $stmt = $pdo->prepare('SELECT id, nombre, apellidos FROM inscritos WHERE actividad_id = ? ORDER BY nombre ASC, apellidos ASC');
+    $stmt = $pdo->prepare('SELECT id, nombre, apellidos FROM inscritos WHERE actividad_id = ? ORDER BY apellidos ASC, nombre ASC');
     $stmt->execute([$actividad_id]);
     $participants = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
