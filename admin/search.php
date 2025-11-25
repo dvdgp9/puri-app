@@ -19,6 +19,28 @@ $admin_info = getAdminInfo();
     <link rel="stylesheet" href="assets/css/admin.css">
     <link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        .search-page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem 2.5rem;
+        }
+        
+        .search-header {
+            margin-bottom: 2rem;
+        }
+        
+        .search-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0.5rem;
+        }
+        
+        .search-header p {
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+        
         .search-box {
             background: white;
             border-radius: 12px;
@@ -46,6 +68,21 @@ $admin_info = getAdminInfo();
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .search-btn {
+            padding: 0.75rem 1.5rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .search-btn:hover {
+            background: #2563eb;
         }
         
         .results-container {
@@ -94,7 +131,13 @@ $admin_info = getAdminInfo();
             border-bottom: none;
         }
         
-        .no-results, .loading {
+        .no-results {
+            padding: 3rem;
+            text-align: center;
+            color: #6b7280;
+        }
+        
+        .loading {
             padding: 3rem;
             text-align: center;
             color: #6b7280;
@@ -107,6 +150,29 @@ $admin_info = getAdminInfo();
         
         .activity-link:hover {
             text-decoration: underline;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge-ended {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .badge-scheduled {
+            background: #fef3c7;
+            color: #92400e;
         }
     </style>
 </head>
@@ -152,42 +218,36 @@ $admin_info = getAdminInfo();
 
     <!-- Main Content -->
     <main class="admin-content">
-        <!-- Breadcrumbs -->
-        <nav class="breadcrumbs">
-            <a href="dashboard.php">Escritorio</a>
-            <span class="breadcrumb-separator">/</span>
-            <span class="breadcrumb-current">Buscar Participantes</span>
-        </nav>
-
-        <!-- Page Title -->
-        <div class="page-header">
-            <h1 class="page-title">Buscar Participantes</h1>
-            <p class="page-subtitle">Busca participantes por nombre o apellidos en todos tus centros</p>
-        </div>
-
-        <div class="search-box">
-            <div class="search-input-wrapper">
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    class="search-input" 
-                    placeholder="Introduce nombre o apellidos..."
-                    autocomplete="off">
-                <button class="btn btn-primary" onclick="performSearch()">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    Buscar
-                </button>
+        <div class="search-page">
+            <div class="search-header">
+                <h1>Buscar Participantes</h1>
+                <p>Busca participantes por nombre o apellidos en todos tus centros</p>
             </div>
-        </div>
 
-        <div class="results-container" id="resultsContainer" style="display: none;">
-            <div class="results-header" id="resultsHeader">
-                Resultados de búsqueda
+            <div class="search-box">
+                <div class="search-input-wrapper">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="search-input" 
+                        placeholder="Introduce nombre o apellidos..."
+                        autocomplete="off">
+                    <button class="search-btn" onclick="performSearch()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        Buscar
+                    </button>
+                </div>
             </div>
-            <div id="resultsContent">
-                <!-- Los resultados se cargarán aquí -->
+
+            <div class="results-container" id="resultsContainer" style="display: none;">
+                <div class="results-header" id="resultsHeader">
+                    Resultados de búsqueda
+                </div>
+                <div id="resultsContent">
+                    <!-- Los resultados se cargarán aquí -->
+                </div>
             </div>
         </div>
     </main>
