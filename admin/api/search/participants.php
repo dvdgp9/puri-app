@@ -21,6 +21,15 @@ try {
         echo json_encode(['success' => true, 'results' => []]);
         exit;
     }
+    
+    // Normalizar el término de búsqueda quitando acentos y caracteres especiales
+    $normalized_search = $search_query;
+    $normalized_search = str_replace(
+        ['á','é','í','ó','ú','Á','É','Í','Ó','Ú','ñ','Ñ','ü','Ü'],
+        ['a','e','i','o','u','A','E','I','O','U','n','N','u','U'],
+        $normalized_search
+    );
+    $normalized_search = preg_replace('/[^a-zA-Z0-9\s]/', '', $normalized_search);
 
     // Obtener centros a los que el admin tiene acceso
     if ($admin_info['role'] === 'superadmin') {
@@ -42,12 +51,24 @@ try {
             INNER JOIN actividades a ON i.actividad_id = a.id
             INNER JOIN instalaciones inst ON a.instalacion_id = inst.id
             INNER JOIN centros c ON inst.centro_id = c.id
-            WHERE (i.nombre LIKE ? OR i.apellidos LIKE ?)
+            WHERE (
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                REPLACE(REPLACE(REPLACE(i.nombre, '*', ''), 'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),
+                'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'ñ','n'),'Ñ','N'),'ü','u'),'Ü','U'),
+                ' ',''), '') LIKE ?
+                OR
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                REPLACE(REPLACE(REPLACE(i.apellidos, '*', ''), 'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),
+                'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'ñ','n'),'Ñ','N'),'ü','u'),'Ü','U'),
+                ' ',''), '') LIKE ?
+            )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
         ";
         
-        $search_param = '%' . $search_query . '%';
+        $search_param = '%' . str_replace(' ', '', $normalized_search) . '%';
         $stmt = $pdo->prepare($sql_search);
         $stmt->execute([$search_param, $search_param]);
         
@@ -82,12 +103,24 @@ try {
             INNER JOIN instalaciones inst ON a.instalacion_id = inst.id
             INNER JOIN centros c ON inst.centro_id = c.id
             WHERE c.id IN ($placeholders)
-              AND (i.nombre LIKE ? OR i.apellidos LIKE ?)
+              AND (
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                REPLACE(REPLACE(REPLACE(i.nombre, '*', ''), 'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),
+                'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'ñ','n'),'Ñ','N'),'ü','u'),'Ü','U'),
+                ' ',''), '') LIKE ?
+                OR
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                REPLACE(REPLACE(REPLACE(i.apellidos, '*', ''), 'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),
+                'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'ñ','n'),'Ñ','N'),'ü','u'),'Ü','U'),
+                ' ',''), '') LIKE ?
+              )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
         ";
         
-        $search_param = '%' . $search_query . '%';
+        $search_param = '%' . str_replace(' ', '', $normalized_search) . '%';
         $params = array_merge($center_ids, [$search_param, $search_param]);
         
         $stmt = $pdo->prepare($sql_search);
