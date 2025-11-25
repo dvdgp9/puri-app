@@ -56,13 +56,13 @@ try {
                 REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
                 REPLACE(REPLACE(REPLACE(i.nombre, '*', ''), 'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),
                 'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'ñ','n'),'Ñ','N'),'ü','u'),'Ü','U'),
-                ' ',''), '') LIKE ?
+                ' ','') LIKE ?
                 OR
                 REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
                 REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
                 REPLACE(REPLACE(REPLACE(i.apellidos, '*', ''), 'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),
                 'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'ñ','n'),'Ñ','N'),'ü','u'),'Ü','U'),
-                ' ',''), '') LIKE ?
+                ' ','') LIKE ?
             )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
@@ -108,13 +108,13 @@ try {
                 REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
                 REPLACE(REPLACE(REPLACE(i.nombre, '*', ''), 'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),
                 'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'ñ','n'),'Ñ','N'),'ü','u'),'Ü','U'),
-                ' ',''), '') LIKE ?
+                ' ','') LIKE ?
                 OR
                 REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
                 REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
                 REPLACE(REPLACE(REPLACE(i.apellidos, '*', ''), 'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),
                 'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'ñ','n'),'Ñ','N'),'ü','u'),'Ü','U'),
-                ' ',''), '') LIKE ?
+                ' ','') LIKE ?
               )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
