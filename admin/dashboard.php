@@ -33,6 +33,12 @@ $admin_info = getAdminInfo();
                 </svg>
                 Informes
             </a>
+            <a href="search.php" class="btn btn-secondary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                Buscar
+            </a>
             <?php if (isSuperAdmin()) { ?>
             <button class="btn btn-secondary" onclick="showAdminsPanel()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
