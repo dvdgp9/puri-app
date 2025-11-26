@@ -53,6 +53,9 @@ try {
                 OR i.apellidos LIKE ?
                 OR REPLACE(i.apellidos, '*', ' ') LIKE ?
                 OR i.apellidos LIKE ?
+                OR CONCAT(i.nombre, ' ', i.apellidos) LIKE ?
+                OR CONCAT(i.nombre, ' ', REPLACE(i.apellidos, '*', ' ')) LIKE ?
+                OR CONCAT(REPLACE(i.nombre, '*', ' '), ' ', REPLACE(i.apellidos, '*', ' ')) LIKE ?
             )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
@@ -65,6 +68,9 @@ try {
             $search_like,
             $search_like,
             $search_like_star,
+            $search_like,
+            $search_like,
+            $search_like,
         ];
 
         $stmt = $pdo->prepare($sql_search);
@@ -107,6 +113,9 @@ try {
                   OR i.apellidos LIKE ?
                   OR REPLACE(i.apellidos, '*', ' ') LIKE ?
                   OR i.apellidos LIKE ?
+                  OR CONCAT(i.nombre, ' ', i.apellidos) LIKE ?
+                  OR CONCAT(i.nombre, ' ', REPLACE(i.apellidos, '*', ' ')) LIKE ?
+                  OR CONCAT(REPLACE(i.nombre, '*', ' '), ' ', REPLACE(i.apellidos, '*', ' ')) LIKE ?
               )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
@@ -121,6 +130,9 @@ try {
                 $search_like,
                 $search_like,
                 $search_like_star,
+                $search_like,
+                $search_like,
+                $search_like,
             ]
         );
 
