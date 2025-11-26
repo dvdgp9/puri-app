@@ -48,6 +48,8 @@ try {
             INNER JOIN centros c ON inst.centro_id = c.id
             WHERE (
                 i.nombre LIKE ?
+                OR REPLACE(i.nombre, '*', ' ') LIKE ?
+                OR i.nombre LIKE ?
                 OR i.apellidos LIKE ?
                 OR REPLACE(i.apellidos, '*', ' ') LIKE ?
                 OR i.apellidos LIKE ?
@@ -58,6 +60,8 @@ try {
         
         $params = [
             $search_like,
+            $search_like,
+            $search_like_star,
             $search_like,
             $search_like,
             $search_like_star,
@@ -98,6 +102,8 @@ try {
             WHERE c.id IN ($placeholders)
               AND (
                   i.nombre LIKE ?
+                  OR REPLACE(i.nombre, '*', ' ') LIKE ?
+                  OR i.nombre LIKE ?
                   OR i.apellidos LIKE ?
                   OR REPLACE(i.apellidos, '*', ' ') LIKE ?
                   OR i.apellidos LIKE ?
@@ -110,6 +116,8 @@ try {
             $center_ids,
             [
                 $search_like,
+                $search_like,
+                $search_like_star,
                 $search_like,
                 $search_like,
                 $search_like_star,
