@@ -56,6 +56,9 @@ try {
                 OR CONCAT(i.nombre, ' ', i.apellidos) LIKE ?
                 OR CONCAT(i.nombre, ' ', REPLACE(i.apellidos, '*', ' ')) LIKE ?
                 OR CONCAT(REPLACE(i.nombre, '*', ' '), ' ', REPLACE(i.apellidos, '*', ' ')) LIKE ?
+                OR CONCAT(i.apellidos, ' ', i.nombre) LIKE ?
+                OR CONCAT(REPLACE(i.apellidos, '*', ' '), ' ', i.nombre) LIKE ?
+                OR CONCAT(REPLACE(i.apellidos, '*', ' '), ' ', REPLACE(i.nombre, '*', ' ')) LIKE ?
             )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
@@ -68,6 +71,9 @@ try {
             $search_like,
             $search_like,
             $search_like_star,
+            $search_like,
+            $search_like,
+            $search_like,
             $search_like,
             $search_like,
             $search_like,
@@ -116,6 +122,9 @@ try {
                   OR CONCAT(i.nombre, ' ', i.apellidos) LIKE ?
                   OR CONCAT(i.nombre, ' ', REPLACE(i.apellidos, '*', ' ')) LIKE ?
                   OR CONCAT(REPLACE(i.nombre, '*', ' '), ' ', REPLACE(i.apellidos, '*', ' ')) LIKE ?
+                  OR CONCAT(i.apellidos, ' ', i.nombre) LIKE ?
+                  OR CONCAT(REPLACE(i.apellidos, '*', ' '), ' ', i.nombre) LIKE ?
+                  OR CONCAT(REPLACE(i.apellidos, '*', ' '), ' ', REPLACE(i.nombre, '*', ' ')) LIKE ?
               )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
@@ -130,6 +139,9 @@ try {
                 $search_like,
                 $search_like,
                 $search_like_star,
+                $search_like,
+                $search_like,
+                $search_like,
                 $search_like,
                 $search_like,
                 $search_like,
