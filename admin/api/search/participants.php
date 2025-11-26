@@ -22,24 +22,23 @@ try {
         exit;
     }
 
-    // Dividir la búsqueda en palabras para hacerla más tolerante con formatos raros en apellidos
-    // Ej: "Santamaría Álvarez" deberá coincidir con "SANTAMARIA*ALVAREZ"
-    $tokens = preg_split('/\s+/u', $search_query, -1, PREG_SPLIT_NO_EMPTY);
-    if (empty($tokens)) {
-        echo json_encode(['success' => true, 'results' => []]);
-        exit;
-    }
+    // Preparar patrones de búsqueda
+    // Queremos que "Santamaría Álvarez" encuentre "SANTAMARIA*ALVAREZ"
+    // Estrategia:
+    //  - nombre: LIKE sobre el término completo tal cual lo escribe el admin
+    //  - apellidos:
+    //      * LIKE término completo
+    //      * LIKE sobre apellidos sin asteriscos (REPLACE(apellidos,'*','')) usando el término sin espacios
+    //      * LIKE sobre patrón donde espacios del término se sustituyen por '*'
+    $search_like         = '%' . $search_query . '%';
+    $search_no_spaces    = preg_replace('/\s+/u', '', $search_query);
+    $search_no_spaces_like = '%' . $search_no_spaces . '%';
+    $search_spaces_to_star = preg_replace('/\s+/u', '*', $search_query);
+    $search_spaces_to_star_like = '%' . $search_spaces_to_star . '%';
 
     // Obtener centros a los que el admin tiene acceso
     if ($admin_info['role'] === 'superadmin') {
         // Superadmin puede buscar en todos los centros
-        // En nombre buscamos con el término completo, en apellidos forzamos que aparezcan todas las palabras
-        $apellidoConditions = [];
-        foreach ($tokens as $_) {
-            $apellidoConditions[] = 'i.apellidos LIKE ?';
-        }
-        $apellidosWhere = implode(' AND ', $apellidoConditions);
-
         $sql_search = "
             SELECT 
                 i.id as inscrito_id,
@@ -57,16 +56,22 @@ try {
             INNER JOIN actividades a ON i.actividad_id = a.id
             INNER JOIN instalaciones inst ON a.instalacion_id = inst.id
             INNER JOIN centros c ON inst.centro_id = c.id
-            WHERE (i.nombre LIKE ? OR ($apellidosWhere))
+            WHERE (
+                i.nombre LIKE ?
+                OR i.apellidos LIKE ?
+                OR REPLACE(i.apellidos, '*', '') LIKE ?
+                OR i.apellidos LIKE ?
+            )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
         ";
         
-        $search_param = '%' . $search_query . '%';
-        $params = [$search_param];
-        foreach ($tokens as $token) {
-            $params[] = '%' . $token . '%';
-        }
+        $params = [
+            $search_like,
+            $search_like,
+            $search_no_spaces_like,
+            $search_spaces_to_star_like,
+        ];
 
         $stmt = $pdo->prepare($sql_search);
         $stmt->execute($params);
@@ -83,13 +88,6 @@ try {
         }
         
         $placeholders = implode(',', array_fill(0, count($center_ids), '?'));
-
-        // En nombre buscamos con el término completo, en apellidos forzamos que aparezcan todas las palabras
-        $apellidoConditions = [];
-        foreach ($tokens as $_) {
-            $apellidoConditions[] = 'i.apellidos LIKE ?';
-        }
-        $apellidosWhere = implode(' AND ', $apellidoConditions);
 
         $sql_search = "
             SELECT 
@@ -109,17 +107,25 @@ try {
             INNER JOIN instalaciones inst ON a.instalacion_id = inst.id
             INNER JOIN centros c ON inst.centro_id = c.id
             WHERE c.id IN ($placeholders)
-              AND (i.nombre LIKE ? OR ($apellidosWhere))
+              AND (
+                  i.nombre LIKE ?
+                  OR i.apellidos LIKE ?
+                  OR REPLACE(i.apellidos, '*', '') LIKE ?
+                  OR i.apellidos LIKE ?
+              )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
         ";
         
-        $search_param = '%' . $search_query . '%';
-        $params = $center_ids;
-        $params[] = $search_param;
-        foreach ($tokens as $token) {
-            $params[] = '%' . $token . '%';
-        }
+        $params = array_merge(
+            $center_ids,
+            [
+                $search_like,
+                $search_like,
+                $search_no_spaces_like,
+                $search_spaces_to_star_like,
+            ]
+        );
 
         $stmt = $pdo->prepare($sql_search);
         $stmt->execute($params);
