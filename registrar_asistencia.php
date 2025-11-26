@@ -5,7 +5,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $actividad_id = filter_input(INPUT_POST, 'actividad_id', FILTER_SANITIZE_NUMBER_INT);
     $fecha = filter_input(INPUT_POST, 'fecha', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: date('Y-m-d');
     $asistencias = $_POST['asistencias'] ?? [];
-    $observaciones = filter_input(INPUT_POST, 'observaciones', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    // No sanitizar observaciones aquí - se guardan tal cual y se escapan al mostrar
+    $observaciones = $_POST['observaciones'] ?? '';
 
     try {
         // Iniciamos una transacción para asegurar la integridad de los datos
