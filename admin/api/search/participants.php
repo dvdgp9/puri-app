@@ -22,10 +22,32 @@ try {
         exit;
     }
 
-    // Preparar patrones de búsqueda para soportar registros con '*'
+    // Tokenizar el término de búsqueda para permitir búsquedas más flexibles
+    // "Ana Santamaría" debe encontrar registros donde ambas palabras aparezcan
+    // en cualquier parte del nombre completo, aunque no sean consecutivas
+    $tokens = preg_split('/\s+/u', $search_query, -1, PREG_SPLIT_NO_EMPTY);
+    
+    // También mantener la búsqueda del término completo para casos exactos
     $search_like = '%' . $search_query . '%';
     $search_like_star = '%' . str_replace(' ', '*', $search_query) . '%';
 
+    // Construir condiciones de búsqueda por tokens
+    // Cada token debe aparecer en el nombre completo (con reemplazo de asteriscos)
+    $tokenConditions = [];
+    $tokenParams = [];
+    
+    foreach ($tokens as $token) {
+        $token_like = '%' . $token . '%';
+        $tokenConditions[] = "(
+            CONCAT(REPLACE(i.nombre, '*', ' '), ' ', REPLACE(i.apellidos, '*', ' ')) LIKE ?
+            OR CONCAT(REPLACE(i.apellidos, '*', ' '), ' ', REPLACE(i.nombre, '*', ' ')) LIKE ?
+        )";
+        $tokenParams[] = $token_like;
+        $tokenParams[] = $token_like;
+    }
+    
+    $tokenWhere = implode(' AND ', $tokenConditions);
+    
     // Obtener centros a los que el admin tiene acceso
     if ($admin_info['role'] === 'superadmin') {
         // Superadmin puede buscar en todos los centros
@@ -59,25 +81,29 @@ try {
                 OR CONCAT(i.apellidos, ' ', i.nombre) LIKE ?
                 OR CONCAT(REPLACE(i.apellidos, '*', ' '), ' ', i.nombre) LIKE ?
                 OR CONCAT(REPLACE(i.apellidos, '*', ' '), ' ', REPLACE(i.nombre, '*', ' ')) LIKE ?
+                OR ($tokenWhere)
             )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
         ";
         
-        $params = [
-            $search_like,
-            $search_like,
-            $search_like_star,
-            $search_like,
-            $search_like,
-            $search_like_star,
-            $search_like,
-            $search_like,
-            $search_like,
-            $search_like,
-            $search_like,
-            $search_like,
-        ];
+        $params = array_merge(
+            [
+                $search_like,
+                $search_like,
+                $search_like_star,
+                $search_like,
+                $search_like,
+                $search_like_star,
+                $search_like,
+                $search_like,
+                $search_like,
+                $search_like,
+                $search_like,
+                $search_like,
+            ],
+            $tokenParams
+        );
 
         $stmt = $pdo->prepare($sql_search);
         $stmt->execute($params);
@@ -125,6 +151,7 @@ try {
                   OR CONCAT(i.apellidos, ' ', i.nombre) LIKE ?
                   OR CONCAT(REPLACE(i.apellidos, '*', ' '), ' ', i.nombre) LIKE ?
                   OR CONCAT(REPLACE(i.apellidos, '*', ' '), ' ', REPLACE(i.nombre, '*', ' ')) LIKE ?
+                  OR ($tokenWhere)
               )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
@@ -145,7 +172,8 @@ try {
                 $search_like,
                 $search_like,
                 $search_like,
-            ]
+            ],
+            $tokenParams
         );
 
         $stmt = $pdo->prepare($sql_search);
