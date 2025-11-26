@@ -22,23 +22,32 @@ try {
         exit;
     }
 
-    // Preparar patrones de búsqueda
+    // Preparar patrón de búsqueda
     // Queremos que "Santamaría Álvarez" encuentre "SANTAMARIA*ALVAREZ"
-    // Estrategia:
-    //  - nombre: LIKE sobre el término completo tal cual lo escribe el admin
-    //  - apellidos:
-    //      * LIKE término completo
-    //      * LIKE sobre apellidos sin asteriscos (REPLACE(apellidos,'*','')) usando el término sin espacios
-    //      * LIKE sobre patrón donde espacios del término se sustituyen por '*'
-    $search_like         = '%' . $search_query . '%';
-    $search_no_spaces    = preg_replace('/\s+/u', '', $search_query);
-    $search_no_spaces_like = '%' . $search_no_spaces . '%';
-    $search_spaces_to_star = preg_replace('/\s+/u', '*', $search_query);
-    $search_spaces_to_star_like = '%' . $search_spaces_to_star . '%';
+    // Estrategia: reemplazar asteriscos por espacios en la BD al comparar
+    // Y normalizar quitando tildes para asegurar que funcione
+    
+    // Función SQL para quitar tildes comunes
+    $normalizeSQL = "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+        REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+            REPLACE(%FIELD%, '*', ' '),
+        'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),
+        'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),
+        'ñ','n'),'Ñ','N'),'ü','u'),'Ü','U'),'ï','i')";
+    
+    // Normalizar el término de búsqueda quitando tildes
+    $search_normalized = $search_query;
+    $search_normalized = str_replace(['á','é','í','ó','ú','Á','É','Í','Ó','Ú'], ['a','e','i','o','u','A','E','I','O','U'], $search_normalized);
+    $search_normalized = str_replace(['ñ','Ñ','ü','Ü','ï'], ['n','N','u','U','i'], $search_normalized);
+    
+    $search_like = '%' . $search_query . '%';
+    $search_like_normalized = '%' . $search_normalized . '%';
 
     // Obtener centros a los que el admin tiene acceso
     if ($admin_info['role'] === 'superadmin') {
         // Superadmin puede buscar en todos los centros
+        $apellidosNormalized = str_replace('%FIELD%', 'i.apellidos', $normalizeSQL);
+        
         $sql_search = "
             SELECT 
                 i.id as inscrito_id,
@@ -58,19 +67,15 @@ try {
             INNER JOIN centros c ON inst.centro_id = c.id
             WHERE (
                 i.nombre LIKE ?
-                OR i.apellidos LIKE ?
-                OR REPLACE(i.apellidos, '*', '') LIKE ?
-                OR i.apellidos LIKE ?
+                OR $apellidosNormalized LIKE ?
             )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
         ";
         
         $params = [
-            $search_like,
-            $search_like,
-            $search_no_spaces_like,
-            $search_spaces_to_star_like,
+            $search_like_normalized,
+            $search_like_normalized,
         ];
 
         $stmt = $pdo->prepare($sql_search);
@@ -88,6 +93,7 @@ try {
         }
         
         $placeholders = implode(',', array_fill(0, count($center_ids), '?'));
+        $apellidosNormalized = str_replace('%FIELD%', 'i.apellidos', $normalizeSQL);
 
         $sql_search = "
             SELECT 
@@ -109,9 +115,7 @@ try {
             WHERE c.id IN ($placeholders)
               AND (
                   i.nombre LIKE ?
-                  OR i.apellidos LIKE ?
-                  OR REPLACE(i.apellidos, '*', '') LIKE ?
-                  OR i.apellidos LIKE ?
+                  OR $apellidosNormalized LIKE ?
               )
             ORDER BY i.apellidos ASC, i.nombre ASC
             LIMIT 100
@@ -120,10 +124,8 @@ try {
         $params = array_merge(
             $center_ids,
             [
-                $search_like,
-                $search_like,
-                $search_no_spaces_like,
-                $search_spaces_to_star_like,
+                $search_like_normalized,
+                $search_like_normalized,
             ]
         );
 
