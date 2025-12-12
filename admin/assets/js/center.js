@@ -684,15 +684,14 @@ async function deleteInstallation(id, nombre) {
         
         if (result.success) {
             showNotification(result.message, 'success');
-            // Recargar instalaciones
+            // Recargar instalaciones y estadísticas
             await loadInstallations();
-            await loadStats();
+            await loadCenterStats();
         } else {
             showNotification(result.message || 'Error al eliminar', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        showNotification('Error de conexión', 'error');
     }
 }
 

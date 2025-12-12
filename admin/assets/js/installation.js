@@ -537,13 +537,12 @@ async function deleteActivity(id, nombre) {
     if (result.success) {
       showNotification(result.message, 'success');
       await loadActivities();
-      await loadStats();
+      await loadInstallationStats();
     } else {
       showNotification(result.message || 'Error al eliminar', 'error');
     }
   } catch (error) {
     console.error('Error:', error);
-    showNotification('Error de conexión', 'error');
   }
 }
 
