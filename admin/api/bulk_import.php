@@ -192,33 +192,8 @@ try {
         
         $actividadKey = mb_strtolower(trim($actividadNombre), 'UTF-8');
         $actividad_id = null;
-        $actividadConflicto = false;
         
-        foreach ($actividadesCache[$instalacion_id] as $actExist) {
-            if ($actExist['nombre_lower'] === $actividadKey) {
-                // Misma actividad - comprobar días
-                $diasExistentes = array_map('trim', explode(',', $actExist['dias_semana'] ?? ''));
-                sort($diasExistentes);
-                $diasNuevos = $diasSemana;
-                sort($diasNuevos);
-                
-                if ($diasExistentes == $diasNuevos) {
-                    // Mismo nombre + mismos días = error
-                    $stats['errores'][] = "Línea $lineNum: La actividad '$actividadNombre' ya existe en '$instalacionNombre' con los mismos días (" . implode(', ', $diasSemana) . ")";
-                    $actividadConflicto = true;
-                    break;
-                }
-                // Días diferentes - permitir crear una nueva (o reusar si queremos)
-                // Por ahora, creamos una nueva actividad con los días diferentes
-            }
-        }
-        
-        if ($actividadConflicto) {
-            continue;
-        }
-        
-        // Buscar si ya creamos esta actividad exacta en esta importación (mismo nombre + mismos días)
-        $actividadYaCreada = false;
+        // Buscar si existe actividad con mismo nombre + mismos días → REUTILIZAR
         foreach ($actividadesCache[$instalacion_id] as $actExist) {
             if ($actExist['nombre_lower'] === $actividadKey) {
                 $diasExistentes = array_map('trim', explode(',', $actExist['dias_semana'] ?? ''));
@@ -227,14 +202,15 @@ try {
                 sort($diasNuevos);
                 
                 if ($diasExistentes == $diasNuevos) {
+                    // Mismo nombre + mismos días = REUTILIZAR esta actividad
                     $actividad_id = $actExist['id'];
-                    $actividadYaCreada = true;
                     break;
                 }
             }
         }
         
-        if (!$actividadYaCreada) {
+        // Si no encontramos actividad existente, crear una nueva
+        if (!$actividad_id) {
             // Crear actividad
             $horario = implode(' y ', $diasSemana); // Campo legacy simplificado
             $stmtActIns = $pdo->prepare("

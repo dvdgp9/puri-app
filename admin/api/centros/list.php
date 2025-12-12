@@ -74,12 +74,12 @@ try {
         ]
     ]);
     
-} catch (Throwable $e) {
-    error_log("Error en API centros/list: " . $e->getMessage() . " en " . $e->getFile() . ":" . $e->getLine());
+} catch (Exception $e) {
+    error_log("Error en API centros/list: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Error: ' . $e->getMessage()
+        'error' => 'Error interno del servidor'
     ]);
 }
 ?>
