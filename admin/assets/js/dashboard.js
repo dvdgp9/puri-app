@@ -719,6 +719,11 @@ function setupEventListeners() {
                 return;
             }
             
+            if (!data.password || !data.password.trim()) {
+                showFieldError('centerPassword', 'La contraseña del centro es obligatoria');
+                return;
+            }
+            
             // Mostrar loading
             const submitBtn = document.getElementById('createCenterBtn');
             submitBtn.classList.add('loading');
@@ -3019,3 +3024,462 @@ window.openModal = openModal;
 window.viewCenter = viewCenter;
 window.showCenterMenu = showCenterMenu;
 window.goToCenter = goToCenter;
+
+// ==============================
+// Bulk Import - Subida en Lote
+// ==============================
+
+let bulkImportCenters = [];
+
+/**
+ * Abrir modal de Bulk Import
+ */
+function showBulkImportModal() {
+    closeAddOptionsModal();
+    const modal = document.getElementById('bulkImportModal');
+    if (modal) {
+        modal.classList.add('show');
+        initBulkImportCenterSelector();
+        initBulkImportTable();
+    }
+}
+
+/**
+ * Cerrar modal de Bulk Import
+ */
+function closeBulkImportModal() {
+    const modal = document.getElementById('bulkImportModal');
+    if (modal) {
+        modal.classList.remove('show');
+        clearBulkImportTable();
+        document.getElementById('bulkImportCenter').value = '';
+        document.getElementById('bulkImportCenterSearch').value = '';
+        document.getElementById('bulkImportError').textContent = '';
+        document.getElementById('bulkImportPreview').style.display = 'none';
+    }
+}
+
+/**
+ * Inicializar selector de centros para bulk import
+ */
+function initBulkImportCenterSelector() {
+    const wrapper = document.querySelector('#bulkImportModal .custom-select-wrapper');
+    const input = document.getElementById('bulkImportCenterSearch');
+    const dropdown = document.getElementById('bulkImportCenterDropdown');
+    const hiddenInput = document.getElementById('bulkImportCenter');
+    
+    if (!wrapper || !input || !dropdown || !hiddenInput) return;
+    
+    // Cargar centros
+    loadBulkImportCenters();
+    
+    // Evento click en input para abrir/cerrar
+    input.onclick = function() {
+        wrapper.classList.toggle('open');
+    };
+    
+    // Evento input para filtrar
+    input.oninput = function() {
+        const query = this.value.toLowerCase();
+        if (bulkImportCenters) {
+            const filtered = bulkImportCenters.filter(centro => 
+                centro.nombre && centro.nombre.toLowerCase().includes(query)
+            );
+            renderBulkImportCenterOptions(filtered);
+        }
+        
+        if (!wrapper.classList.contains('open')) {
+            wrapper.classList.add('open');
+        }
+    };
+    
+    // Cerrar al hacer click fuera
+    document.addEventListener('click', function(e) {
+        if (!wrapper.contains(e.target)) {
+            wrapper.classList.remove('open');
+        }
+    });
+}
+
+/**
+ * Cargar centros para bulk import
+ */
+async function loadBulkImportCenters() {
+    const dropdown = document.getElementById('bulkImportCenterDropdown');
+    
+    try {
+        dropdown.innerHTML = '<div class="custom-select-loading">Cargando centros...</div>';
+        
+        const response = await fetch('api/centros/list.php');
+        const data = await response.json();
+        
+        if (data.success) {
+            bulkImportCenters = data.centros || data.data || [];
+            renderBulkImportCenterOptions(bulkImportCenters);
+        } else {
+            dropdown.innerHTML = '<div class="custom-select-no-results">Error cargando centros</div>';
+        }
+    } catch (error) {
+        console.error('Error loading centers:', error);
+        dropdown.innerHTML = '<div class="custom-select-no-results">Error cargando centros</div>';
+    }
+}
+
+/**
+ * Renderizar opciones de centros para bulk import
+ */
+function renderBulkImportCenterOptions(centros) {
+    const dropdown = document.getElementById('bulkImportCenterDropdown');
+    
+    if (!centros || centros.length === 0) {
+        dropdown.innerHTML = '<div class="custom-select-no-results">No se encontraron centros</div>';
+        return;
+    }
+    
+    dropdown.innerHTML = centros.map(centro => 
+        `<div class="custom-select-option" data-value="${centro.id}" data-name="${escapeHtml(centro.nombre)}">
+            <div class="option-content">
+                <div class="option-title">${escapeHtml(centro.nombre)}</div>
+                ${centro.direccion ? `<div class="option-subtitle">${escapeHtml(centro.direccion)}</div>` : ''}
+            </div>
+        </div>`
+    ).join('');
+    
+    // Agregar eventos click a las opciones
+    dropdown.querySelectorAll('.custom-select-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const value = this.dataset.value;
+            const name = this.dataset.name;
+            
+            document.getElementById('bulkImportCenterSearch').value = name;
+            document.getElementById('bulkImportCenter').value = value;
+            
+            const wrapper = document.querySelector('#bulkImportModal .custom-select-wrapper');
+            wrapper.classList.remove('open');
+            
+            clearFieldError('bulkImportCenter');
+        });
+    });
+}
+
+/**
+ * Inicializar tabla de bulk import con filas vacías y soporte para pegado
+ */
+function initBulkImportTable() {
+    const tbody = document.getElementById('bulkImportBody');
+    tbody.innerHTML = '';
+    
+    // Añadir 5 filas iniciales
+    for (let i = 0; i < 5; i++) {
+        addBulkImportRow();
+    }
+    
+    // Configurar listener para pegado desde Excel
+    tbody.addEventListener('paste', handleBulkImportPaste);
+    
+    updateBulkImportRowCount();
+}
+
+/**
+ * Añadir una fila a la tabla de bulk import
+ */
+function addBulkImportRow() {
+    const tbody = document.getElementById('bulkImportBody');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td><input type="text" class="bulk-nombre" placeholder="Nombre"></td>
+        <td><input type="text" class="bulk-apellidos" placeholder="Apellidos"></td>
+        <td><input type="text" class="bulk-instalacion" placeholder="Instalación"></td>
+        <td><input type="text" class="bulk-actividad" placeholder="Actividad"></td>
+        <td><input type="text" class="bulk-fecha" placeholder="dd/mm/aa"></td>
+        <td><input type="text" class="bulk-dias" placeholder="Lunes, Miércoles..."></td>
+        <td><button type="button" class="btn-remove-row" onclick="removeBulkImportRow(this)">&times;</button></td>
+    `;
+    tbody.appendChild(row);
+    updateBulkImportRowCount();
+}
+
+/**
+ * Eliminar una fila de la tabla de bulk import
+ */
+function removeBulkImportRow(btn) {
+    const row = btn.closest('tr');
+    if (row) {
+        row.remove();
+        updateBulkImportRowCount();
+    }
+}
+
+/**
+ * Limpiar tabla de bulk import
+ */
+function clearBulkImportTable() {
+    const tbody = document.getElementById('bulkImportBody');
+    tbody.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+        addBulkImportRow();
+    }
+    updateBulkImportRowCount();
+}
+
+/**
+ * Actualizar contador de filas
+ */
+function updateBulkImportRowCount() {
+    const tbody = document.getElementById('bulkImportBody');
+    const rows = tbody.querySelectorAll('tr');
+    let filledRows = 0;
+    
+    rows.forEach(row => {
+        const nombre = row.querySelector('.bulk-nombre')?.value?.trim() || '';
+        const apellidos = row.querySelector('.bulk-apellidos')?.value?.trim() || '';
+        if (nombre || apellidos) filledRows++;
+    });
+    
+    const countEl = document.getElementById('bulkImportRowCount');
+    if (countEl) {
+        countEl.textContent = `${filledRows} fila(s) con datos`;
+    }
+}
+
+/**
+ * Manejar pegado desde Excel
+ */
+function handleBulkImportPaste(event) {
+    const clipboardData = event.clipboardData || window.clipboardData;
+    const pastedText = clipboardData.getData('text');
+    
+    if (!pastedText) return;
+    
+    // Detectar si viene de Excel (tiene tabs o múltiples líneas)
+    if (pastedText.includes('\t') || pastedText.split('\n').length > 1) {
+        event.preventDefault();
+        
+        const lines = pastedText.split('\n').filter(line => line.trim());
+        const tbody = document.getElementById('bulkImportBody');
+        
+        // Limpiar tabla existente
+        tbody.innerHTML = '';
+        
+        lines.forEach((line, index) => {
+            // Ignorar primera línea si parece ser encabezado
+            if (index === 0) {
+                const firstCell = line.split('\t')[0]?.toLowerCase().trim();
+                if (firstCell === 'nombre' || firstCell === 'name') {
+                    return; // Saltar encabezado
+                }
+            }
+            
+            const cells = line.split('\t');
+            
+            // Mínimo 2 columnas (nombre, apellidos)
+            if (cells.length < 2) return;
+            
+            // Formato esperado del Excel del usuario:
+            // A: Nombre, B: Apellidos, C: Centro (ignorar), D: Instalación, E: Actividad, F: Fecha, G+: Días
+            const nombre = (cells[0] || '').trim();
+            const apellidos = (cells[1] || '').trim();
+            // Columna 2 es "Centro" - la ignoramos porque se selecciona manualmente
+            const instalacion = (cells[3] || '').trim(); // Columna D
+            const actividad = (cells[4] || '').trim();   // Columna E
+            const fecha = (cells[5] || '').trim();       // Columna F
+            
+            // Días están desde columna G (índice 6) en adelante, pueden ser varias columnas
+            let dias = '';
+            if (cells.length > 6) {
+                const diasCols = cells.slice(6).filter(d => d.trim());
+                if (diasCols.length > 0) {
+                    dias = diasCols.join(', ');
+                }
+            }
+            
+            // Crear fila
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="text" class="bulk-nombre" value="${escapeHtml(nombre)}"></td>
+                <td><input type="text" class="bulk-apellidos" value="${escapeHtml(apellidos)}"></td>
+                <td><input type="text" class="bulk-instalacion" value="${escapeHtml(instalacion)}"></td>
+                <td><input type="text" class="bulk-actividad" value="${escapeHtml(actividad)}"></td>
+                <td><input type="text" class="bulk-fecha" value="${escapeHtml(fecha)}"></td>
+                <td><input type="text" class="bulk-dias" value="${escapeHtml(dias)}"></td>
+                <td><button type="button" class="btn-remove-row" onclick="removeBulkImportRow(this)">&times;</button></td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        // Añadir filas vacías si hay menos de 3
+        const currentRows = tbody.querySelectorAll('tr').length;
+        for (let i = currentRows; i < 3; i++) {
+            addBulkImportRow();
+        }
+        
+        updateBulkImportRowCount();
+        showNotification(`${lines.length - (lines[0]?.split('\t')[0]?.toLowerCase() === 'nombre' ? 1 : 0)} filas importadas desde el portapapeles`, 'success');
+    }
+}
+
+/**
+ * Ejecutar la importación en lote
+ */
+async function executeBulkImport() {
+    const centroId = document.getElementById('bulkImportCenter').value;
+    const errorEl = document.getElementById('bulkImportError');
+    const btn = document.getElementById('bulkImportBtn');
+    
+    // Validar centro
+    if (!centroId) {
+        showFieldError('bulkImportCenter', 'Debe seleccionar un centro');
+        return;
+    }
+    
+    // Recopilar filas
+    const tbody = document.getElementById('bulkImportBody');
+    const rows = [];
+    
+    tbody.querySelectorAll('tr').forEach(tr => {
+        const nombre = tr.querySelector('.bulk-nombre')?.value?.trim() || '';
+        const apellidos = tr.querySelector('.bulk-apellidos')?.value?.trim() || '';
+        const instalacion = tr.querySelector('.bulk-instalacion')?.value?.trim() || '';
+        const actividad = tr.querySelector('.bulk-actividad')?.value?.trim() || '';
+        const fecha = tr.querySelector('.bulk-fecha')?.value?.trim() || '';
+        const dias = tr.querySelector('.bulk-dias')?.value?.trim() || '';
+        
+        // Solo añadir filas que tengan al menos nombre
+        if (nombre || apellidos) {
+            rows.push({
+                nombre,
+                apellidos,
+                instalacion,
+                actividad,
+                fecha_inicio: fecha,
+                dias_semana: dias
+            });
+        }
+    });
+    
+    if (rows.length === 0) {
+        errorEl.textContent = 'No hay datos para importar. Pega datos desde Excel o añádelos manualmente.';
+        return;
+    }
+    
+    // Mostrar loading
+    btn.classList.add('loading');
+    errorEl.textContent = '';
+    
+    try {
+        const response = await fetch('api/bulk_import.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                centro_id: parseInt(centroId),
+                rows: rows
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            
+            // Mostrar preview con estadísticas
+            showBulkImportResults(result.stats);
+            
+            // Recargar datos del dashboard
+            await loadCenters();
+            await loadStats();
+            
+            // Cerrar modal después de 2 segundos si no hay errores
+            if (!result.stats.errores || result.stats.errores.length === 0) {
+                setTimeout(() => {
+                    closeBulkImportModal();
+                }, 2000);
+            }
+        } else {
+            errorEl.textContent = result.message || 'Error al importar datos';
+            showNotification('Error: ' + (result.message || 'Error desconocido'), 'error');
+        }
+    } catch (error) {
+        console.error('Error en bulk import:', error);
+        errorEl.textContent = 'Error de conexión al servidor';
+        showNotification('Error de conexión', 'error');
+    } finally {
+        btn.classList.remove('loading');
+    }
+}
+
+/**
+ * Mostrar resultados de la importación
+ */
+function showBulkImportResults(stats) {
+    const previewEl = document.getElementById('bulkImportPreview');
+    const contentEl = document.getElementById('bulkImportPreviewContent');
+    
+    let html = '<div class="preview-stats">';
+    
+    if (stats.instalaciones_creadas > 0) {
+        html += `<div class="preview-stat"><strong>${stats.instalaciones_creadas}</strong> instalación(es) creada(s)</div>`;
+    }
+    if (stats.instalaciones_reutilizadas > 0) {
+        html += `<div class="preview-stat"><strong>${stats.instalaciones_reutilizadas}</strong> instalación(es) existente(s)</div>`;
+    }
+    if (stats.actividades_creadas > 0) {
+        html += `<div class="preview-stat"><strong>${stats.actividades_creadas}</strong> actividad(es) creada(s)</div>`;
+    }
+    if (stats.participantes_creados > 0) {
+        html += `<div class="preview-stat"><strong>${stats.participantes_creados}</strong> participante(s) inscrito(s)</div>`;
+    }
+    
+    html += '</div>';
+    
+    // Mostrar errores si los hay
+    if (stats.errores && stats.errores.length > 0) {
+        html += '<div class="bulk-import-errors">';
+        html += `<h5>⚠️ Errores encontrados (${stats.errores.length})</h5>`;
+        html += '<ul>';
+        stats.errores.slice(0, 10).forEach(error => {
+            html += `<li>${escapeHtml(error)}</li>`;
+        });
+        if (stats.errores.length > 10) {
+            html += `<li>... y ${stats.errores.length - 10} más</li>`;
+        }
+        html += '</ul></div>';
+    }
+    
+    contentEl.innerHTML = html;
+    previewEl.style.display = 'block';
+}
+
+// Actualizar selectCreateOption para incluir bulk
+const originalSelectCreateOption = window.selectCreateOption;
+window.selectCreateOption = function(option) {
+    if (option === 'bulk') {
+        showBulkImportModal();
+    } else if (typeof originalSelectCreateOption === 'function') {
+        originalSelectCreateOption(option);
+    } else {
+        // Fallback si no existe la función original
+        closeAddOptionsModal();
+        switch(option) {
+            case 'centro':
+                showCreateCenterModal();
+                break;
+            case 'instalacion':
+                showCreateInstallationModal();
+                break;
+            case 'actividad':
+                showCreateActivityModal();
+                break;
+            case 'participante':
+                showAddParticipantModal();
+                break;
+        }
+    }
+};
+
+// Exponer funciones globalmente
+window.showBulkImportModal = showBulkImportModal;
+window.closeBulkImportModal = closeBulkImportModal;
+window.addBulkImportRow = addBulkImportRow;
+window.removeBulkImportRow = removeBulkImportRow;
+window.clearBulkImportTable = clearBulkImportTable;
+window.executeBulkImport = executeBulkImport;

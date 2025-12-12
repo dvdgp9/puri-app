@@ -186,6 +186,12 @@ $admin_info = getAdminInfo();
                         <input type="text" id="centerAddress" name="direccion" class="form-input" placeholder="Ej: Calle Principal 123">
                         <div class="form-error" id="centerAddressError"></div>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label" for="centerPassword">Contraseña del Centro *</label>
+                        <input type="text" id="centerPassword" name="password" class="form-input" placeholder="Contraseña para acceso de trabajadores" required>
+                        <small class="form-text">Esta contraseña la usarán los trabajadores para acceder al centro.</small>
+                        <div class="form-error" id="centerPasswordError"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeCreateCenterModal()">Cancelar</button>
@@ -267,6 +273,13 @@ $admin_info = getAdminInfo();
                         </svg>
                         <span class="option-title">Participante</span>
                         <span class="option-desc">Añadir participante a una actividad</span>
+                    </button>
+                    <button class="option-btn option-btn-highlight" onclick="selectCreateOption('bulk')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="option-title">Subida en Lote</span>
+                        <span class="option-desc">Importar desde Excel (instalaciones, actividades y participantes)</span>
                     </button>
                 </div>
             </div>
@@ -813,6 +826,105 @@ $admin_info = getAdminInfo();
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Subida en Lote -->
+    <div class="modal-overlay" id="bulkImportModal">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h2 class="modal-title">Subida en Lote</h2>
+                <button class="modal-close" onclick="closeBulkImportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="bulk-import-info">
+                    <div class="info-box info-box-primary">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div>
+                            <strong>Importa desde Excel</strong>
+                            <p>Copia las columnas desde tu hoja de cálculo y pégalas aquí. El sistema creará automáticamente las instalaciones, actividades y participantes.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selector de Centro -->
+                <div class="form-group">
+                    <label for="bulkImportCenter">Centro Deportivo *</label>
+                    <div class="custom-select-wrapper">
+                        <input type="text" id="bulkImportCenterSearch" class="custom-select-input" 
+                               placeholder="Buscar centro..." autocomplete="off">
+                        <input type="hidden" id="bulkImportCenter" name="centro_id" required>
+                        <div class="custom-select-dropdown" id="bulkImportCenterDropdown">
+                            <div class="custom-select-loading">Cargando centros...</div>
+                        </div>
+                        <svg class="custom-select-arrow" width="12" height="12" viewBox="0 0 12 12">
+                            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                        </svg>
+                    </div>
+                    <span class="field-error" id="bulkImportCenter-error"></span>
+                </div>
+
+                <!-- Área de pegado -->
+                <div class="form-group">
+                    <label>Pegar datos desde Excel</label>
+                    <div class="bulk-paste-instructions">
+                        <strong>Columnas esperadas (en este orden):</strong>
+                        <ol>
+                            <li><strong>Nombre</strong> - Nombre del participante</li>
+                            <li><strong>Apellidos</strong> - Apellidos del participante</li>
+                            <li><strong>Instalación</strong> - Nombre de la instalación</li>
+                            <li><strong>Actividad</strong> - Nombre de la actividad</li>
+                            <li><strong>Fecha inicio</strong> - Fecha de inicio (d/m/aa o dd/mm/aaaa)</li>
+                            <li><strong>Días</strong> - Días de la semana (ej: "Lunes, Miércoles" o en columnas separadas)</li>
+                        </ol>
+                    </div>
+                    <div class="table-wrapper bulk-table-wrapper">
+                        <table class="editable-table" id="bulkImportTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:14%">Nombre</th>
+                                    <th style="width:16%">Apellidos</th>
+                                    <th style="width:16%">Instalación</th>
+                                    <th style="width:16%">Actividad</th>
+                                    <th style="width:12%">Fecha inicio</th>
+                                    <th style="width:22%">Días semana</th>
+                                    <th style="width:4%"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="bulkImportBody">
+                                <!-- filas dinámicas -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top:8px; display: flex; gap: 8px; align-items: center;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="addBulkImportRow()">+ Añadir fila</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="clearBulkImportTable()">Limpiar tabla</button>
+                        <span id="bulkImportRowCount" style="margin-left: auto; font-size: 12px; color: #6b7280;">0 filas</span>
+                    </div>
+                    <div class="form-error" id="bulkImportError"></div>
+                </div>
+
+                <!-- Preview de resultados -->
+                <div id="bulkImportPreview" class="bulk-import-preview" style="display: none;">
+                    <h4>Vista previa</h4>
+                    <div id="bulkImportPreviewContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeBulkImportModal()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="bulkImportBtn" onclick="executeBulkImport()">
+                    <span class="btn-text">Importar Datos</span>
+                    <span class="btn-loading">
+                        <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
+                        </svg>
+                    </span>
+                </button>
+            </div>
         </div>
     </div>
 

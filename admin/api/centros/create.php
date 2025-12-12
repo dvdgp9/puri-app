@@ -33,9 +33,15 @@ try {
     // Validar campos obligatorios
     $nombre = trim($input['nombre'] ?? '');
     $direccion = trim($input['direccion'] ?? '');
+    $password = trim($input['password'] ?? '');
     
     if (empty($nombre)) {
         echo json_encode(['success' => false, 'error' => 'El nombre del centro es obligatorio']);
+        exit;
+    }
+    
+    if (empty($password)) {
+        echo json_encode(['success' => false, 'error' => 'La contraseña del centro es obligatoria']);
         exit;
     }
     
@@ -49,8 +55,7 @@ try {
     
     // Crear el centro
     $stmt = $pdo->prepare("INSERT INTO centros (nombre, direccion, password) VALUES (?, ?, ?)");
-    $password_default = 'CONTRACENTRO'; // Password por defecto como en los ejemplos
-    $result = $stmt->execute([$nombre, $direccion, $password_default]);
+    $result = $stmt->execute([$nombre, $direccion, $password]);
     
     if ($result) {
         $centro_id = $pdo->lastInsertId();

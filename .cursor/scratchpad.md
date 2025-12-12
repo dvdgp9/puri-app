@@ -413,6 +413,15 @@ Los filtros actuales funcionan pero pueden ser más claros y eficientes. Buscamo
 - [ ] Mejorar `actividades-search.js` (debounce, chips, ordenar por fecha, reset, persistencia)
 - [ ] QA accesibilidad/Responsive y performance
 
+### Project Status Board (Subida en Lote - Bulk Import)
+- [x] Crear endpoint `admin/api/bulk_import.php` (procesa instalaciones, actividades, participantes)
+- [x] Añadir botón "Subida en Lote" en modal de opciones de añadir
+- [x] Crear modal `#bulkImportModal` con selector de centro y tabla editable
+- [x] Implementar JS para parsear pegado desde Excel (columnas: Nombre, Apellidos, Centro[ignorar], Instalación, Actividad, Fecha, Días)
+- [x] Estilos CSS para bulk import (.info-box, .bulk-table-wrapper, .bulk-import-errors, etc.)
+- [ ] Probar flujo completo con datos reales del usuario
+- [ ] Validar manejo de errores (participante sin apellidos, actividad duplicada con mismos días)
+
 ### Executor's Feedback or Assistance Requests
 - Confirmar si prefieres que los chips de días apliquen condición "cualquiera" (OR, actual) o "todos" (AND).
 - Confirmar si el sticky debe quedar bajo el header global y su offset exacto (px).
