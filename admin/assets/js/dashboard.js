@@ -3110,11 +3110,11 @@ async function loadBulkImportCenters() {
     try {
         dropdown.innerHTML = '<div class="custom-select-loading">Cargando centros...</div>';
         
-        const response = await fetch('api/centros/list.php');
+        const response = await fetch('api/centros/list_for_selector.php');
         const data = await response.json();
         
         if (data.success) {
-            bulkImportCenters = data.centros || data.data || [];
+            bulkImportCenters = data.centros || [];
             renderBulkImportCenterOptions(bulkImportCenters);
         } else {
             dropdown.innerHTML = '<div class="custom-select-no-results">Error cargando centros</div>';
