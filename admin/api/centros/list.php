@@ -7,10 +7,10 @@ header('Content-Type: application/json');
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
-require_once '../../../config/config.php';
-require_once '../../auth_middleware.php';
-
 try {
+    require_once '../../../config/config.php';
+    require_once '../../auth_middleware.php';
+    
     $admin_info = getAdminInfo();
     
     // Parámetros de búsqueda y filtrado
@@ -74,12 +74,12 @@ try {
         ]
     ]);
     
-} catch (Exception $e) {
-    error_log("Error en API centros/list: " . $e->getMessage());
+} catch (Throwable $e) {
+    error_log("Error en API centros/list: " . $e->getMessage() . " en " . $e->getFile() . ":" . $e->getLine());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Error interno del servidor'
+        'error' => 'Error: ' . $e->getMessage()
     ]);
 }
 ?>
