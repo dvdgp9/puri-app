@@ -112,9 +112,9 @@ try {
             $diasSemana = array_filter($diasSemana);
         }
         
-        // Validar participante: nombre Y apellidos obligatorios
-        if (empty($nombre) || empty($apellidos)) {
-            $stats['errores'][] = "Línea $lineNum: Faltan nombre o apellidos";
+        // Validar participante: solo nombre obligatorio (apellidos opcional)
+        if (empty($nombre)) {
+            $stats['errores'][] = "Línea $lineNum: Falta el nombre del participante";
             continue;
         }
         
