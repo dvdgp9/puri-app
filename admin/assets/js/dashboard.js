@@ -1038,6 +1038,7 @@ function renderCenters() {
                     <div class="dropdown-menu" id="dropdown-${center.id}" onclick="event.stopPropagation()">
                         <a href="#" onclick="event.preventDefault(); editCenter(${center.id});">Editar</a>
                         <a href="#" onclick="event.preventDefault(); toggleActiveCenter(${center.id}, ${center.activo ? 1 : 0});">${center.activo ? 'Desactivar' : 'Activar'}</a>
+                        ${window.isSuperAdmin ? `<a href="#" class="dropdown-item-danger" onclick="event.preventDefault(); deleteCenter(${center.id}, '${escapeHtml(center.nombre || '')}');">Eliminar</a>` : ''}
                     </div>
                 </div>
             </div>
@@ -1299,6 +1300,45 @@ async function toggleActiveCenter(centerId, currentActivo) {
     } catch (err) {
         console.error(err);
         showNotification('Error al actualizar el estado del centro', 'error');
+    }
+}
+
+/**
+ * Eliminar centro en cascada (solo superadmin)
+ */
+async function deleteCenter(id, nombre) {
+    if (!window.isSuperAdmin) {
+        showNotification('Solo superadmin puede eliminar centros', 'error');
+        return;
+    }
+    
+    // Cerrar dropdown
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.classList.remove('show');
+    });
+    
+    const confirmMsg = `¿Estás seguro de eliminar el centro "${nombre}"?\n\nEsto eliminará PERMANENTEMENTE:\n- Todas las instalaciones del centro\n- Todas las actividades\n- Todos los participantes inscritos\n- Todo el historial de asistencias\n- Todas las asignaciones de administradores\n\nEsta acción NO se puede deshacer.`;
+    
+    if (!confirm(confirmMsg)) return;
+    
+    try {
+        const response = await fetch('api/centros/delete.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            await loadCenters();
+            await loadDashboardStats();
+        } else {
+            showNotification(result.message || 'Error al eliminar', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
     }
 }
 

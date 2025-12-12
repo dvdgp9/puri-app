@@ -928,6 +928,9 @@ $admin_info = getAdminInfo();
         </div>
     </div>
 
+    <script>
+        window.isSuperAdmin = <?= isSuperAdmin() ? 'true' : 'false' ?>;
+    </script>
     <script src="assets/js/dashboard.js"></script>
 </body>
 </html>
