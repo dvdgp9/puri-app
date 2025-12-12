@@ -1333,7 +1333,7 @@ async function deleteCenter(id, nombre) {
         if (result.success) {
             showNotification(result.message, 'success');
             await loadCenters();
-            await loadDashboardStats();
+            await loadStats();
         } else {
             showNotification(result.message || 'Error al eliminar', 'error');
         }
