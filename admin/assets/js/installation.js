@@ -454,15 +454,28 @@ if (typeof toggleDropdown === 'undefined') {
     }
   });
 }
-if (typeof showNotification === 'undefined') {
-  function showNotification(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => { toast.classList.remove('show'); setTimeout(()=>toast.remove(), 300); }, 3000);
-  }
+function showNotification(message, type = 'info') {
+  // Crear elemento de notificación (estructura unificada con dashboard y center)
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.innerHTML = `
+    <div class="notification-content">
+      <span class="notification-message">${message}</span>
+      <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+    </div>
+  `;
+  
+  // Añadir al DOM
+  document.body.appendChild(notification);
+  
+  // Mostrar con animación
+  setTimeout(() => notification.classList.add('show'), 100);
+  
+  // Auto-remover después de 5 segundos
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => notification.remove(), 300);
+  }, 5000);
 }
 
 if (typeof formatDate === 'undefined') {
