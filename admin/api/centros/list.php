@@ -4,8 +4,11 @@
  */
 
 header('Content-Type: application/json');
-require_once '../../auth_middleware.php';
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
 require_once '../../../config/config.php';
+require_once '../../auth_middleware.php';
 
 try {
     $admin_info = getAdminInfo();
@@ -62,6 +65,7 @@ try {
     echo json_encode([
         'success' => true,
         'data' => $centros,
+        'centros' => $centros, // Alias para compatibilidad
         'pagination' => [
             'total' => (int)$total,
             'limit' => $limit,
