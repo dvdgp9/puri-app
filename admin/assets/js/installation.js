@@ -185,6 +185,7 @@ function renderActivities() {
           </button>
           <div class="dropdown-menu" id="activity-dropdown-${a.id}" onclick="event.stopPropagation();">
             <a href="#" onclick="event.preventDefault(); editActivity(${a.id});">Editar</a>
+            ${window.isSuperAdmin ? `<a href="#" class="dropdown-item-danger" onclick="event.preventDefault(); deleteActivity(${a.id}, '${escapeHtml(a.nombre || '')}');">Eliminar</a>` : ''}
           </div>
         </div>
       </div>
@@ -510,3 +511,40 @@ async function handleEditInstallationHeaderSubmit(e) {
     showNotification('Error actualizando la instalación', 'error');
   }
 }
+
+/**
+ * Eliminar actividad en cascada (solo superadmin)
+ */
+async function deleteActivity(id, nombre) {
+  if (!window.isSuperAdmin) {
+    showNotification('Solo superadmin puede eliminar actividades', 'error');
+    return;
+  }
+  
+  const confirmMsg = `¿Estás seguro de eliminar la actividad "${nombre}"?\n\nEsto eliminará PERMANENTEMENTE:\n- Todos los participantes inscritos\n- Todo el historial de asistencias\n- Todas las observaciones\n\nEsta acción NO se puede deshacer.`;
+  
+  if (!confirm(confirmMsg)) return;
+  
+  try {
+    const response = await fetch('api/actividades/delete.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      showNotification(result.message, 'success');
+      await loadActivities();
+      await loadStats();
+    } else {
+      showNotification(result.message || 'Error al eliminar', 'error');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    showNotification('Error de conexión', 'error');
+  }
+}
+
+window.deleteActivity = deleteActivity;

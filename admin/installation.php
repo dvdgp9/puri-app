@@ -336,6 +336,10 @@ try {
             </div>
         </div>
     </div>
+    <script>
+        window.AdminRole = '<?= $admin_info['role'] ?>';
+        window.isSuperAdmin = <?= $admin_info['role'] === 'superadmin' ? 'true' : 'false' ?>;
+    </script>
     <script src="assets/js/installation.js"></script>
 </body>
 </html>

@@ -222,6 +222,7 @@ function renderInstallations() {
                     <div class="dropdown-menu" id="installation-dropdown-${installation.id}" onclick="event.stopPropagation();">
                         <a href="#" onclick="event.preventDefault(); editInstallation(${installation.id});">Editar</a>
                         <a href="#" onclick="event.preventDefault(); toggleActiveInstallation(${installation.id}, ${installation.activo ? 1 : 0});">${installation.activo ? 'Desactivar' : 'Activar'}</a>
+                        ${window.isSuperAdmin ? `<a href="#" class="dropdown-item-danger" onclick="event.preventDefault(); deleteInstallation(${installation.id}, '${escapeHtml(installation.nombre || '')}');">Eliminar</a>` : ''}
                     </div>
                 </div>
             </div>
@@ -659,6 +660,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+/**
+ * Eliminar instalación en cascada (solo superadmin)
+ */
+async function deleteInstallation(id, nombre) {
+    if (!window.isSuperAdmin) {
+        showNotification('Solo superadmin puede eliminar instalaciones', 'error');
+        return;
+    }
+    
+    const confirmMsg = `¿Estás seguro de eliminar la instalación "${nombre}"?\n\nEsto eliminará PERMANENTEMENTE:\n- Todas las actividades de esta instalación\n- Todos los participantes inscritos\n- Todo el historial de asistencias\n\nEsta acción NO se puede deshacer.`;
+    
+    if (!confirm(confirmMsg)) return;
+    
+    try {
+        const response = await fetch('api/instalaciones/delete.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            // Recargar instalaciones
+            await loadInstallations();
+            await loadStats();
+        } else {
+            showNotification(result.message || 'Error al eliminar', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error de conexión', 'error');
+    }
+}
+
 // Hacer funciones globales para uso en HTML
 window.goBack = goBack;
 window.goToInstallation = goToInstallation;
@@ -669,3 +706,4 @@ window.viewActivities = viewActivities;
 window.editInstallation = editInstallation;
 window.toggleActiveInstallation = toggleActiveInstallation;
 window.closeModal = closeModal;
+window.deleteInstallation = deleteInstallation;

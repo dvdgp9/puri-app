@@ -251,6 +251,11 @@ try {
         </div>
     </div>
 
+    <script>
+        // Pasar info de rol al JS
+        window.AdminRole = '<?= $admin_info['role'] ?>';
+        window.isSuperAdmin = <?= $admin_info['role'] === 'superadmin' ? 'true' : 'false' ?>;
+    </script>
     <script src="assets/js/center.js"></script>
 </body>
 </html>

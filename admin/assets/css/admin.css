@@ -1909,3 +1909,13 @@ body {
 .editable-table td input::placeholder {
     color: #9ca3af;
 }
+
+/* Dropdown item danger (para eliminar) */
+.dropdown-item-danger {
+    color: #dc2626 !important;
+}
+
+.dropdown-item-danger:hover {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+}
