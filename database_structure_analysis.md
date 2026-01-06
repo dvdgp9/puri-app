@@ -115,6 +115,8 @@ Definición (DDL):
 CREATE TABLE admins (
     id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
+    nombre VARCHAR(100) NULL,
+    apellidos VARCHAR(150) NULL,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('admin', 'superadmin') DEFAULT 'admin',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -126,6 +128,8 @@ CREATE TABLE admins (
 |-------|------|-------|-------------|
 | `id` | INT | PK | Identificador único del administrador |
 | `username` | VARCHAR(50) | UNIQUE | Nombre de usuario (único) |
+| `nombre` | VARCHAR(100) | | Nombre de pila del administrador |
+| `apellidos` | VARCHAR(150) | | Apellidos del administrador |
 | `password_hash` | VARCHAR(255) | | Hash de contraseña (bcrypt) |
 | `role` | ENUM('admin','superadmin') | | Rol del administrador |
 | `created_at` | TIMESTAMP | | Fecha de creación |
