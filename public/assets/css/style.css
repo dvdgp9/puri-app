@@ -426,6 +426,34 @@ button:active {
     }
 }
 
+/* Estilos para el checkbox de Recordarme */
+.remember-me {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    user-select: none;
+}
+
+.checkbox-container input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.checkbox-label {
+    line-height: 1;
+}
+
 /* Estilos para grupos de checkboxes */
 .checkbox-group {
     display: flex;

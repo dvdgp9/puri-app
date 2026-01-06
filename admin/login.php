@@ -41,7 +41,7 @@
                 <label class="checkbox-container">
                     <input type="checkbox" name="remember_me" id="remember_me">
                     <span class="checkmark"></span>
-                    Recordarme por 60 días
+                    <span class="checkbox-label">Recordarme por 60 días</span>
                 </label>
             </div>
             
