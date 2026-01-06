@@ -17,6 +17,15 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
+// Destruir el token de persistencia si existe
+if (isset($_COOKIE['admin_remember_token'])) {
+    require_once '../config/config.php';
+    $token = $_COOKIE['admin_remember_token'];
+    $stmt = $pdo->prepare("DELETE FROM admin_sessions WHERE token = ?");
+    $stmt->execute([$token]);
+    setcookie('admin_remember_token', '', time() - 3600, '/');
+}
+
 session_destroy();
 
 // Redirigir al login

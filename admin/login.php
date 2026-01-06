@@ -37,6 +37,14 @@
                        placeholder="Ingrese su contraseña">
             </div>
             
+            <div class="form-group remember-me">
+                <label class="checkbox-container">
+                    <input type="checkbox" name="remember_me" id="remember_me">
+                    <span class="checkmark"></span>
+                    Recordarme por 60 días
+                </label>
+            </div>
+            
             <button type="submit">
                 <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
             </button>
