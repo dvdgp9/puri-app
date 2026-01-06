@@ -874,6 +874,7 @@ $admin_info = getAdminInfo();
                         <ol>
                             <li><strong>Nombre</strong> - Nombre del participante</li>
                             <li><strong>Apellidos</strong> - Apellidos del participante</li>
+                            <li><strong>Centro</strong> - (Se ignora, se usa el seleccionado arriba)</li>
                             <li><strong>Instalación</strong> - Nombre de la instalación</li>
                             <li><strong>Actividad</strong> - Nombre de la actividad</li>
                             <li><strong>Fecha inicio</strong> - Fecha de inicio (d/m/aa o dd/mm/aaaa)</li>

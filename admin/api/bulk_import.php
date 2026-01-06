@@ -157,8 +157,8 @@ try {
         }
         
         // Normalizar horas (usar valores por defecto si están vacías)
-        $horaInicioNorm = !empty($horaInicio) ? $horaInicio : '09:00';
-        $horaFinNorm = !empty($horaFin) ? $horaFin : '10:00';
+        $horaInicioNorm = !empty($horaInicio) ? $horaInicio : null;
+        $horaFinNorm = !empty($horaFin) ? $horaFin : null;
         
         // Validar días
         if (empty($diasSemana)) {
@@ -229,7 +229,12 @@ try {
         // Si no encontramos actividad existente, crear una nueva
         if (!$actividad_id) {
             // Crear actividad
-            $horario = implode(' y ', $diasSemana) . ' ' . $horaInicioNorm . '-' . $horaFinNorm; // Campo legacy
+            $horarioPartes = $diasSemana;
+            if ($horaInicioNorm && $horaFinNorm) {
+                $horarioPartes[] = $horaInicioNorm . '-' . $horaFinNorm;
+            }
+            $horario = implode(' y ', $horarioPartes); // Campo legacy
+
             $stmtActIns = $pdo->prepare("
                 INSERT INTO actividades (nombre, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)

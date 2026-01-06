@@ -3232,9 +3232,9 @@ function addBulkImportRow() {
         <td><input type="text" class="bulk-instalacion" placeholder="Instalación"></td>
         <td><input type="text" class="bulk-actividad" placeholder="Actividad"></td>
         <td><input type="text" class="bulk-fecha-inicio" placeholder="dd/mm/aa"></td>
-        <td><input type="text" class="bulk-fecha-fin" placeholder="(opcional)"></td>
-        <td><input type="text" class="bulk-hora-inicio" placeholder="09:00"></td>
-        <td><input type="text" class="bulk-hora-fin" placeholder="10:00"></td>
+        <td><input type="text" class="bulk-fecha-fin" placeholder="Opcional"></td>
+        <td><input type="text" class="bulk-hora-inicio" placeholder="Opcional"></td>
+        <td><input type="text" class="bulk-hora-fin" placeholder="Opcional"></td>
         <td><input type="text" class="bulk-dias" placeholder="Lunes, Miércoles..."></td>
         <td><button type="button" class="btn-remove-row" onclick="removeBulkImportRow(this)">&times;</button></td>
     `;
