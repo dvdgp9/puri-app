@@ -25,14 +25,34 @@ try {
     $where = '';
     $params = [];
     if ($search !== '') {
-        $where = 'WHERE username LIKE ?';
+        $where = 'WHERE (a.username LIKE ? OR a.nombre LIKE ? OR a.apellidos LIKE ?)';
+        $params[] = "%$search%";
+        $params[] = "%$search%";
         $params[] = "%$search%";
     }
 
-    $sql = "SELECT id, username, role, created_at FROM admins $where ORDER BY created_at DESC";
+    $sql = "
+        SELECT 
+            a.id, 
+            a.username, 
+            a.nombre,
+            a.apellidos,
+            a.role, 
+            a.created_at,
+            (SELECT COUNT(*) FROM admin_asignaciones WHERE admin_id = a.id) AS centers_count
+        FROM admins a
+        $where 
+        ORDER BY created_at DESC
+    ";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Normalizar tipos
+    foreach ($admins as &$admin) {
+        $admin['id'] = (int)$admin['id'];
+        $admin['centers_count'] = (int)$admin['centers_count'];
+    }
 
     echo json_encode([
         'success' => true,

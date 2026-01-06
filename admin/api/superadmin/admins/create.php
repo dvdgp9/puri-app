@@ -27,6 +27,8 @@ try {
     $username = trim($payload['username'] ?? '');
     $password = (string)($payload['password'] ?? '');
     $role = trim($payload['role'] ?? '');
+    $nombre = trim($payload['nombre'] ?? '');
+    $apellidos = trim($payload['apellidos'] ?? '');
 
     // Validaciones
     if ($username === '' || $password === '' || $role === '') {
@@ -59,12 +61,12 @@ try {
 
     // Crear
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare('INSERT INTO admins (username, password_hash, role) VALUES (?, ?, ?)');
-    $stmt->execute([$username, $password_hash, $role]);
+    $stmt = $pdo->prepare('INSERT INTO admins (username, password_hash, role, nombre, apellidos) VALUES (?, ?, ?, ?, ?)');
+    $stmt->execute([$username, $password_hash, $role, $nombre ?: null, $apellidos ?: null]);
     $newId = (int)$pdo->lastInsertId();
 
     // Recuperar registro creado
-    $stmt = $pdo->prepare('SELECT id, username, role, created_at FROM admins WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, username, nombre, apellidos, role, created_at FROM admins WHERE id = ?');
     $stmt->execute([$newId]);
     $created = $stmt->fetch(PDO::FETCH_ASSOC);
 

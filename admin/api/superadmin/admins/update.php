@@ -29,6 +29,8 @@ try {
     $id = isset($payload['id']) ? (int)$payload['id'] : 0;
     $newRole = isset($payload['role']) ? trim($payload['role']) : null;
     $newPassword = isset($payload['new_password']) ? (string)$payload['new_password'] : null;
+    $nombre = array_key_exists('nombre', $payload) ? trim($payload['nombre']) : null;
+    $apellidos = array_key_exists('apellidos', $payload) ? trim($payload['apellidos']) : null;
 
     if ($id <= 0) {
         http_response_code(400);
@@ -83,6 +85,14 @@ try {
         $sets[] = 'password_hash = ?';
         $params[] = password_hash($newPassword, PASSWORD_DEFAULT);
     }
+    if ($nombre !== null) {
+        $sets[] = 'nombre = ?';
+        $params[] = $nombre ?: null;
+    }
+    if ($apellidos !== null) {
+        $sets[] = 'apellidos = ?';
+        $params[] = $apellidos ?: null;
+    }
 
     if (empty($sets)) {
         echo json_encode(['success' => true, 'data' => $admin]);
@@ -95,7 +105,7 @@ try {
     $stmt->execute($params);
 
     // Devolver el registro actualizado
-    $stmt = $pdo->prepare('SELECT id, username, role, created_at FROM admins WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, username, nombre, apellidos, role, created_at FROM admins WHERE id = ?');
     $stmt->execute([$id]);
     $updated = $stmt->fetch(PDO::FETCH_ASSOC);
 

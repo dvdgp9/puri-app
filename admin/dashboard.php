@@ -40,12 +40,12 @@ $admin_info = getAdminInfo();
                 Buscar
             </a>
             <?php if (isSuperAdmin()) { ?>
-            <button class="btn btn-secondary" onclick="showAdminsPanel()">
+            <a href="admins.php" class="btn btn-secondary">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0V10m0 10H7m10-10H7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                 </svg>
                 Administradores
-            </button>
+            </a>
             <?php } ?>
             <button class="btn btn-primary" onclick="showAddOptionsModal()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
@@ -84,30 +84,6 @@ $admin_info = getAdminInfo();
         <!-- Stats Grid -->
         <div class="stats-grid" id="stats-grid">
             <div class="loading-card">Cargando estadísticas...</div>
-        </div>
-
-        <!-- Panel de Administradores (solo visible cuando se activa) -->
-        <div class="centers-panel" id="admins-panel" style="display:none;">
-            <div class="centers-header">
-                <h2 class="centers-title">Administradores</h2>
-                <div class="centers-actions">
-                    <input type="text" id="search-admins" class="search-input" placeholder="Buscar por usuario...">
-                    <select id="sort-admins" class="sort-select">
-                        <option value="created_at_desc">Más recientes</option>
-                        <option value="created_at_asc">Más antiguos</option>
-                        <option value="username_asc">Usuario A-Z</option>
-                        <option value="username_desc">Usuario Z-A</option>
-                    </select>
-                    <button class="btn btn-primary" id="addAdminBtn" onclick="showCreateAdminModal()">
-                        + Añadir Admin
-                    </button>
-                </div>
-            </div>
-            <div class="centers-content">
-                <div id="admins-list" class="centers-list">
-                    <!-- Los administradores se cargarán aquí dinámicamente -->
-                </div>
-            </div>
         </div>
 
         <!-- Panel de Centros -->
@@ -680,152 +656,6 @@ $admin_info = getAdminInfo();
                     </span>
                 </button>
             </div>
-        </div>
-    </div>
-
-    <!-- Modal Crear Admin -->
-    <div class="modal-overlay" id="createAdminModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title">Crear Administrador</h2>
-                <button class="modal-close" onclick="closeCreateAdminModal()">&times;</button>
-            </div>
-            <form id="createAdminForm">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label class="form-label" for="adminUsername">Usuario</label>
-                        <input type="text" id="adminUsername" name="username" class="form-input" placeholder="usuario" required>
-                        <div class="form-error" id="adminUsername-error"></div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="adminPassword">Contraseña</label>
-                        <input type="password" id="adminPassword" name="password" class="form-input" placeholder="mín. 8 caracteres" required>
-                        <div class="form-error" id="adminPassword-error"></div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="adminRole">Rol</label>
-                        <select id="adminRole" name="role" class="form-input" required>
-                            <option value="admin">Admin</option>
-                            <option value="superadmin">Superadmin</option>
-                        </select>
-                        <div class="form-error" id="adminRole-error"></div>
-                    </div>
-                    <?php if (isSuperAdmin()) { ?>
-                    <div class="form-group">
-                        <label class="form-label" for="createAdminCentersSearch">Centros asignados</label>
-                        <div id="createAdminCentersWrapper">
-                            <input type="text" id="createAdminCentersSearch" class="form-input" placeholder="Buscar centros..." oninput="filterCentersList('createAdminCentersList', 'createAdminCentersNoResults', this.value)">
-                            <div id="createAdminCentersList" class="checkbox-group" style="max-height: 240px; overflow: auto; padding-right: 4px;">
-                                <!-- Centros para asignar (solo superadmin) -->
-                            </div>
-                            <div id="createAdminCentersNoResults" class="empty-state" style="display:none;">No hay centros que coincidan</div>
-                        </div>
-                        <div id="createAdminCentersInfo" class="form-hint" hidden>Los usuarios con permisos de Superadmin tienen acceso a todos los centros, instalaciones y actividades.</div>
-                    </div>
-                    <?php } ?>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeCreateAdminModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="createAdminBtn">
-                        <span class="btn-text">Crear</span>
-                        <span class="btn-loading">
-                            <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
-                            </svg>
-                        </span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Editar Admin -->
-    <div class="modal-overlay" id="editAdminModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title">Editar Administrador</h2>
-                <button class="modal-close" onclick="closeEditAdminModal()">&times;</button>
-            </div>
-            <form id="editAdminForm">
-                <input type="hidden" id="editAdminId" name="id">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label class="form-label">Usuario</label>
-                        <input type="text" id="editAdminUsername" class="form-input" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="editAdminRole">Rol</label>
-                        <select id="editAdminRole" name="role" class="form-input">
-                            <option value="admin">Admin</option>
-                            <option value="superadmin">Superadmin</option>
-                        </select>
-                        <div class="form-error" id="editAdminRole-error"></div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="editAdminNewPassword">Nueva contraseña (opcional)</label>
-                        <input type="password" id="editAdminNewPassword" name="new_password" class="form-input" placeholder="dejar vacío si no cambia">
-                        <div class="form-error" id="editAdminNewPassword-error"></div>
-                    </div>
-                    <?php if (isSuperAdmin()) { ?>
-                    <div class="form-group">
-                        <label class="form-label" for="editAdminCentersSearch">Centros asignados</label>
-                        <div id="editAdminCentersWrapper">
-                            <input type="text" id="editAdminCentersSearch" class="form-input" placeholder="Buscar centros..." oninput="filterCentersList('editAdminCentersList', 'editAdminCentersNoResults', this.value)">
-                            <div id="editAdminCentersList" class="checkbox-group" style="max-height: 240px; overflow: auto; padding-right: 4px;">
-                                <!-- Centros asignados se cargarán aquí -->
-                            </div>
-                            <div id="editAdminCentersNoResults" class="empty-state" style="display:none;">No hay centros que coincidan</div>
-                        </div>
-                        <div id="editAdminCentersInfo" class="form-hint" hidden>Los usuarios con permisos de Superadmin tienen acceso a todos los centros, instalaciones y actividades.</div>
-                    </div>
-                    <?php } ?>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeEditAdminModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="saveEditAdminBtn">
-                        <span class="btn-text">Guardar cambios</span>
-                        <span class="btn-loading">
-                            <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
-                            </svg>
-                        </span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- Modal Gestionar Centros por Admin (Superadmin) -->
-    <div class="modal-overlay" id="manageAdminCentersModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title" id="manageCentersTitle">Centros del administrador</h2>
-                <button class="modal-close" onclick="closeManageCentersModal()">&times;</button>
-            </div>
-            <form id="manageCentersForm" onsubmit="saveManageCenters(event)">
-                <input type="hidden" id="manageCentersAdminId" name="admin_id">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label class="form-label" for="manageCentersSearch">Buscar centros</label>
-                        <input type="text" id="manageCentersSearch" class="form-input" placeholder="Escribe para filtrar..." oninput="filterManageCenters(this.value)">
-                    </div>
-                    <div id="manageCentersList" class="checkbox-group" style="max-height: 320px; overflow: auto; padding-right: 4px;">
-                        <!-- Lista de centros con checkboxes -->
-                    </div>
-                    <div id="manageCentersNoResults" class="empty-state" style="display: none;">No hay centros que coincidan</div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeManageCentersModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="saveManageCentersBtn">
-                        <span class="btn-text">Guardar</span>
-                        <span class="btn-loading">
-                            <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
-                            </svg>
-                        </span>
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 
