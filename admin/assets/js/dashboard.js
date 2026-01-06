@@ -3231,7 +3231,10 @@ function addBulkImportRow() {
         <td><input type="text" class="bulk-apellidos" placeholder="Apellidos"></td>
         <td><input type="text" class="bulk-instalacion" placeholder="Instalación"></td>
         <td><input type="text" class="bulk-actividad" placeholder="Actividad"></td>
-        <td><input type="text" class="bulk-fecha" placeholder="dd/mm/aa"></td>
+        <td><input type="text" class="bulk-fecha-inicio" placeholder="dd/mm/aa"></td>
+        <td><input type="text" class="bulk-fecha-fin" placeholder="(opcional)"></td>
+        <td><input type="text" class="bulk-hora-inicio" placeholder="09:00"></td>
+        <td><input type="text" class="bulk-hora-fin" placeholder="10:00"></td>
         <td><input type="text" class="bulk-dias" placeholder="Lunes, Miércoles..."></td>
         <td><button type="button" class="btn-remove-row" onclick="removeBulkImportRow(this)">&times;</button></td>
     `;
@@ -3316,18 +3319,22 @@ function handleBulkImportPaste(event) {
             if (cells.length < 2) return;
             
             // Formato esperado del Excel del usuario:
-            // A: Nombre, B: Apellidos, C: Centro (ignorar), D: Instalación, E: Actividad, F: Fecha, G+: Días
+            // A: Nombre, B: Apellidos, C: Centro (ignorar), D: Instalación, E: Actividad, 
+            // F: Fecha inicio, G: Fecha fin, H: Hora inicio, I: Hora fin, J+: Días
             const nombre = (cells[0] || '').trim();
             const apellidos = (cells[1] || '').trim();
             // Columna 2 es "Centro" - la ignoramos porque se selecciona manualmente
-            const instalacion = (cells[3] || '').trim(); // Columna D
-            const actividad = (cells[4] || '').trim();   // Columna E
-            const fecha = (cells[5] || '').trim();       // Columna F
+            const instalacion = (cells[3] || '').trim();   // Columna D
+            const actividad = (cells[4] || '').trim();     // Columna E
+            const fechaInicio = (cells[5] || '').trim();   // Columna F
+            const fechaFin = (cells[6] || '').trim();      // Columna G (opcional)
+            const horaInicio = (cells[7] || '').trim();    // Columna H (opcional)
+            const horaFin = (cells[8] || '').trim();       // Columna I (opcional)
             
-            // Días están desde columna G (índice 6) en adelante, pueden ser varias columnas
+            // Días están desde columna J (índice 9) en adelante, pueden ser varias columnas
             let dias = '';
-            if (cells.length > 6) {
-                const diasCols = cells.slice(6).filter(d => d.trim());
+            if (cells.length > 9) {
+                const diasCols = cells.slice(9).filter(d => d.trim());
                 if (diasCols.length > 0) {
                     dias = diasCols.join(', ');
                 }
@@ -3340,7 +3347,10 @@ function handleBulkImportPaste(event) {
                 <td><input type="text" class="bulk-apellidos" value="${escapeHtml(apellidos)}"></td>
                 <td><input type="text" class="bulk-instalacion" value="${escapeHtml(instalacion)}"></td>
                 <td><input type="text" class="bulk-actividad" value="${escapeHtml(actividad)}"></td>
-                <td><input type="text" class="bulk-fecha" value="${escapeHtml(fecha)}"></td>
+                <td><input type="text" class="bulk-fecha-inicio" value="${escapeHtml(fechaInicio)}"></td>
+                <td><input type="text" class="bulk-fecha-fin" value="${escapeHtml(fechaFin)}"></td>
+                <td><input type="text" class="bulk-hora-inicio" value="${escapeHtml(horaInicio)}"></td>
+                <td><input type="text" class="bulk-hora-fin" value="${escapeHtml(horaFin)}"></td>
                 <td><input type="text" class="bulk-dias" value="${escapeHtml(dias)}"></td>
                 <td><button type="button" class="btn-remove-row" onclick="removeBulkImportRow(this)">&times;</button></td>
             `;
@@ -3381,7 +3391,10 @@ async function executeBulkImport() {
         const apellidos = tr.querySelector('.bulk-apellidos')?.value?.trim() || '';
         const instalacion = tr.querySelector('.bulk-instalacion')?.value?.trim() || '';
         const actividad = tr.querySelector('.bulk-actividad')?.value?.trim() || '';
-        const fecha = tr.querySelector('.bulk-fecha')?.value?.trim() || '';
+        const fechaInicio = tr.querySelector('.bulk-fecha-inicio')?.value?.trim() || '';
+        const fechaFin = tr.querySelector('.bulk-fecha-fin')?.value?.trim() || '';
+        const horaInicio = tr.querySelector('.bulk-hora-inicio')?.value?.trim() || '';
+        const horaFin = tr.querySelector('.bulk-hora-fin')?.value?.trim() || '';
         const dias = tr.querySelector('.bulk-dias')?.value?.trim() || '';
         
         // Solo añadir filas que tengan al menos nombre
@@ -3391,7 +3404,10 @@ async function executeBulkImport() {
                 apellidos,
                 instalacion,
                 actividad,
-                fecha_inicio: fecha,
+                fecha_inicio: fechaInicio,
+                fecha_fin: fechaFin,
+                hora_inicio: horaInicio,
+                hora_fin: horaFin,
                 dias_semana: dias
             });
         }

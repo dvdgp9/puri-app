@@ -104,6 +104,9 @@ try {
         $instalacionNombre = isset($row['instalacion']) ? trim((string)$row['instalacion']) : '';
         $actividadNombre = isset($row['actividad']) ? trim((string)$row['actividad']) : '';
         $fechaInicio = isset($row['fecha_inicio']) ? trim((string)$row['fecha_inicio']) : '';
+        $fechaFin = isset($row['fecha_fin']) ? trim((string)$row['fecha_fin']) : '';
+        $horaInicio = isset($row['hora_inicio']) ? trim((string)$row['hora_inicio']) : '';
+        $horaFin = isset($row['hora_fin']) ? trim((string)$row['hora_fin']) : '';
         $diasSemana = isset($row['dias_semana']) ? $row['dias_semana'] : [];
         
         // Normalizar días si viene como string separado por comas
@@ -136,12 +139,26 @@ try {
             continue;
         }
         
-        // Normalizar fecha (puede venir como d/m/y o d/m/yy o yyyy-mm-dd)
+        // Normalizar fecha inicio (puede venir como d/m/y o d/m/yy o yyyy-mm-dd)
         $fechaInicioNorm = normalizarFecha($fechaInicio);
         if (!$fechaInicioNorm) {
-            $stats['errores'][] = "Línea $lineNum: Formato de fecha inválido ($fechaInicio)";
+            $stats['errores'][] = "Línea $lineNum: Formato de fecha de inicio inválido ($fechaInicio)";
             continue;
         }
+        
+        // Normalizar fecha fin (opcional)
+        $fechaFinNorm = null;
+        if (!empty($fechaFin)) {
+            $fechaFinNorm = normalizarFecha($fechaFin);
+            if (!$fechaFinNorm) {
+                $stats['errores'][] = "Línea $lineNum: Formato de fecha de fin inválido ($fechaFin)";
+                continue;
+            }
+        }
+        
+        // Normalizar horas (usar valores por defecto si están vacías)
+        $horaInicioNorm = !empty($horaInicio) ? $horaInicio : '09:00';
+        $horaFinNorm = !empty($horaFin) ? $horaFin : '10:00';
         
         // Validar días
         if (empty($diasSemana)) {
@@ -212,19 +229,20 @@ try {
         // Si no encontramos actividad existente, crear una nueva
         if (!$actividad_id) {
             // Crear actividad
-            $horario = implode(' y ', $diasSemana); // Campo legacy simplificado
+            $horario = implode(' y ', $diasSemana) . ' ' . $horaInicioNorm . '-' . $horaFinNorm; // Campo legacy
             $stmtActIns = $pdo->prepare("
                 INSERT INTO actividades (nombre, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmtActIns->execute([
                 $actividadNombre,
                 $horario,
                 $diasSemanaStr,
-                '09:00', // Hora por defecto
-                '10:00', // Hora por defecto
+                $horaInicioNorm,
+                $horaFinNorm,
                 $instalacion_id,
-                $fechaInicioNorm
+                $fechaInicioNorm,
+                $fechaFinNorm
             ]);
             $actividad_id = $pdo->lastInsertId();
             

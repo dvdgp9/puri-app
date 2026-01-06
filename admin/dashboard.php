@@ -877,6 +877,9 @@ $admin_info = getAdminInfo();
                             <li><strong>Instalación</strong> - Nombre de la instalación</li>
                             <li><strong>Actividad</strong> - Nombre de la actividad</li>
                             <li><strong>Fecha inicio</strong> - Fecha de inicio (d/m/aa o dd/mm/aaaa)</li>
+                            <li><strong>Fecha fin</strong> - Fecha de fin (opcional)</li>
+                            <li><strong>Hora inicio</strong> - Hora de inicio (opcional, ej: 09:00)</li>
+                            <li><strong>Hora fin</strong> - Hora de fin (opcional, ej: 10:00)</li>
                             <li><strong>Días</strong> - Días de la semana (ej: "Lunes, Miércoles" o en columnas separadas)</li>
                         </ol>
                     </div>
@@ -884,13 +887,16 @@ $admin_info = getAdminInfo();
                         <table class="editable-table" id="bulkImportTable">
                             <thead>
                                 <tr>
-                                    <th style="width:14%">Nombre</th>
-                                    <th style="width:16%">Apellidos</th>
-                                    <th style="width:16%">Instalación</th>
-                                    <th style="width:16%">Actividad</th>
-                                    <th style="width:12%">Fecha inicio</th>
-                                    <th style="width:22%">Días semana</th>
-                                    <th style="width:4%"></th>
+                                    <th>Nombre</th>
+                                    <th>Apellidos</th>
+                                    <th>Instalación</th>
+                                    <th>Actividad</th>
+                                    <th>F. Inicio</th>
+                                    <th>F. Fin</th>
+                                    <th>H. Inicio</th>
+                                    <th>H. Fin</th>
+                                    <th>Días</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody id="bulkImportBody">

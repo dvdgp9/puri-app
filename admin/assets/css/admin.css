@@ -1080,6 +1080,13 @@ body {
     width: 95%;
 }
 
+/* Modal extra grande para bulk import */
+.modal-xlarge,
+#bulkImportModal .modal {
+    max-width: 1100px;
+    width: 98%;
+}
+
 .form-row {
     display: flex;
     flex-wrap: wrap;
@@ -1797,6 +1804,8 @@ body {
 .bulk-table-wrapper .editable-table {
     margin: 0;
     border: none;
+    table-layout: fixed;
+    width: 100%;
 }
 
 .bulk-table-wrapper .editable-table th {
@@ -1804,12 +1813,43 @@ body {
     top: 0;
     background: #f8fafc;
     z-index: 1;
+    font-size: 11px;
+    padding: 8px 4px;
+    white-space: nowrap;
+}
+
+.bulk-table-wrapper .editable-table td {
+    padding: 4px 2px;
 }
 
 .bulk-table-wrapper .editable-table td input {
-    font-size: 12px;
-    padding: 6px 8px;
+    font-size: 11px;
+    padding: 5px 6px;
+    width: 100%;
+    box-sizing: border-box;
 }
+
+/* Anchos de columnas para bulk import */
+#bulkImportTable th:nth-child(1),
+#bulkImportTable td:nth-child(1) { width: 12%; } /* Nombre */
+#bulkImportTable th:nth-child(2),
+#bulkImportTable td:nth-child(2) { width: 12%; } /* Apellidos */
+#bulkImportTable th:nth-child(3),
+#bulkImportTable td:nth-child(3) { width: 12%; } /* Instalación */
+#bulkImportTable th:nth-child(4),
+#bulkImportTable td:nth-child(4) { width: 12%; } /* Actividad */
+#bulkImportTable th:nth-child(5),
+#bulkImportTable td:nth-child(5) { width: 9%; }  /* F. Inicio */
+#bulkImportTable th:nth-child(6),
+#bulkImportTable td:nth-child(6) { width: 9%; }  /* F. Fin */
+#bulkImportTable th:nth-child(7),
+#bulkImportTable td:nth-child(7) { width: 8%; }  /* H. Inicio */
+#bulkImportTable th:nth-child(8),
+#bulkImportTable td:nth-child(8) { width: 8%; }  /* H. Fin */
+#bulkImportTable th:nth-child(9),
+#bulkImportTable td:nth-child(9) { width: 14%; } /* Días */
+#bulkImportTable th:nth-child(10),
+#bulkImportTable td:nth-child(10) { width: 4%; } /* Botón X */
 
 .bulk-import-preview {
     margin-top: 16px;
