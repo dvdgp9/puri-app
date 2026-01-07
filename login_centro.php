@@ -24,6 +24,7 @@ if(isset($_POST['centro_id']) && isset($_POST['password'])){
         }
 
         if ($is_valid) {
+            unset($_SESSION['error']);
             $_SESSION['centro_id'] = $centro_id;
             // Redirección segura a return_to si existe y es relativa (misma app)
             $returnTo = isset($_POST['return_to']) ? $_POST['return_to'] : '';

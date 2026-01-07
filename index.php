@@ -20,6 +20,7 @@ require_once 'includes/header.php';
                 <i class="fas fa-exclamation-circle"></i>
                 <?php 
                 echo htmlspecialchars($_SESSION['error']);
+                unset($_SESSION['error']);
                 ?>
             </div>
         <?php endif; ?>

@@ -199,7 +199,7 @@ $admin_info = getAdminInfo();
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="editCenterPassword">Nueva Contraseña (opcional)</label>
-                        <input type="password" id="editCenterPassword" name="password" class="form-input" placeholder="Dejar en blanco para no cambiar">
+                        <input type="password" id="editCenterPassword" name="password" class="form-input" placeholder="Dejar en blanco para no cambiar" autocomplete="new-password">
                         <small class="form-text">Si se completa, cambiará la contraseña de acceso para los trabajadores.</small>
                         <div class="form-error" id="editCenterPassword-error"></div>
                     </div>
