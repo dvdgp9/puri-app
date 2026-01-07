@@ -22,6 +22,7 @@ try {
     $id = intval($input['id'] ?? 0);
     $nombre = trim($input['nombre'] ?? '');
     $direccion = trim($input['direccion'] ?? '');
+    $password = trim($input['password'] ?? '');
 
     if ($id <= 0) {
         http_response_code(400);
@@ -65,6 +66,13 @@ try {
 
     $stmt = $pdo->prepare('UPDATE centros SET nombre = ?, direccion = ? WHERE id = ?');
     $stmt->execute([$nombre, $direccion, $id]);
+
+    // Actualizar contraseña si se proporciona
+    if ($password !== '') {
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare('UPDATE centros SET password = ? WHERE id = ?');
+        $stmt->execute([$hashed_password, $id]);
+    }
 
     echo json_encode(['success' => true, 'message' => 'Centro actualizado']);
 } catch (Exception $e) {

@@ -462,6 +462,8 @@ function closeEditCenterModal() {
     if (modal) {
         modal.classList.remove('show');
     }
+    const form = document.getElementById('editCenterForm');
+    if (form) form.reset();
 }
 
 // ====== Helpers to load centers into Create/Edit Admin modals ======
@@ -1268,6 +1270,8 @@ function editCenter(centerId) {
     if (idInput) idInput.value = center.id;
     if (nameInput) nameInput.value = center.nombre || '';
     if (addrInput) addrInput.value = center.direccion || '';
+    const passInput = document.getElementById('editCenterPassword');
+    if (passInput) passInput.value = '';
     // Abrir modal
     showEditCenterModal();
 }
@@ -1675,6 +1679,9 @@ async function updateCenter(data) {
             nombre: String(data.nombre || '').trim(),
             direccion: String(data.direccion || '').trim()
         };
+        if (data.password && data.password.trim() !== '') {
+            payload.password = data.password.trim();
+        }
         const resp = await fetch('api/centros/update.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

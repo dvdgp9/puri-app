@@ -197,6 +197,12 @@ $admin_info = getAdminInfo();
                         <input type="text" id="editCenterAddress" name="direccion" class="form-input">
                         <div class="form-error" id="editCenterAddress-error"></div>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editCenterPassword">Nueva Contraseña (opcional)</label>
+                        <input type="password" id="editCenterPassword" name="password" class="form-input" placeholder="Dejar en blanco para no cambiar">
+                        <small class="form-text">Si se completa, cambiará la contraseña de acceso para los trabajadores.</small>
+                        <div class="form-error" id="editCenterPassword-error"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeEditCenterModal()">Cancelar</button>

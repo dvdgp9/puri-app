@@ -259,9 +259,11 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 - [x] Estandarizar comportamiento del dropdown del perfil en header (center.js, installation.js, activity.js)
 
 ### Dashboard: Centros (CRUD)
-- [x] Implementar `updateCenter` en `admin/assets/js/dashboard.js` (editar centro desde modal)
-- [ ] Validar edición: notificación de éxito, cierre de modal y refresco de listado
-- [ ] Probar errores de validación (nombre vacío, nombre duplicado, no autorizado)
+- [x] Añadir campo de contraseña en el modal de edición de centros (`admin/dashboard.php`)
+- [x] Actualizar lógica JS para enviar la nueva contraseña si se proporciona (`admin/assets/js/dashboard.js`)
+- [x] Actualizar API para procesar el hash de la nueva contraseña (`admin/api/centros/update.php`)
+- [ ] Validar edición de centro con cambio de contraseña exitoso
+- [ ] Validar que si se deja la contraseña vacía, no se modifica la actual
 
 ### Instalación: UI listado de actividades
 - [x] API `admin/api/actividades/list_by_installation.php` devuelve `participantes_count` (subquery sobre `inscritos`)
