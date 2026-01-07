@@ -53,9 +53,10 @@ try {
         exit;
     }
     
-    // Crear el centro
+    // Crear el centro con contraseña hasheada
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     $stmt = $pdo->prepare("INSERT INTO centros (nombre, direccion, password) VALUES (?, ?, ?)");
-    $result = $stmt->execute([$nombre, $direccion, $password]);
+    $result = $stmt->execute([$nombre, $direccion, $hashed_password]);
     
     if ($result) {
         $centro_id = $pdo->lastInsertId();
