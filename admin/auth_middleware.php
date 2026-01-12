@@ -11,6 +11,46 @@ if (session_status() == PHP_SESSION_NONE) {
 function requireAdminAuth() {
     // Verificar si el administrador está logueado
     if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+        // Intentar restaurar sesión desde cookie "Recordarme"
+        if (isset($_COOKIE['admin_remember_token'])) {
+            require_once __DIR__ . '/../config/config.php';
+            $token = $_COOKIE['admin_remember_token'];
+            
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT s.*, a.username, a.role 
+                    FROM admin_sessions s 
+                    JOIN admins a ON s.admin_id = a.id 
+                    WHERE s.token = ? AND s.expires_at > NOW()
+                ");
+                $stmt->execute([$token]);
+                $session = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($session) {
+                    // Restaurar sesión
+                    session_regenerate_id(true);
+                    $_SESSION['admin_id'] = $session['admin_id'];
+                    $_SESSION['admin_username'] = $session['username'];
+                    $_SESSION['admin_role'] = $session['role'];
+                    $_SESSION['admin_logged_in'] = true;
+                    
+                    // Actualizar fecha de último uso
+                    $pdo->prepare("UPDATE admin_sessions SET last_used_at = NOW() WHERE id = ?")
+                        ->execute([$session['id']]);
+                    
+                    // Sesión restaurada exitosamente, continuar
+                    return;
+                } else {
+                    // Token inválido o expirado, limpiar cookie
+                    setcookie('admin_remember_token', '', time() - 3600, '/');
+                }
+            } catch (PDOException $e) {
+                error_log("Error al verificar token de recordarme: " . $e->getMessage());
+                // Si hay error, limpiar cookie y continuar al login
+                setcookie('admin_remember_token', '', time() - 3600, '/');
+            }
+        }
+        
         // Redirigir al login si no está autenticado
         header("Location: login.php");
         exit;
