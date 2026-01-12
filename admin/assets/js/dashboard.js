@@ -3237,9 +3237,10 @@ function addBulkImportRow() {
     row.innerHTML = `
         <td><input type="text" class="bulk-nombre" placeholder="Nombre"></td>
         <td><input type="text" class="bulk-apellidos" placeholder="Apellidos"></td>
-        <td><input type="text" class="bulk-instalacion" placeholder="Instalación"></td>
-        <td><input type="text" class="bulk-actividad" placeholder="Actividad"></td>
-        <td><input type="text" class="bulk-fecha-inicio" placeholder="dd/mm/aa"></td>
+        <td><input type="text" class="bulk-instalacion" placeholder="Pabellón, Piscina..."></td>
+        <td><input type="text" class="bulk-actividad" placeholder="Natación, Karate..."></td>
+        <td><input type="text" class="bulk-grupo" placeholder="Opcional"></td>
+        <td><input type="text" class="bulk-fecha-inicio" placeholder="d/m/aaaa"></td>
         <td><input type="text" class="bulk-fecha-fin" placeholder="Opcional"></td>
         <td><input type="text" class="bulk-hora-inicio" placeholder="Opcional"></td>
         <td><input type="text" class="bulk-hora-fin" placeholder="Opcional"></td>
@@ -3321,31 +3322,28 @@ function handleBulkImportPaste(event) {
                 }
             }
             
-            const cells = line.split('\t');
+            const parts = line.split('\t');
             
-            // Mínimo 2 columnas (nombre, apellidos)
-            if (cells.length < 2) return;
-            
-            // Formato esperado del Excel del usuario:
-            // A: Nombre, B: Apellidos, C: Centro (ignorar), D: Instalación, E: Actividad, 
-            // F: Fecha inicio, G: Fecha fin, H: Hora inicio, I: Hora fin, J+: Días
-            const nombre = (cells[0] || '').trim();
-            const apellidos = (cells[1] || '').trim();
-            // Columna 2 es "Centro" - la ignoramos porque se selecciona manualmente
-            const instalacion = (cells[3] || '').trim();   // Columna D
-            const actividad = (cells[4] || '').trim();     // Columna E
-            const fechaInicio = (cells[5] || '').trim();   // Columna F
-            const fechaFin = (cells[6] || '').trim();      // Columna G (opcional)
-            const horaInicio = (cells[7] || '').trim();    // Columna H (opcional)
-            const horaFin = (cells[8] || '').trim();       // Columna I (opcional)
-            
-            // Días están desde columna J (índice 9) en adelante, pueden ser varias columnas
-            let dias = '';
-            if (cells.length > 9) {
-                const diasCols = cells.slice(9).filter(d => d.trim());
-                if (diasCols.length > 0) {
-                    dias = diasCols.join(', ');
-                }
+            if (parts.length < 2) return;
+
+            let nombre, apellidos, centro, instalacion, actividad, grupo, fechaInicio, fechaFin, horaInicio, horaFin, dias;
+
+            if (parts.length >= 11) {
+                // Formato completo: Nombre, Apellidos, Centro, Instalación, Actividad, Grupo, F.Inicio, F.Fin, H.Inicio, H.Fin, Días
+                [nombre, apellidos, centro, instalacion, actividad, grupo, fechaInicio, fechaFin, horaInicio, horaFin, dias] = parts;
+            } else if (parts.length >= 10) {
+                // Formato anterior: Nombre, Apellidos, Centro, Instalación, Actividad, F.Inicio, F.Fin, H.Inicio, H.Fin, Días
+                [nombre, apellidos, centro, instalacion, actividad, fechaInicio, fechaFin, horaInicio, horaFin, dias] = parts;
+                grupo = '';
+            } else {
+                // Otros formatos... (intentar asignar lo que haya)
+                [nombre, apellidos, centro, instalacion, actividad] = parts;
+                fechaInicio = parts[5] || '';
+                fechaFin = parts[6] || '';
+                horaInicio = parts[7] || '';
+                horaFin = parts[8] || '';
+                dias = parts[9] || '';
+                grupo = '';
             }
             
             // Crear fila
@@ -3355,6 +3353,7 @@ function handleBulkImportPaste(event) {
                 <td><input type="text" class="bulk-apellidos" value="${escapeHtml(apellidos)}"></td>
                 <td><input type="text" class="bulk-instalacion" value="${escapeHtml(instalacion)}"></td>
                 <td><input type="text" class="bulk-actividad" value="${escapeHtml(actividad)}"></td>
+                <td><input type="text" class="bulk-grupo" value="${escapeHtml(grupo)}"></td>
                 <td><input type="text" class="bulk-fecha-inicio" value="${escapeHtml(fechaInicio)}"></td>
                 <td><input type="text" class="bulk-fecha-fin" value="${escapeHtml(fechaFin)}"></td>
                 <td><input type="text" class="bulk-hora-inicio" value="${escapeHtml(horaInicio)}"></td>
@@ -3394,30 +3393,23 @@ async function executeBulkImport() {
     const tbody = document.getElementById('bulkImportBody');
     const rows = [];
     
-    tbody.querySelectorAll('tr').forEach(tr => {
-        const nombre = tr.querySelector('.bulk-nombre')?.value?.trim() || '';
-        const apellidos = tr.querySelector('.bulk-apellidos')?.value?.trim() || '';
-        const instalacion = tr.querySelector('.bulk-instalacion')?.value?.trim() || '';
-        const actividad = tr.querySelector('.bulk-actividad')?.value?.trim() || '';
-        const fechaInicio = tr.querySelector('.bulk-fecha-inicio')?.value?.trim() || '';
-        const fechaFin = tr.querySelector('.bulk-fecha-fin')?.value?.trim() || '';
-        const horaInicio = tr.querySelector('.bulk-hora-inicio')?.value?.trim() || '';
-        const horaFin = tr.querySelector('.bulk-hora-fin')?.value?.trim() || '';
-        const dias = tr.querySelector('.bulk-dias')?.value?.trim() || '';
+    tbody.querySelectorAll('tr').forEach(row => {
+        const rowData = {
+            nombre: row.querySelector('.bulk-nombre').value.trim(),
+            apellidos: row.querySelector('.bulk-apellidos').value.trim(),
+            instalacion: row.querySelector('.bulk-instalacion').value.trim(),
+            actividad: row.querySelector('.bulk-actividad').value.trim(),
+            grupo: row.querySelector('.bulk-grupo').value.trim(),
+            fecha_inicio: row.querySelector('.bulk-fecha-inicio').value.trim(),
+            fecha_fin: row.querySelector('.bulk-fecha-fin').value.trim(),
+            hora_inicio: row.querySelector('.bulk-hora-inicio').value.trim(),
+            hora_fin: row.querySelector('.bulk-hora-fin').value.trim(),
+            dias_semana: row.querySelector('.bulk-dias').value.trim()
+        };
         
         // Solo añadir filas que tengan al menos nombre
-        if (nombre || apellidos) {
-            rows.push({
-                nombre,
-                apellidos,
-                instalacion,
-                actividad,
-                fecha_inicio: fechaInicio,
-                fecha_fin: fechaFin,
-                hora_inicio: horaInicio,
-                hora_fin: horaFin,
-                dias_semana: dias
-            });
+        if (rowData.nombre || rowData.apellidos) {
+            rows.push(rowData);
         }
     });
     

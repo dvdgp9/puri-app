@@ -722,6 +722,7 @@ $admin_info = getAdminInfo();
                             <li><strong>Centro</strong> - (Se ignora, se usa el seleccionado arriba)</li>
                             <li><strong>Instalación</strong> - Nombre de la instalación</li>
                             <li><strong>Actividad</strong> - Nombre de la actividad</li>
+                            <li><strong>Grupo</strong> - (Opcional) Identificador del grupo</li>
                             <li><strong>Fecha inicio</strong> - Fecha de inicio (d/m/aa o dd/mm/aaaa)</li>
                             <li><strong>Fecha fin</strong> - Fecha de fin (opcional)</li>
                             <li><strong>Hora inicio</strong> - Hora de inicio (opcional, ej: 09:00)</li>
@@ -737,6 +738,7 @@ $admin_info = getAdminInfo();
                                     <th>Apellidos</th>
                                     <th>Instalación</th>
                                     <th>Actividad</th>
+                                    <th>Grupo</th>
                                     <th>F. Inicio</th>
                                     <th>F. Fin</th>
                                     <th>H. Inicio</th>

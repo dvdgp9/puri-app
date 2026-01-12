@@ -82,7 +82,7 @@ try {
         $instalacionesExistentes[$row['nombre_lower']] = $row;
     }
 
-    // Cache de actividades por instalación: key = instalacion_id, value = array de { id, nombre_lower, dias_semana }
+    // Cache de actividades por instalación: key = instalacion_id, value = array de { id, nombre_lower, grupo_lower, dias_semana }
     $actividadesCache = [];
 
     // Resultados
@@ -103,6 +103,8 @@ try {
         $apellidos = isset($row['apellidos']) ? trim((string)$row['apellidos']) : '';
         $instalacionNombre = isset($row['instalacion']) ? trim((string)$row['instalacion']) : '';
         $actividadNombre = isset($row['actividad']) ? trim((string)$row['actividad']) : '';
+        $grupo = isset($row['grupo']) ? trim((string)$row['grupo']) : null;
+        if ($grupo === '') $grupo = null;
         $fechaInicio = isset($row['fecha_inicio']) ? trim((string)$row['fecha_inicio']) : '';
         $fechaFin = isset($row['fecha_fin']) ? trim((string)$row['fecha_fin']) : '';
         $horaInicio = isset($row['hora_inicio']) ? trim((string)$row['hora_inicio']) : '';
@@ -199,7 +201,7 @@ try {
         // --- Buscar o crear actividad ---
         // Cargar cache de actividades para esta instalación si no existe
         if (!isset($actividadesCache[$instalacion_id])) {
-            $stmtAct = $pdo->prepare("SELECT id, LOWER(TRIM(nombre)) as nombre_lower, dias_semana FROM actividades WHERE instalacion_id = ?");
+            $stmtAct = $pdo->prepare("SELECT id, LOWER(TRIM(nombre)) as nombre_lower, LOWER(TRIM(grupo)) as grupo_lower, dias_semana FROM actividades WHERE instalacion_id = ?");
             $stmtAct->execute([$instalacion_id]);
             $actividadesCache[$instalacion_id] = [];
             while ($act = $stmtAct->fetch(PDO::FETCH_ASSOC)) {
@@ -208,11 +210,12 @@ try {
         }
         
         $actividadKey = mb_strtolower(trim($actividadNombre), 'UTF-8');
+        $grupoKey = $grupo ? mb_strtolower(trim($grupo), 'UTF-8') : null;
         $actividad_id = null;
         
-        // Buscar si existe actividad con mismo nombre + mismos días → REUTILIZAR
+        // Buscar si existe actividad con mismo nombre + mismo grupo + mismos días → REUTILIZAR
         foreach ($actividadesCache[$instalacion_id] as $actExist) {
-            if ($actExist['nombre_lower'] === $actividadKey) {
+            if ($actExist['nombre_lower'] === $actividadKey && $actExist['grupo_lower'] === $grupoKey) {
                 $diasExistentes = array_map('trim', explode(',', $actExist['dias_semana'] ?? ''));
                 sort($diasExistentes);
                 $diasNuevos = $diasSemana;
@@ -236,11 +239,12 @@ try {
             $horario = implode(' y ', $horarioPartes); // Campo legacy
 
             $stmtActIns = $pdo->prepare("
-                INSERT INTO actividades (nombre, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO actividades (nombre, grupo, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmtActIns->execute([
                 $actividadNombre,
+                $grupo,
                 $horario,
                 $diasSemanaStr,
                 $horaInicioNorm,
@@ -255,6 +259,7 @@ try {
             $actividadesCache[$instalacion_id][] = [
                 'id' => $actividad_id,
                 'nombre_lower' => $actividadKey,
+                'grupo_lower' => $grupoKey,
                 'dias_semana' => $diasSemanaStr
             ];
             $stats['actividades_creadas']++;
