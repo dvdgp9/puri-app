@@ -24,17 +24,22 @@ $query = "SELECT a.id, a.nombre, a.grupo, a.instalacion_id, a.dias_semana, a.hor
           WHERE a.id = ?";
 $params = [$actividad_id];
 
-    $stmt = $pdo->prepare($query);
-    $stmt->execute($params);
-    $actividad = $stmt->fetch(PDO::FETCH_ASSOC);
+if ($admin_info['role'] !== 'superadmin') {
+    $query .= " AND c.id IN (SELECT centro_id FROM admin_asignaciones WHERE admin_id = ?)";
+    $params[] = $admin_info['id'];
+}
 
-    if (!$actividad) {
-        header("Location: dashboard.php");
-        exit;
-    }
+$stmt = $pdo->prepare($query);
+$stmt->execute($params);
+$actividad = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Inyectar contexto para JS
-    $activity_js_ctx = json_encode($actividad);
+if (!$actividad) {
+    header("Location: dashboard.php");
+    exit;
+}
+
+// Inyectar contexto para JS
+$activity_js_ctx = json_encode($actividad);
 ?>
 <!DOCTYPE html>
 <html lang="es">
