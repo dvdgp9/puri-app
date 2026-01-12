@@ -29,6 +29,7 @@ try {
 
     // Validar campos requeridos
     $nombre = trim($input['nombre'] ?? '');
+    $grupo = trim($input['grupo'] ?? '') ?: null;
     $instalacion_id = intval($input['instalacion_id'] ?? 0);
     $dias_semana = $input['dias_semana'] ?? [];
     $hora_inicio = trim($input['hora_inicio'] ?? '');
@@ -83,12 +84,13 @@ try {
     
     // Crear la actividad
     $stmt = $pdo->prepare("
-        INSERT INTO actividades (nombre, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO actividades (nombre, grupo, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
     
     $result = $stmt->execute([
-        $nombre, 
+        $nombre,
+        $grupo,
         $horario, 
         $dias_semana_string, 
         $hora_inicio, 

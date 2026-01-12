@@ -18,6 +18,7 @@ if (!$actividad) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = filter_input(INPUT_POST, 'nombre', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $grupo = filter_input(INPUT_POST, 'grupo', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: null;
     // Procesar días de la semana
     $dias_semana = isset($_POST['dias_semana']) ? implode(',', $_POST['dias_semana']) : '';
     $hora_inicio = filter_input(INPUT_POST, 'hora_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -36,8 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($nombre) || (empty($dias_semana) && empty($_POST['horario'])) || !$instalacion_id || empty($fecha_inicio)) {
         $error = "El nombre, los días de la semana, la instalación y la fecha de inicio son obligatorios.";
     } else {
-        $stmt = $pdo->prepare("UPDATE actividades SET nombre = ?, horario = ?, dias_semana = ?, hora_inicio = ?, hora_fin = ?, instalacion_id = ?, fecha_inicio = ?, fecha_fin = ? WHERE id = ?");
-        $result = $stmt->execute([$nombre, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null, $id]);
+        $stmt = $pdo->prepare("UPDATE actividades SET nombre = ?, grupo = ?, horario = ?, dias_semana = ?, hora_inicio = ?, hora_fin = ?, instalacion_id = ?, fecha_inicio = ?, fecha_fin = ? WHERE id = ?");
+        $result = $stmt->execute([$nombre, $grupo, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null, $id]);
 
         if ($result) {
              // Redirigir a la lista de actividades, *incluyendo el instalacion_id*
@@ -67,6 +68,10 @@ require_once 'includes/header.php';
     <form method="post">
         <label for="nombre">Nombre:</label>
         <input type="text" id="nombre" name="nombre" value="<?php echo htmlspecialchars($actividad['nombre']); ?>" required>
+        <br>
+        <label for="grupo">Grupo:</label>
+        <input type="text" id="grupo" name="grupo" value="<?php echo htmlspecialchars($actividad['grupo'] ?? ''); ?>" placeholder="Ejemplo: 1, A, Avanzado (opcional)">
+        <small>Identificador opcional para diferenciar grupos de la misma actividad.</small>
         <br>
         <!-- Selector de días de la semana -->
         <label>

@@ -26,6 +26,7 @@ if (!$instalacion) {
 // Procesar el formulario si se ha enviado
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = filter_input(INPUT_POST, 'nombre', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $grupo = filter_input(INPUT_POST, 'grupo', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: null;
     // Procesar días de la semana
     $dias_semana = isset($_POST['dias_semana']) ? implode(',', $_POST['dias_semana']) : '';
     $hora_inicio = filter_input(INPUT_POST, 'hora_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -42,8 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($nombre) || empty($dias_semana) || empty($fecha_inicio)) {
         $error = "El nombre, los días de la semana y la fecha de inicio son obligatorios.";
     } else {
-        $stmt = $pdo->prepare("INSERT INTO actividades (nombre, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $result = $stmt->execute([$nombre, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null]);
+        $stmt = $pdo->prepare("INSERT INTO actividades (nombre, grupo, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $result = $stmt->execute([$nombre, $grupo, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null]);
 
         if ($result) {
             header("Location: actividades.php?instalacion_id=" . $instalacion_id);
@@ -85,6 +86,18 @@ require_once 'includes/header.php';
                        required 
                        placeholder="Ejemplo: Taller de Pintura"
                        value="<?php echo isset($_POST['nombre']) ? htmlspecialchars($_POST['nombre']) : ''; ?>">
+            </div>
+
+            <div class="form-group">
+                <label for="grupo">
+                    <i class="fas fa-users"></i> Grupo
+                </label>
+                <input type="text" 
+                       id="grupo" 
+                       name="grupo" 
+                       placeholder="Ejemplo: 1, A, Avanzado (opcional)"
+                       value="<?php echo isset($_POST['grupo']) ? htmlspecialchars($_POST['grupo']) : ''; ?>">
+                <small class="form-text">Identificador opcional para diferenciar grupos de la misma actividad.</small>
             </div>
 
             <!-- Selector de días de la semana -->

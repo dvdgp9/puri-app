@@ -4,6 +4,7 @@
  */
 require_once 'auth_middleware.php';
 require_once '../config/config.php';
+require_once '../includes/actividad_helpers.php';
 
 $actividad_id = intval($_GET['id'] ?? 0);
 if ($actividad_id <= 0) {
@@ -15,7 +16,7 @@ try {
     $admin_info = getAdminInfo();
 
     // Obtener actividad + instalación + centro
-    $query = "SELECT a.id, a.nombre, a.instalacion_id, a.dias_semana, a.hora_inicio, a.hora_fin, a.fecha_inicio, a.fecha_fin,
+    $query = "SELECT a.id, a.nombre, a.grupo, a.instalacion_id, a.dias_semana, a.hora_inicio, a.hora_fin, a.fecha_inicio, a.fecha_fin,
                      i.nombre AS instalacion_nombre, i.centro_id,
                      c.nombre AS centro_nombre, c.direccion AS centro_direccion
               FROM actividades a
@@ -116,7 +117,7 @@ try {
                 </button>
             </div>
             <div class="center-header-center">
-                <h1 class="center-title installation-title"><?= htmlspecialchars(html_entity_decode($actividad['nombre'], ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?></h1>
+                <h1 class="center-title installation-title"><?= formatearNombreActividad($actividad['nombre'], $actividad['grupo'] ?? null) ?></h1>
                 <p class="center-address">
                     <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>

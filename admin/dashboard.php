@@ -369,6 +369,15 @@ $admin_info = getAdminInfo();
                         <span class="field-error" id="activityName-error"></span>
                     </div>
 
+                    <!-- Grupo -->
+                    <div class="form-group">
+                        <label for="activityGroup">Grupo</label>
+                        <input type="text" id="activityGroup" name="grupo" 
+                               placeholder="Ejemplo: 1, A, Avanzado (opcional)">
+                        <small class="form-text">Identificador opcional para diferenciar grupos de la misma actividad.</small>
+                        <span class="field-error" id="activityGroup-error"></span>
+                    </div>
+
                     <!-- Días de la semana -->
                     <div class="form-group">
                         <label>Días de la semana *</label>

@@ -176,6 +176,11 @@ try {
                         <input type="text" id="activityName" name="nombre" required placeholder="Ejemplo: Natación Infantil">
                         <span class="field-error" id="activityName-error"></span>
                     </div>
+                    <div class="form-group">
+                        <label for="activityGroup">Grupo</label>
+                        <input type="text" id="activityGroup" name="grupo" placeholder="Ejemplo: 1, A, Avanzado (opcional)">
+                        <small class="form-text">Identificador opcional para diferenciar grupos de la misma actividad.</small>
+                    </div>
                     <!-- Días de la semana -->
                     <div class="form-group">
                         <label>Días de la semana *</label>
@@ -248,6 +253,11 @@ try {
                         <label for="editActivityName">Nombre *</label>
                         <input type="text" id="editActivityName" name="nombre" required>
                         <span class="field-error" id="editActivityName-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="editActivityGroup">Grupo</label>
+                        <input type="text" id="editActivityGroup" name="grupo" placeholder="Ejemplo: 1, A, Avanzado (opcional)">
+                        <small class="form-text">Identificador opcional para diferenciar grupos de la misma actividad.</small>
                     </div>
                     <!-- Días de la semana -->
                     <div class="form-group">

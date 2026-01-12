@@ -1,5 +1,6 @@
 <?php
 require_once 'config/config.php';
+require_once 'includes/actividad_helpers.php';
 
 // Verifica que se haya autenticado el centro
 if(!isset($_SESSION['centro_id'])){
@@ -222,7 +223,7 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
                   <div class="activity-card">
                     <div class="activity-name">
                       <i class="fas fa-play"></i>
-                      <span><?php echo htmlspecialchars($actividad['nombre']); ?></span>
+                      <span><?php echo formatearNombreActividad($actividad['nombre'], $actividad['grupo'] ?? null); ?></span>
                     </div>
                     <div class="activity-schedule">
                       <i class="fas fa-clock"></i>
@@ -269,7 +270,7 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
                   <div class="activity-card">
                     <div class="activity-name">
                       <i class="fas fa-calendar-plus"></i>
-                      <span><?php echo htmlspecialchars($actividad['nombre']); ?></span>
+                      <span><?php echo formatearNombreActividad($actividad['nombre'], $actividad['grupo'] ?? null); ?></span>
                     </div>
                     <div class="activity-schedule">
                       <i class="fas fa-clock"></i>
@@ -314,7 +315,7 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
                   <div class="activity-card">
                     <div class="activity-name">
                       <i class="fas fa-check-circle"></i>
-                      <span><?php echo htmlspecialchars($actividad['nombre']); ?></span>
+                      <span><?php echo formatearNombreActividad($actividad['nombre'], $actividad['grupo'] ?? null); ?></span>
                     </div>
                     <div class="activity-schedule">
                       <i class="fas fa-clock"></i>

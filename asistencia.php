@@ -1,5 +1,6 @@
 <?php
 require_once 'config/config.php';
+require_once 'includes/actividad_helpers.php';
 
 // Primero, validar parámetro de actividad
 if(!isset($_GET['actividad_id'])){
@@ -359,11 +360,11 @@ require_once 'includes/header.php';
         <span class="separator">›</span>
         <a href="actividades.php?instalacion_id=<?php echo htmlspecialchars($actividad['instalacion_id']); ?>"><?php echo htmlspecialchars(html_entity_decode($actividad['instalacion_nombre'])); ?></a>
         <span class="separator">›</span>
-        <span class="current"><?php echo htmlspecialchars(html_entity_decode($actividad['nombre'])); ?></span>
+        <span class="current"><?php echo formatearNombreActividad($actividad['nombre'], $actividad['grupo'] ?? null); ?></span>
       </div>
       <div class="activity-header">
         <div>
-          <h2 class="activity-title"><?php echo htmlspecialchars(html_entity_decode($actividad['nombre'])); ?></h2>
+          <h2 class="activity-title"><?php echo formatearNombreActividad($actividad['nombre'], $actividad['grupo'] ?? null); ?></h2>
           <div class="activity-subinfo">
             <?php echo htmlspecialchars(html_entity_decode($actividad['centro_nombre'])); ?> · <?php echo htmlspecialchars(html_entity_decode($actividad['instalacion_nombre'])); ?>
             <?php if ($dias_letters): ?> · <?php echo htmlspecialchars($dias_letters); ?><?php endif; ?>

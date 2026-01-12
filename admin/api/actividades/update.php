@@ -51,6 +51,7 @@ try {
 
     // Campos a actualizar (opcionales)
     $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
+    $grupo = array_key_exists('grupo', $input) ? (trim((string)$input['grupo']) ?: null) : null;
     $dias_semana = $input['dias_semana'] ?? null; // puede ser array o string
     $hora_inicio = array_key_exists('hora_inicio', $input) ? trim((string)$input['hora_inicio']) : null;
     $hora_fin = array_key_exists('hora_fin', $input) ? trim((string)$input['hora_fin']) : null;
@@ -76,6 +77,7 @@ try {
     $fields = [];
     $params = [];
     if ($nombre !== null) { $fields[] = 'nombre = ?'; $params[] = $nombre; }
+    if ($grupo !== null || array_key_exists('grupo', $input)) { $fields[] = 'grupo = ?'; $params[] = $grupo; }
     if (isset($dias_semana_string)) { $fields[] = 'dias_semana = ?'; $params[] = $dias_semana_string; }
     if ($hora_inicio !== null) { $fields[] = 'hora_inicio = ?'; $params[] = $hora_inicio; }
     if ($hora_fin !== null) { $fields[] = 'hora_fin = ?'; $params[] = $hora_fin; }

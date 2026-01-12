@@ -251,6 +251,7 @@ async function handleCreateActivity(e) {
   e.preventDefault();
   const form = e.target;
   const nombre = (form.querySelector('#activityName').value || '').trim();
+  const grupo = (form.querySelector('#activityGroup').value || '').trim() || null;
   // recoger días de checkboxes
   const dias_semana = Array.from(form.querySelectorAll('input[name="dias_semana[]"]:checked')).map(el => el.value);
   const hora_inicio = form.querySelector('#activityStart').value || '';
@@ -277,7 +278,7 @@ async function handleCreateActivity(e) {
     const resp = await fetch('api/actividades/create.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin, instalacion_id: Installation.id })
+      body: JSON.stringify({ nombre, grupo, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin, instalacion_id: Installation.id })
     });
     const result = await resp.json();
     if (result.success) {
@@ -299,6 +300,7 @@ function editActivity(id) {
   if (!a) return;
   document.getElementById('editActivityId').value = id;
   document.getElementById('editActivityName').value = decodeHtml(a.nombre || '');
+  document.getElementById('editActivityGroup').value = a.grupo || '';
   // set checkboxes for days
   const diasArr = (a.dias_semana || '').split(',').map(s => s.trim()).filter(Boolean);
   document.querySelectorAll('input[name="edit_dias_semana[]"]').forEach(cb => {
@@ -329,6 +331,7 @@ async function handleEditActivity(e) {
   e.preventDefault();
   const id = Number(document.getElementById('editActivityId').value);
   const nombre = String(document.getElementById('editActivityName').value || '').trim();
+  const grupo = String(document.getElementById('editActivityGroup').value || '').trim() || null;
   const dias_semana = Array.from(document.querySelectorAll('input[name="edit_dias_semana[]"]:checked')).map(el => el.value);
   const hora_inicio = String(document.getElementById('editActivityStart').value || '');
   const hora_fin = String(document.getElementById('editActivityEnd').value || '');
@@ -354,7 +357,7 @@ async function handleEditActivity(e) {
     const resp = await fetch('api/actividades/update.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, nombre, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin })
+      body: JSON.stringify({ id, nombre, grupo, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin })
     });
     const result = await resp.json();
     if (result.success) {

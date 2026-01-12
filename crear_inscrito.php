@@ -1,5 +1,6 @@
 <?php
 require_once 'config/config.php';
+require_once 'includes/actividad_helpers.php';
 
 // Verifica que se haya autenticado el centro
 if(!isset($_SESSION['centro_id'])){
@@ -55,7 +56,7 @@ require_once 'includes/header.php';
             <span class="separator">></span>
             <a href="actividades.php?instalacion_id=<?php echo $actividad['instalacion_id']; ?>"><?php echo htmlspecialchars($actividad['instalacion_nombre']); ?></a>
             <span class="separator">></span>
-            <a href="asistencia.php?actividad_id=<?php echo $actividad_id; ?>"><?php echo htmlspecialchars($actividad['nombre']); ?></a>
+            <a href="asistencia.php?actividad_id=<?php echo $actividad_id; ?>"><?php echo formatearNombreActividad($actividad['nombre'], $actividad['grupo'] ?? null); ?></a>
             <span class="separator">></span>
             <span class="current">Nuevo/a Inscrito/a</span>
         </div>

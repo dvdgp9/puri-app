@@ -142,9 +142,11 @@ function sortParticipants() {
 // Edit Activity
 function openEditActivityModal() {
   // Prefill
-  const a = ActivityPage.ctx || {};
-  if (document.getElementById('editActivityId')) document.getElementById('editActivityId').value = String(ActivityPage.id);
-  if (document.getElementById('editActivityName')) document.getElementById('editActivityName').value = decodeHtml(a.nombre || '');
+  const a = ActivityPage.ctx;
+  if (!a) return;
+  document.getElementById('editActivityId').value = a.id;
+  document.getElementById('editActivityName').value = decodeHtml(a.nombre || '');
+  if (document.getElementById('editActivityGroup')) document.getElementById('editActivityGroup').value = a.grupo || '';
   const diasArr = String(a.dias_semana || '').split(',').map(s => s.trim()).filter(Boolean);
   document.querySelectorAll('input[name="edit_dias_semana[]"]').forEach(cb => {
     cb.checked = diasArr.includes(cb.value);
@@ -160,6 +162,7 @@ async function handleEditActivitySubmit(e) {
   e.preventDefault();
   const id = Number(document.getElementById('editActivityId').value);
   const nombre = String(document.getElementById('editActivityName').value || '').trim();
+  const grupo = document.getElementById('editActivityGroup') ? (String(document.getElementById('editActivityGroup').value || '').trim() || null) : null;
   const dias_semana = Array.from(document.querySelectorAll('input[name="edit_dias_semana[]"]:checked')).map(el => el.value);
   const hora_inicio = String(document.getElementById('editActivityStart').value || '');
   const hora_fin = String(document.getElementById('editActivityEnd').value || '');
@@ -175,14 +178,18 @@ async function handleEditActivitySubmit(e) {
   try {
     const resp = await fetch('api/actividades/update.php', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, nombre, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin })
+      body: JSON.stringify({ id, nombre, grupo, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin })
     });
     const result = await resp.json();
     if (result.success) {
       // Update header title and ctx
       const title = document.querySelector('.center-title');
-      if (title) title.textContent = nombre;
+      if (title) {
+        const nombreDisplay = grupo ? `${nombre} (${grupo})` : nombre;
+        title.textContent = nombreDisplay;
+      }
       ActivityPage.ctx.nombre = nombre;
+      ActivityPage.ctx.grupo = grupo;
       ActivityPage.ctx.dias_semana = dias_semana.join(',');
       ActivityPage.ctx.hora_inicio = hora_inicio;
       ActivityPage.ctx.hora_fin = hora_fin;

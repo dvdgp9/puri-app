@@ -2093,6 +2093,7 @@ async function createActivity() {
         // Preparar datos
         const data = {
             nombre: formData.get('nombre'),
+            grupo: formData.get('grupo') || null,
             instalacion_id: formData.get('instalacion_id'),
             dias_semana: diasSemana,
             hora_inicio: formData.get('hora_inicio'),
