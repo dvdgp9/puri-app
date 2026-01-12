@@ -38,8 +38,8 @@ if (!$actividad) {
     exit;
 }
 
-// Inyectar contexto para JS
-$activity_js_ctx = json_encode($actividad);
+    // Inyectar contexto para JS
+    $activity_js_ctx = json_encode($actividad);
 ?>
 <!DOCTYPE html>
 <html lang="es">

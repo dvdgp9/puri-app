@@ -2,16 +2,17 @@
  * JavaScript para la página de detalle de actividad (participantes)
  */
 
-const ActivityPage = {
-  id: null,
-  ctx: null,
-  participants: []
-};
+// ActivityPage is already defined by the inline script in activity.php
+// Just ensure we have the participants array
+if (!window.ActivityPage) {
+  window.ActivityPage = { id: null, ctx: null, participants: [] };
+}
+if (!window.ActivityPage.participants) {
+  window.ActivityPage.participants = [];
+}
 
 // Init
 window.addEventListener('DOMContentLoaded', () => {
-  ActivityPage.ctx = window.__ACTIVITY_CTX__ || null;
-  ActivityPage.id = ActivityPage.ctx ? Number(ActivityPage.ctx.id) : null;
   if (!ActivityPage.id) {
     window.location.href = 'dashboard.php';
     return;
