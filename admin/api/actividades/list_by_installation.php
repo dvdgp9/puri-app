@@ -51,6 +51,7 @@ try {
         SELECT 
             a.id, 
             a.nombre, 
+            a.grupo,
             a.dias_semana, 
             a.hora_inicio, 
             a.hora_fin, 

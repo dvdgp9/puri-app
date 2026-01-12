@@ -148,14 +148,15 @@ try {
             continue;
         }
         
-        // Normalizar fecha fin (opcional)
         $fechaFinNorm = null;
         if (!empty($fechaFin)) {
             $fechaFinNorm = normalizarFecha($fechaFin);
-            if (!$fechaFinNorm) {
-                $stats['errores'][] = "Línea $lineNum: Formato de fecha de fin inválido ($fechaFin)";
-                continue;
+            if ($fechaFinNorm === '0000-00-00') {
+                $fechaFinNorm = null;
             }
+        }
+        if ($fechaFinNorm === '0000-00-00' || $fechaFinNorm === '') {
+            $fechaFinNorm = null;
         }
         
         // Normalizar horas (usar valores por defecto si están vacías)
@@ -318,28 +319,32 @@ try {
  * Acepta: d/m/y, d/m/yy, d/m/yyyy, yyyy-mm-dd
  */
 function normalizarFecha($fecha) {
-    $fecha = trim($fecha);
+    if (empty($fecha) || $fecha === '00/00/0000' || $fecha === '0000-00-00') return null;
     
-    // Formato ISO yyyy-mm-dd
+    // Si ya viene en formato YYYY-MM-DD
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
         return $fecha;
     }
+
+    $fecha = str_replace('/', '-', $fecha);
+    $timestamp = strtotime($fecha);
     
-    // Formato d/m/y o d/m/yy o d/m/yyyy
-    if (preg_match('#^(\d{1,2})/(\d{1,2})/(\d{2,4})$#', $fecha, $m)) {
-        $dia = str_pad($m[1], 2, '0', STR_PAD_LEFT);
-        $mes = str_pad($m[2], 2, '0', STR_PAD_LEFT);
-        $anio = $m[3];
-        
-        // Normalizar año
-        if (strlen($anio) == 2) {
-            $anio = ($anio > 50) ? '19' . $anio : '20' . $anio;
+    if (!$timestamp) {
+        // Re-intentar con formato d-m-Y si strtotime falló (a veces confunde d-m-y con m-d-y)
+        if (preg_match('/^(\d{1,2})-(\d{1,2})-(\d{2,4})$/', $fecha, $matches)) {
+            $dia = $matches[1];
+            $mes = $matches[2];
+            $anio = $matches[3];
+            if (strlen($anio) === 2) $anio = '20' . $anio;
+            if (checkdate($mes, $dia, $anio)) {
+                return sprintf('%04d-%02d-%02d', $anio, $mes, $dia);
+            }
         }
-        
-        return "$anio-$mes-$dia";
+        return null;
     }
     
-    return null;
+    $formateada = date('Y-m-d', $timestamp);
+    return ($formateada === '0000-00-00' || $formateada === '1970-01-01') ? null : $formateada;
 }
 
 /**

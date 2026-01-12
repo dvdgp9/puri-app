@@ -147,7 +147,7 @@ function renderActivities() {
     <div class="center-item" onclick="goToActivity(${a.id})" style="cursor: pointer;">
       <div class="center-main">
         <div class="center-header">
-          <h3 class="center-name">${escapeHtml(decodeHtml(a.nombre || ''))}</h3>
+          <h3 class="center-name">${escapeHtml(decodeHtml(a.nombre || ''))}${a.grupo ? ' (' + escapeHtml(a.grupo) + ')' : ''}</h3>
         </div>
         <div class="center-details">
           <span class="center-stat">

@@ -12,37 +12,29 @@ if ($actividad_id <= 0) {
     exit;
 }
 
-try {
-    $admin_info = getAdminInfo();
+$admin_info = getAdminInfo();
 
-    // Obtener actividad + instalación + centro
-    $query = "SELECT a.id, a.nombre, a.grupo, a.instalacion_id, a.dias_semana, a.hora_inicio, a.hora_fin, a.fecha_inicio, a.fecha_fin,
-                     i.nombre AS instalacion_nombre, i.centro_id,
-                     c.nombre AS centro_nombre, c.direccion AS centro_direccion
-              FROM actividades a
-              INNER JOIN instalaciones i ON i.id = a.instalacion_id
-              INNER JOIN centros c ON c.id = i.centro_id
-              WHERE a.id = ?";
-    $params = [$actividad_id];
-
-    if ($admin_info['role'] !== 'superadmin') {
-        $query .= " AND c.id IN (SELECT centro_id FROM admin_asignaciones WHERE admin_id = ?)";
-        $params[] = $admin_info['id'];
-    }
+// Obtener actividad + instalación + centro
+$query = "SELECT a.id, a.nombre, a.grupo, a.instalacion_id, a.dias_semana, a.hora_inicio, a.hora_fin, a.fecha_inicio, a.fecha_fin,
+                 i.nombre AS instalacion_nombre, i.centro_id,
+                 c.nombre AS centro_nombre, c.direccion AS centro_direccion
+          FROM actividades a
+          INNER JOIN instalaciones i ON i.id = a.instalacion_id
+          INNER JOIN centros c ON c.id = i.centro_id
+          WHERE a.id = ?";
+$params = [$actividad_id];
 
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);
     $actividad = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$actividad) {
-        header("Location: dashboard.php?error=actividad_no_encontrada");
+        header("Location: dashboard.php");
         exit;
     }
-} catch (Exception $e) {
-    error_log("Error en activity.php: " . $e->getMessage());
-    header("Location: dashboard.php?error=error_sistema");
-    exit;
-}
+
+    // Inyectar contexto para JS
+    $activity_js_ctx = json_encode($actividad);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -52,6 +44,12 @@ try {
     <title><?= htmlspecialchars(html_entity_decode($actividad['nombre'], ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?> - Sistema Puri</title>
     <link rel="stylesheet" href="assets/css/admin.css">
     <link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        const ActivityPage = {
+            id: <?= $actividad['id'] ?>,
+            ctx: <?= $activity_js_ctx ?>
+        };
+    </script>
 </head>
 <body>
     <!-- Header -->
