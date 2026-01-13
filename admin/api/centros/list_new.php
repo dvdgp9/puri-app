@@ -15,7 +15,7 @@ try {
     // Verificar autenticación
     $admin_info = getAdminInfo();
     
-    // Consulta con conteos reales: centros → instalaciones → actividades
+    // Consulta con conteos reales: centros → instalaciones → actividades → inscritos
     $query = "
         SELECT 
             c.id, 
@@ -23,10 +23,12 @@ try {
             c.direccion,
             c.activo,
             COUNT(DISTINCT i.id) as total_instalaciones,
-            COUNT(DISTINCT a.id) as total_actividades
+            COUNT(DISTINCT a.id) as total_actividades,
+            COUNT(DISTINCT ins.id) as total_inscritos
         FROM centros c
         LEFT JOIN instalaciones i ON c.id = i.centro_id
         LEFT JOIN actividades a ON i.id = a.instalacion_id
+        LEFT JOIN inscritos ins ON a.id = ins.actividad_id
     ";
     
     $params = [];

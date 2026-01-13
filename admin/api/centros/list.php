@@ -43,12 +43,17 @@ try {
     $stmt->execute($params);
     $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Obtener registros con paginación - consulta simplificada
+    // Obtener registros con paginación - incluyendo conteo de inscritos
     $query = "
         SELECT 
             c.id,
             c.nombre,
-            c.direccion
+            c.direccion,
+            (SELECT COUNT(*) 
+             FROM inscritos ins 
+             INNER JOIN actividades act ON ins.actividad_id = act.id 
+             INNER JOIN instalaciones inst ON act.instalacion_id = inst.id 
+             WHERE inst.centro_id = c.id) AS total_inscritos
         FROM centros c
         $where_clause
         ORDER BY c.nombre ASC

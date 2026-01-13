@@ -52,15 +52,50 @@ try {
         }
     }
 
-    // Listado de participantes (inscritos) de la actividad
-    $stmt = $pdo->prepare('SELECT id, nombre, apellidos FROM inscritos WHERE actividad_id = ? ORDER BY apellidos ASC, nombre ASC');
-    $stmt->execute([$actividad_id]);
+    // Obtener el número de días con paso de lista en los últimos 28 días para esta actividad
+    $stmt_dias = $pdo->prepare('
+        SELECT COUNT(DISTINCT fecha) as total_dias
+        FROM asistencias 
+        WHERE actividad_id = ? 
+          AND fecha >= DATE_SUB(CURDATE(), INTERVAL 28 DAY)
+    ');
+    $stmt_dias->execute([$actividad_id]);
+    $dias_con_lista = (int)$stmt_dias->fetchColumn();
+
+    // Listado de participantes (inscritos) de la actividad con estadísticas de asistencia
+    $stmt = $pdo->prepare('
+        SELECT 
+            i.id, 
+            i.nombre, 
+            i.apellidos,
+            (SELECT COUNT(*) 
+             FROM asistencias a 
+             WHERE a.usuario_id = i.id 
+               AND a.actividad_id = ? 
+               AND a.asistio = 1
+               AND a.fecha >= DATE_SUB(CURDATE(), INTERVAL 28 DAY)) AS asistencias_28d
+        FROM inscritos i
+        WHERE i.actividad_id = ? 
+        ORDER BY i.apellidos ASC, i.nombre ASC
+    ');
+    $stmt->execute([$actividad_id, $actividad_id]);
     $participants = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Calcular porcentaje para cada participante
+    foreach ($participants as &$p) {
+        $p['asistencias_28d'] = (int)$p['asistencias_28d'];
+        $p['dias_con_lista_28d'] = $dias_con_lista;
+        $p['porcentaje_asistencia_28d'] = $dias_con_lista > 0 
+            ? round(($p['asistencias_28d'] / $dias_con_lista) * 100, 0) 
+            : 0;
+    }
+    unset($p);
 
     echo json_encode([
         'success' => true,
         'participants' => $participants,
         'count' => count($participants),
+        'dias_con_lista_28d' => $dias_con_lista,
         'activity' => [
             'id' => intval($ctx['actividad_id']),
             'nombre' => $ctx['actividad_nombre']

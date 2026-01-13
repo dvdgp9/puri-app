@@ -98,6 +98,15 @@ function renderParticipants() {
         <div class="center-main">
           <div class="center-header">
             <h3 class="center-name">${escapeHtml((p.apellidos || '') + ', ' + (p.nombre || ''))}</h3>
+            ${p.dias_con_lista_28d > 0 ? `<span class="center-status ${p.porcentaje_asistencia_28d >= 75 ? 'active' : p.porcentaje_asistencia_28d >= 50 ? '' : 'inactive'}" title="${p.asistencias_28d}/${p.dias_con_lista_28d} días">${p.porcentaje_asistencia_28d}%</span>` : ''}
+          </div>
+          <div class="center-details">
+            ${p.dias_con_lista_28d > 0 ? `<span class="center-stat" title="Asistencias en los últimos 28 días">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+              </svg>
+              ${p.asistencias_28d} de ${p.dias_con_lista_28d} días (28d)
+            </span>` : '<span class="center-stat" style="color:#94a3b8">Sin datos de asistencia</span>'}
           </div>
         </div>
         <div class="center-actions">

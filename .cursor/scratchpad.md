@@ -286,6 +286,13 @@ El acceso al panel admin no está funcionando actualmente. El objetivo inmediato
 - [x] API `admin/api/participantes/list_by_activity.php` (listar inscritos por actividad con contexto y auth)
 - [x] Crear `admin/activity.php` (breadcrumb, header con botón Editar, botón "+ Añadir Participantes", listado)
 - [x] Crear `admin/assets/js/activity.js` (carga actividad+inscritos, render, búsqueda/orden)
+
+### Estadísticas Mejoradas UX (2026-01-13)
+- [x] **Dashboard**: Añadir total de inscritos por centro (`admin/api/centros/list_new.php` + `dashboard.js`)
+- [x] **Center.php**: Añadir inscritos y asistencias totales por instalación (`admin/api/instalaciones/list_by_center.php` + `center.js`)
+- [x] **Installation.php**: Añadir días con paso de lista (últimos 28 días) por actividad (`admin/api/actividades/list_by_installation.php` + `installation.js`)
+- [x] **Activity.php**: Añadir nº y % de asistencias por participante (últimos 28 días) (`admin/api/participantes/list_by_activity.php` + `activity.js`)
+- [ ] Validar visualmente todas las estadísticas en cada nivel de la jerarquía
 - [x] Modal "Añadir Participantes": pestañas Manual y CSV con `actividad_id` fijado y campos de contexto bloqueados
 - [x] Wire Manual → `admin/api/participantes/create.php`
 - [x] Wire CSV → `admin/api/participantes/upload_csv.php`

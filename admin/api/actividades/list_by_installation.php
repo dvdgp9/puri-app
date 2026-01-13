@@ -47,6 +47,7 @@ try {
     }
     
     // Obtener actividades de la instalación, incluyendo conteo de participantes
+    // y número de días con paso de lista en los últimos 28 días
     $stmt = $pdo->prepare("
         SELECT 
             a.id, 
@@ -57,7 +58,11 @@ try {
             a.hora_fin, 
             a.fecha_inicio, 
             a.fecha_fin,
-            (SELECT COUNT(*) FROM inscritos i WHERE i.actividad_id = a.id) AS participantes_count
+            (SELECT COUNT(*) FROM inscritos i WHERE i.actividad_id = a.id) AS participantes_count,
+            (SELECT COUNT(DISTINCT fecha) 
+             FROM asistencias 
+             WHERE actividad_id = a.id 
+               AND fecha >= DATE_SUB(CURDATE(), INTERVAL 28 DAY)) AS dias_con_lista_28d
         FROM actividades a
         WHERE a.instalacion_id = ? 
         ORDER BY a.nombre

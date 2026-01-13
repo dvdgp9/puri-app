@@ -45,6 +45,7 @@ try {
     // activas: fecha_inicio <= hoy y (fecha_fin IS NULL o fecha_fin >= hoy)
     // programadas: fecha_inicio > hoy
     // Query para obtener instalaciones del centro con conteos por estado (con columna 'activo')
+    // Incluye total_inscritos y total_asistencias
     $sql = "
         SELECT 
             i.id,
@@ -60,7 +61,13 @@ try {
             COALESCE(SUM(CASE 
                 WHEN a.id IS NOT NULL 
                  AND a.fecha_fin IS NOT NULL 
-                 AND a.fecha_fin < CURDATE() THEN 1 ELSE 0 END), 0) AS actividades_finalizadas
+                 AND a.fecha_fin < CURDATE() THEN 1 ELSE 0 END), 0) AS actividades_finalizadas,
+            (SELECT COUNT(*) FROM inscritos ins 
+             INNER JOIN actividades act ON ins.actividad_id = act.id 
+             WHERE act.instalacion_id = i.id) AS total_inscritos,
+            (SELECT COUNT(*) FROM asistencias asist 
+             INNER JOIN actividades act ON asist.actividad_id = act.id 
+             WHERE act.instalacion_id = i.id) AS total_asistencias
         FROM instalaciones i
         LEFT JOIN actividades a ON a.instalacion_id = i.id
         WHERE i.centro_id = ?
