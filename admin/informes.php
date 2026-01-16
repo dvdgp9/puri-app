@@ -334,10 +334,23 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <!-- Paso 2: Seleccionar Actividades -->
-            <div class="step-section step-disabled" id="step-actividades">
+            <!-- Paso 2: Seleccionar Instalación -->
+            <div class="step-section step-disabled" id="step-instalacion">
                 <div class="step-header">
                     <div class="step-number">2</div>
+                    <h2 class="step-title">Selecciona una instalación</h2>
+                </div>
+                <div class="form-group">
+                    <select id="instalacion-select" class="form-input">
+                        <option value="">-- Selecciona una instalación --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Paso 3: Seleccionar Actividades -->
+            <div class="step-section step-disabled" id="step-actividades">
+                <div class="step-header">
+                    <div class="step-number">3</div>
                     <h2 class="step-title">Selecciona actividades <span style="font-weight: 400; font-size: 14px; color: var(--text-muted);">(máximo 10)</span></h2>
                 </div>
                 
@@ -356,7 +369,7 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
-                        <p>Selecciona un centro para ver sus actividades</p>
+                        <p>Selecciona una instalación para ver sus actividades</p>
                     </div>
                 </div>
                 
@@ -366,10 +379,10 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <!-- Paso 3: Rango de fechas -->
+            <!-- Paso 4: Rango de fechas -->
             <div class="step-section step-disabled" id="step-fechas">
                 <div class="step-header">
-                    <div class="step-number">3</div>
+                    <div class="step-number">4</div>
                     <h2 class="step-title">Selecciona el rango de fechas</h2>
                 </div>
                 
@@ -407,6 +420,8 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
     // Estado global
     const State = {
         centroId: null,
+        instalacionId: null,
+        instalaciones: [],
         actividades: [],
         selectedActividades: new Set(),
         filtroActual: 'todas',
@@ -436,9 +451,40 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
         // Cambio de centro
         document.getElementById('centro-select').addEventListener('change', async function() {
             State.centroId = this.value;
+            State.instalacionId = null;
             State.selectedActividades.clear();
+            State.actividades = [];
+            
+            // Resetear selectores dependientes
+            const instalacionSelect = document.getElementById('instalacion-select');
+            instalacionSelect.innerHTML = '<option value="">-- Selecciona una instalación --</option>';
+            document.getElementById('actividades-grid').innerHTML = `
+                <div class="empty-actividades">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    <p>Selecciona una instalación para ver sus actividades</p>
+                </div>
+            `;
             
             if (State.centroId) {
+                await cargarInstalaciones();
+                document.getElementById('step-instalacion').classList.remove('step-disabled');
+            } else {
+                document.getElementById('step-instalacion').classList.add('step-disabled');
+            }
+            
+            document.getElementById('step-actividades').classList.add('step-disabled');
+            document.getElementById('step-fechas').classList.add('step-disabled');
+            actualizarUI();
+        });
+        
+        // Cambio de instalación
+        document.getElementById('instalacion-select').addEventListener('change', async function() {
+            State.instalacionId = this.value;
+            State.selectedActividades.clear();
+            
+            if (State.instalacionId) {
                 await cargarActividades();
                 document.getElementById('step-actividades').classList.remove('step-disabled');
             } else {
@@ -470,13 +516,37 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
         document.getElementById('fecha-fin').addEventListener('change', validarFormulario);
     }
 
+    // ====== Cargar instalaciones ======
+    async function cargarInstalaciones() {
+        const select = document.getElementById('instalacion-select');
+        select.innerHTML = '<option value="">Cargando...</option>';
+        
+        try {
+            const resp = await fetch(`api/informes/instalaciones.php?centro_id=${State.centroId}`);
+            const data = await resp.json();
+            
+            if (data.success) {
+                State.instalaciones = data.data || [];
+                select.innerHTML = '<option value="">-- Selecciona una instalación --</option>';
+                State.instalaciones.forEach(inst => {
+                    select.innerHTML += `<option value="${inst.id}">${escapeHtml(inst.nombre)}</option>`;
+                });
+            } else {
+                select.innerHTML = '<option value="">Error al cargar</option>';
+            }
+        } catch (err) {
+            console.error(err);
+            select.innerHTML = '<option value="">Error de conexión</option>';
+        }
+    }
+
     // ====== Cargar actividades ======
     async function cargarActividades() {
         const grid = document.getElementById('actividades-grid');
         grid.innerHTML = '<div class="empty-actividades"><p>Cargando actividades...</p></div>';
         
         try {
-            const resp = await fetch(`api/informes/actividades.php?centro_id=${State.centroId}`);
+            const resp = await fetch(`api/informes/actividades.php?instalacion_id=${State.instalacionId}`);
             const data = await resp.json();
             
             if (data.success) {
@@ -499,7 +569,7 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
         let actividades = State.actividades.filter(a => {
             // Filtro de búsqueda
             if (State.busqueda) {
-                const texto = `${a.nombre} ${a.instalacion_nombre} ${a.horario}`.toLowerCase();
+                const texto = `${a.nombre} ${a.grupo || ''} ${a.horario}`.toLowerCase();
                 if (!texto.includes(State.busqueda)) return false;
             }
             
@@ -535,7 +605,7 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </svg>
                     </div>
                     <div class="actividad-info">
-                        <div class="actividad-nombre">${escapeHtml(a.nombre)}</div>
+                        <div class="actividad-nombre">${escapeHtml(a.nombre)}${a.grupo ? ' <span style="color: var(--admin-primary); font-weight: 500;">(' + escapeHtml(a.grupo) + ')</span>' : ''}</div>
                         <div class="actividad-meta">
                             <span>📅 ${fechaInfo}</span>
                             <span>🕐 ${escapeHtml(a.horario || 'Sin horario')}</span>
@@ -543,7 +613,6 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 ${a.finalizada ? 'Finalizada' : 'Activa'}
                             </span>
                         </div>
-                        <div class="actividad-ubicacion">📍 ${escapeHtml(a.instalacion_nombre)}</div>
                     </div>
                 </div>
             `;

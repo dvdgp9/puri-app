@@ -11,14 +11,22 @@ header('Content-Type: application/json; charset=utf-8');
 
 try {
     $centroId = isset($_GET['centro_id']) ? (int)$_GET['centro_id'] : 0;
+    $instalacionId = isset($_GET['instalacion_id']) ? (int)$_GET['instalacion_id'] : 0;
     
-    if ($centroId <= 0) {
-        echo json_encode(['success' => false, 'error' => 'Centro no especificado']);
+    if ($centroId <= 0 && $instalacionId <= 0) {
+        echo json_encode(['success' => false, 'error' => 'Centro o instalación no especificado']);
         exit;
     }
     
+    // Determinar centro_id si solo se pasó instalacion_id
+    if ($instalacionId > 0 && $centroId <= 0) {
+        $stmt = $pdo->prepare("SELECT centro_id FROM instalaciones WHERE id = ? LIMIT 1");
+        $stmt->execute([$instalacionId]);
+        $centroId = (int)$stmt->fetchColumn();
+    }
+    
     // Verificar permisos del admin sobre el centro (excepto superadmin)
-    if (!isSuperAdmin()) {
+    if (!isSuperAdmin() && $centroId > 0) {
         $stmt = $pdo->prepare("SELECT 1 FROM admin_asignaciones WHERE admin_id = ? AND centro_id = ? LIMIT 1");
         $stmt->execute([$_SESSION['admin_id'], $centroId]);
         if (!$stmt->fetchColumn()) {
@@ -27,34 +35,67 @@ try {
         }
     }
     
-    // Obtener actividades del centro con información completa
-    $sql = "
-        SELECT 
-            a.id,
-            a.nombre,
-            a.horario,
-            a.dias_semana,
-            a.hora_inicio,
-            a.hora_fin,
-            a.fecha_inicio,
-            a.fecha_fin,
-            i.nombre AS instalacion_nombre,
-            i.id AS instalacion_id,
-            CASE 
-                WHEN a.fecha_fin IS NOT NULL AND a.fecha_fin < CURDATE() THEN 1 
-                ELSE 0 
-            END AS finalizada
-        FROM actividades a
-        INNER JOIN instalaciones i ON a.instalacion_id = i.id
-        WHERE i.centro_id = ?
-        ORDER BY 
-            finalizada ASC,
-            a.nombre ASC,
-            a.fecha_inicio DESC
-    ";
-    
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$centroId]);
+    // Obtener actividades con información completa
+    // Filtrar por instalación si se especifica, sino por centro
+    if ($instalacionId > 0) {
+        $sql = "
+            SELECT 
+                a.id,
+                a.nombre,
+                a.grupo,
+                a.horario,
+                a.dias_semana,
+                a.hora_inicio,
+                a.hora_fin,
+                a.fecha_inicio,
+                a.fecha_fin,
+                i.nombre AS instalacion_nombre,
+                i.id AS instalacion_id,
+                CASE 
+                    WHEN a.fecha_fin IS NOT NULL AND a.fecha_fin < CURDATE() THEN 1 
+                    ELSE 0 
+                END AS finalizada
+            FROM actividades a
+            INNER JOIN instalaciones i ON a.instalacion_id = i.id
+            WHERE a.instalacion_id = ?
+            ORDER BY 
+                finalizada ASC,
+                a.nombre ASC,
+                a.grupo ASC,
+                a.fecha_inicio DESC
+        ";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$instalacionId]);
+    } else {
+        $sql = "
+            SELECT 
+                a.id,
+                a.nombre,
+                a.grupo,
+                a.horario,
+                a.dias_semana,
+                a.hora_inicio,
+                a.hora_fin,
+                a.fecha_inicio,
+                a.fecha_fin,
+                i.nombre AS instalacion_nombre,
+                i.id AS instalacion_id,
+                CASE 
+                    WHEN a.fecha_fin IS NOT NULL AND a.fecha_fin < CURDATE() THEN 1 
+                    ELSE 0 
+                END AS finalizada
+            FROM actividades a
+            INNER JOIN instalaciones i ON a.instalacion_id = i.id
+            WHERE i.centro_id = ?
+            ORDER BY 
+                finalizada ASC,
+                a.nombre ASC,
+                a.grupo ASC,
+                a.fecha_inicio DESC
+        ";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$centroId]);
+    }
     $actividades = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Formatear datos
