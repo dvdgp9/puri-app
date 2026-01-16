@@ -90,16 +90,19 @@ try {
     $inscritos = $stmt_inscritos->fetchAll(PDO::FETCH_ASSOC);
     
     // Generar el nombre del archivo
+    // Formato: Actividad_Grupo_Instalacion_Centro_Fecha
     $fecha_hoy = date('Y-m-d');
-    $centro_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['centro_nombre']);
     $actividad_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['actividad_nombre']);
     $grupo_slug = !empty($info['actividad_grupo']) ? '_' . preg_replace('/[^a-z0-9]+/i', '_', $info['actividad_grupo']) : '';
+    $instalacion_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['instalacion_nombre']);
+    $centro_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['centro_nombre']);
 
     $filename = sprintf(
-        'Informe_%s_%s%s_%s.xls',
-        $centro_slug,
+        '%s%s_%s_%s_%s.xls',
         $actividad_slug,
         $grupo_slug,
+        $instalacion_slug,
+        $centro_slug,
         $fecha_hoy
     );
 
