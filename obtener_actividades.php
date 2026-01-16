@@ -13,7 +13,7 @@ if (!$instalacion_id) {
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT id, nombre, horario FROM actividades WHERE instalacion_id = ? ORDER BY nombre");
+    $stmt = $pdo->prepare("SELECT id, nombre, horario, grupo FROM actividades WHERE instalacion_id = ? ORDER BY nombre");
     $stmt->execute([$instalacion_id]);
     $actividades = $stmt->fetchAll(PDO::FETCH_ASSOC);
     

@@ -193,7 +193,8 @@ $admin_info = getAdminInfo();
                     if (data.success) {
                         actividadSelect.innerHTML = '<option value="">Selecciona una actividad</option>';
                         data.actividades.forEach(actividad => {
-                            actividadSelect.innerHTML += `<option value="${actividad.id}">${actividad.nombre} - ${actividad.horario}</option>`;
+                            const grupoText = actividad.grupo ? ` (${actividad.grupo})` : '';
+                            actividadSelect.innerHTML += `<option value="${actividad.id}">${actividad.nombre}${grupoText} - ${actividad.horario}</option>`;
                         });
                         actividadSelect.disabled = false;
                     }

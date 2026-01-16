@@ -33,6 +33,7 @@ $stmt = $pdo->prepare("
     SELECT 
         a.nombre as actividad_nombre,
         a.horario as actividad_horario,
+        a.grupo as actividad_grupo,
         i.nombre as instalacion_nombre,
         c.nombre as centro_nombre
     FROM actividades a
@@ -48,6 +49,7 @@ $info['centro_nombre'] = mb_convert_encoding($info['centro_nombre'], 'UTF-8', 'a
 $info['instalacion_nombre'] = mb_convert_encoding($info['instalacion_nombre'], 'UTF-8', 'auto');
 $info['actividad_nombre'] = mb_convert_encoding($info['actividad_nombre'], 'UTF-8', 'auto');
 $info['actividad_horario'] = mb_convert_encoding($info['actividad_horario'], 'UTF-8', 'auto');
+$info['actividad_grupo'] = mb_convert_encoding($info['actividad_grupo'] ?? '', 'UTF-8', 'auto');
 
 // Obtener todas las fechas en el rango seleccionado donde hubo asistencias
 $stmt_fechas = $pdo->prepare("
@@ -123,11 +125,17 @@ while ($row = $stmt_observaciones->fetch(PDO::FETCH_ASSOC)) {
 }
 
 // Generar el nombre del archivo
+$fecha_hoy = date('Y-m-d');
+$centro_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['centro_nombre']);
+$actividad_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['actividad_nombre']);
+$grupo_slug = !empty($info['actividad_grupo']) ? '_' . preg_replace('/[^a-z0-9]+/i', '_', $info['actividad_grupo']) : '';
+
 $filename = sprintf(
-    'informe_%s_%s_%s.xls',
-    preg_replace('/[^a-z0-9]+/i', '_', $info['centro_nombre']),
-    preg_replace('/[^a-z0-9]+/i', '_', $info['instalacion_nombre']),
-    date('Y-m-d')
+    'Informe_%s_%s%s_%s.xls',
+    $centro_slug,
+    $actividad_slug,
+    $grupo_slug,
+    $fecha_hoy
 );
 
 // Configurar headers para descarga
@@ -139,6 +147,7 @@ $info['centro_nombre'] = htmlspecialchars(mb_convert_encoding($info['centro_nomb
 $info['instalacion_nombre'] = htmlspecialchars(mb_convert_encoding($info['instalacion_nombre'], 'UTF-8', 'auto'));
 $info['actividad_nombre'] = htmlspecialchars(mb_convert_encoding($info['actividad_nombre'], 'UTF-8', 'auto'));
 $info['actividad_horario'] = htmlspecialchars(mb_convert_encoding($info['actividad_horario'], 'UTF-8', 'auto'));
+$info['actividad_grupo'] = htmlspecialchars(mb_convert_encoding($info['actividad_grupo'] ?? '', 'UTF-8', 'auto'));
 
 // Preparar fechas en formato corto para los encabezados
 $fecha_headers = [];
@@ -185,7 +194,7 @@ echo '<!DOCTYPE html>
             <td colspan="' . (count($fechas) + 2) . '">' . $info['instalacion_nombre'] . '</td>
         </tr>
         <tr class="header-row">
-            <td colspan="' . (count($fechas) + 2) . '">' . $info['actividad_nombre'] . ' | ' . $info['actividad_horario'] . '</td>
+            <td colspan="' . (count($fechas) + 2) . '">' . $info['actividad_nombre'] . ($info['actividad_grupo'] ? ' (' . $info['actividad_grupo'] . ')' : '') . ' | ' . $info['actividad_horario'] . '</td>
         </tr>
         <tr class="header-row">
             <td>Período:</td>

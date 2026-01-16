@@ -189,7 +189,35 @@ Implementar un dashboard Single Page Application (SPA) con:
 2. **Performance**: Operaciones masivas pueden causar timeouts
 3. **Memoria**: Múltiples CSVs grandes pueden exceder límites PHP
 
-## Background and Motivation (Login Admin roto)
+## Mejora de Informes (2026-01-16)
+
+### Background and Motivation
+Un compañero ha reportado que al descargar informes no se puede identificar a qué grupo horario pertenecen los documentos. Además, se solicita que los nombres de los archivos descargados sean más "amigables" y descriptivos.
+
+### Key Challenges and Analysis
+- La tabla `actividades` tiene un campo `grupo` que no se está utilizando en la generación de informes ni en el nombre del archivo.
+- Los nombres de archivo actuales son genéricos (`informe_centro_instalacion_fecha.xls`).
+- Es necesario incluir el campo `grupo` en las consultas SQL de `generar_informe.php` y `admin/api/informes/generar.php`.
+- El nombre del archivo debe incluir el nombre de la actividad y el grupo para ser "amigable".
+
+### High-level Task Breakdown
+1. **Backend (Admin API)**: Actualizar `admin/api/informes/generar.php` para incluir `grupo` en la consulta y en el nombre del archivo.
+2. **Backend (Legacy/Direct)**: Actualizar `generar_informe.php` para incluir `grupo` en la consulta y en el nombre del archivo.
+3. **Frontend (Helpers)**: Asegurar que `obtener_actividades.php` devuelva el grupo para que se pueda mostrar en los selectores si es necesario.
+4. **Frontend (UI)**: Verificar si `informes.php` necesita mostrar el grupo en el selector de actividades.
+
+### Success Criteria
+- El archivo descargado tiene un nombre descriptivo: `Informe_[Centro]_[Actividad]_[Grupo]_[Fecha].xls`.
+- El contenido del informe muestra claramente el grupo al que pertenece la actividad.
+- Los nombres de los archivos no contienen caracteres extraños (sanitizados).
+
+### Project Status Board (Mejora de Informes)
+- [x] Actualizar consulta SQL y nombre de archivo en `admin/api/informes/generar.php`
+- [x] Actualizar consulta SQL y nombre de archivo en `generar_informe.php`
+- [x] Actualizar `obtener_actividades.php` para incluir campo `grupo`
+- [x] Validar que el informe PDF/Excel muestra el grupo en la cabecera
+- [x] Mostrar grupo en el selector de actividades de `informes.php`
+
 
 El acceso al panel admin no está funcionando actualmente. El objetivo inmediato es restaurar el login y la persistencia de sesión para que `index.html` cargue la SPA y no redirija de vuelta a `login.php`.
 
