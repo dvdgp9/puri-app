@@ -124,11 +124,6 @@ try {
     header('Content-Type: application/vnd.ms-excel; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     
-    // El resto del archivo generaría el HTML...
-    // Nota: El archivo original parece estar incompleto o cortado en el snippet.
-    // Voy a completar la lógica de generación basándome en generar_informe.php si es necesario,
-    // pero por ahora solo ajusto lo que hay en el snippet.
-    
     // Obtener observaciones
     $stmt_obs = $pdo->prepare("
         SELECT fecha, observacion
@@ -142,14 +137,6 @@ try {
     while ($row = $stmt_obs->fetch(PDO::FETCH_ASSOC)) {
         $observaciones_por_fecha[$row['fecha']] = $row['observacion'];
     }
-    
-    // Generar nombre del archivo
-    $actividadSlug = preg_replace('/[^a-z0-9]+/i', '_', $info['actividad_nombre']);
-    $filename = sprintf('informe_%s_%s_a_%s.xls', $actividadSlug, $fechaInicio, $fechaFin);
-    
-    // Headers para descarga
-    header('Content-Type: application/vnd.ms-excel; charset=utf-8');
-    header('Content-Disposition: attachment; filename="' . $filename . '"');
     
     // Preparar headers de fechas
     $fecha_headers = [];

@@ -345,6 +345,7 @@ Actualización rápida (2025-08-17 12:23): creado `admin/index.php` para evitar 
 
 - Preferir un único bootstrap de SPA para evitar condiciones de carrera en autenticación.
 - Al autenticar, regenerar el ID de sesión para mitigar fijación de sesión y estabilizar el cookie.
+- Bug informes en blanco (2026-01-21): En `admin/api/informes/generar.php` faltaba la consulta SQL a la tabla `asistencias`. Se añadió el bloque que obtiene y organiza `$asistencias_por_usuario` igual que en `generar_informe.php`.
 
 ---
 

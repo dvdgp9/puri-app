@@ -355,13 +355,32 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 
                 <div class="actividades-search">
-                    <input type="text" id="buscar-actividades" class="form-input" placeholder="Buscar actividades...">
+                    <input type="text" id="buscar-actividades" class="form-input" placeholder="Buscar por nombre o grupo...">
+                </div>
+                
+                <!-- Filtro de fechas para actividades -->
+                <div class="actividades-fecha-filter" style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: flex-end;">
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 140px;">
+                        <label class="form-label" style="font-size: 12px;">Actividades desde</label>
+                        <input type="date" id="filtro-fecha-desde" class="form-input" style="font-size: 13px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 140px;">
+                        <label class="form-label" style="font-size: 12px;">Actividades hasta</label>
+                        <input type="date" id="filtro-fecha-hasta" class="form-input" style="font-size: 13px;">
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="limpiarFiltroFechas()" style="height: 38px;">
+                        Limpiar fechas
+                    </button>
                 </div>
                 
                 <div class="actividades-filters">
                     <button class="filter-btn active" data-filter="todas">Todas</button>
                     <button class="filter-btn" data-filter="activas">Activas</button>
                     <button class="filter-btn" data-filter="finalizadas">Finalizadas</button>
+                    <span style="flex: 1;"></span>
+                    <button type="button" class="btn btn-outline btn-sm" id="btn-seleccionar-todas" onclick="seleccionarTodasVisibles()" style="font-size: 12px;">
+                        ✓ Seleccionar visibles
+                    </button>
                 </div>
                 
                 <div class="actividades-grid" id="actividades-grid">
@@ -385,6 +404,16 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="step-number">4</div>
                     <h2 class="step-title">Selecciona el rango de fechas</h2>
                 </div>
+                
+                <!-- Botón período completo -->
+                <div style="margin-bottom: 16px;">
+                    <button type="button" class="btn btn-outline" id="btn-periodo-completo" onclick="usarPeriodoCompleto()" style="width: 100%;">
+                        📅 Usar todo el período de las actividades seleccionadas
+                    </button>
+                    <p id="periodo-info" style="margin-top: 8px; font-size: 12px; color: var(--text-muted); text-align: center;"></p>
+                </div>
+                
+                <div style="text-align: center; margin-bottom: 12px; color: var(--text-muted); font-size: 13px;">— o especifica un rango —</div>
                 
                 <div class="fechas-row">
                     <div class="form-group">
@@ -425,7 +454,9 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
         actividades: [],
         selectedActividades: new Set(),
         filtroActual: 'todas',
-        busqueda: ''
+        busqueda: '',
+        filtroFechaDesde: null,
+        filtroFechaHasta: null
     };
 
     // ====== Inicialización ======
@@ -511,9 +542,19 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
             });
         });
         
-        // Fechas
+        // Fechas del informe
         document.getElementById('fecha-inicio').addEventListener('change', validarFormulario);
         document.getElementById('fecha-fin').addEventListener('change', validarFormulario);
+        
+        // Filtros de fecha para actividades
+        document.getElementById('filtro-fecha-desde').addEventListener('change', function() {
+            State.filtroFechaDesde = this.value || null;
+            renderActividades();
+        });
+        document.getElementById('filtro-fecha-hasta').addEventListener('change', function() {
+            State.filtroFechaHasta = this.value || null;
+            renderActividades();
+        });
     }
 
     // ====== Cargar instalaciones ======
@@ -576,6 +617,16 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
             // Filtro de estado
             if (State.filtroActual === 'activas' && a.finalizada) return false;
             if (State.filtroActual === 'finalizadas' && !a.finalizada) return false;
+            
+            // Filtro de fechas de la actividad
+            if (State.filtroFechaDesde && a.fecha_fin) {
+                // La actividad debe terminar después o en la fecha "desde"
+                if (a.fecha_fin < State.filtroFechaDesde) return false;
+            }
+            if (State.filtroFechaHasta && a.fecha_inicio) {
+                // La actividad debe empezar antes o en la fecha "hasta"
+                if (a.fecha_inicio > State.filtroFechaHasta) return false;
+            }
             
             return true;
         });
@@ -672,16 +723,135 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
         actualizarUI();
     }
 
+    // ====== Nuevas funciones de filtrado y selección ======
+    
+    // Limpiar filtros de fecha de actividades
+    function limpiarFiltroFechas() {
+        State.filtroFechaDesde = null;
+        State.filtroFechaHasta = null;
+        document.getElementById('filtro-fecha-desde').value = '';
+        document.getElementById('filtro-fecha-hasta').value = '';
+        renderActividades();
+    }
+    
+    // Seleccionar todas las actividades visibles (respetando filtros y límite de 10)
+    function seleccionarTodasVisibles() {
+        // Obtener actividades visibles aplicando los mismos filtros que renderActividades
+        const visibles = State.actividades.filter(a => {
+            if (State.busqueda) {
+                const texto = `${a.nombre} ${a.grupo || ''} ${a.horario}`.toLowerCase();
+                if (!texto.includes(State.busqueda)) return false;
+            }
+            if (State.filtroActual === 'activas' && a.finalizada) return false;
+            if (State.filtroActual === 'finalizadas' && !a.finalizada) return false;
+            if (State.filtroFechaDesde && a.fecha_fin && a.fecha_fin < State.filtroFechaDesde) return false;
+            if (State.filtroFechaHasta && a.fecha_inicio && a.fecha_inicio > State.filtroFechaHasta) return false;
+            return true;
+        });
+        
+        // Añadir hasta el límite de 10
+        let added = 0;
+        for (const a of visibles) {
+            if (State.selectedActividades.size >= 10) {
+                showNotification(`Se han seleccionado 10 actividades (máximo)`, 'warning');
+                break;
+            }
+            if (!State.selectedActividades.has(a.id)) {
+                State.selectedActividades.add(a.id);
+                added++;
+            }
+        }
+        
+        renderActividades();
+        actualizarUI();
+        
+        if (added > 0) {
+            showNotification(`${added} actividad(es) añadidas a la selección`, 'success');
+        }
+    }
+    
+    // Usar todo el período de las actividades seleccionadas
+    function usarPeriodoCompleto() {
+        if (State.selectedActividades.size === 0) {
+            showNotification('Primero selecciona al menos una actividad', 'warning');
+            return;
+        }
+        
+        // Encontrar la fecha más antigua de inicio y la más reciente de fin
+        let fechaMinima = null;
+        let fechaMaxima = null;
+        
+        for (const actId of State.selectedActividades) {
+            const actividad = State.actividades.find(a => a.id === actId);
+            if (!actividad) continue;
+            
+            if (actividad.fecha_inicio) {
+                if (!fechaMinima || actividad.fecha_inicio < fechaMinima) {
+                    fechaMinima = actividad.fecha_inicio;
+                }
+            }
+            if (actividad.fecha_fin) {
+                if (!fechaMaxima || actividad.fecha_fin > fechaMaxima) {
+                    fechaMaxima = actividad.fecha_fin;
+                }
+            }
+        }
+        
+        // Si no hay fechas definidas, usar un rango por defecto (último año)
+        if (!fechaMinima) {
+            const hace1Anio = new Date();
+            hace1Anio.setFullYear(hace1Anio.getFullYear() - 1);
+            fechaMinima = formatDateInput(hace1Anio);
+        }
+        if (!fechaMaxima) {
+            fechaMaxima = formatDateInput(new Date());
+        }
+        
+        // Establecer las fechas en los inputs
+        document.getElementById('fecha-inicio').value = fechaMinima;
+        document.getElementById('fecha-fin').value = fechaMaxima;
+        
+        validarFormulario();
+        showNotification(`Período establecido: ${formatFechaDisplay(fechaMinima)} - ${formatFechaDisplay(fechaMaxima)}`, 'success');
+    }
+    
+    // Formatear fecha para mostrar
+    function formatFechaDisplay(fecha) {
+        if (!fecha) return '';
+        const d = new Date(fecha + 'T00:00:00');
+        return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
     // ====== Actualizar UI ======
     function actualizarUI() {
         const count = State.selectedActividades.size;
         const counter = document.getElementById('seleccion-counter');
         const countEl = document.getElementById('count-selected');
         const stepFechas = document.getElementById('step-fechas');
+        const periodoInfo = document.getElementById('periodo-info');
         
         // Mostrar/ocultar contador
         counter.style.display = count > 0 ? 'flex' : 'none';
         countEl.textContent = count;
+        
+        // Mostrar info del período disponible
+        if (count > 0 && periodoInfo) {
+            let fechaMin = null, fechaMax = null;
+            for (const actId of State.selectedActividades) {
+                const act = State.actividades.find(a => a.id === actId);
+                if (act) {
+                    if (act.fecha_inicio && (!fechaMin || act.fecha_inicio < fechaMin)) fechaMin = act.fecha_inicio;
+                    if (act.fecha_fin && (!fechaMax || act.fecha_fin > fechaMax)) fechaMax = act.fecha_fin;
+                }
+            }
+            if (fechaMin && fechaMax) {
+                periodoInfo.textContent = `Período disponible: ${formatFechaDisplay(fechaMin)} → ${formatFechaDisplay(fechaMax)}`;
+            } else {
+                periodoInfo.textContent = 'Algunas actividades no tienen fechas definidas';
+            }
+        } else if (periodoInfo) {
+            periodoInfo.textContent = '';
+        }
         
         // Habilitar/deshabilitar paso de fechas
         if (count > 0) {
