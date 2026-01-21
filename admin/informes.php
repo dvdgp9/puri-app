@@ -406,11 +406,16 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 
                 <!-- Botón período completo -->
-                <div style="margin-bottom: 16px;">
-                    <button type="button" class="btn btn-outline" id="btn-periodo-completo" onclick="usarPeriodoCompleto()" style="width: 100%;">
-                        📅 Usar todo el período de las actividades seleccionadas
-                    </button>
-                    <p id="periodo-info" style="margin-top: 8px; font-size: 12px; color: var(--text-muted); text-align: center;"></p>
+                <div style="margin-bottom: 24px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 1px dashed var(--admin-primary);">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                        <button type="button" class="btn btn-secondary" id="btn-periodo-completo" onclick="usarPeriodoCompleto()" style="width: 100%; justify-content: center; height: 44px; font-weight: 600;">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18" style="margin-right: 8px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Usar todo el período disponible
+                        </button>
+                        <p id="periodo-info" style="margin: 0; font-size: 13px; color: var(--admin-primary); font-weight: 500; text-align: center; min-height: 1.2em;"></p>
+                    </div>
                 </div>
                 
                 <div style="text-align: center; margin-bottom: 12px; color: var(--text-muted); font-size: 13px;">— o especifica un rango —</div>
