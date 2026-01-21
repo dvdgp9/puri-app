@@ -89,6 +89,20 @@ try {
     $stmt_inscritos->execute([$actividadId]);
     $inscritos = $stmt_inscritos->fetchAll(PDO::FETCH_ASSOC);
     
+    // Obtener todas las asistencias para el período
+    $stmt_asistencias = $pdo->prepare("
+        SELECT usuario_id, fecha, asistio
+        FROM asistencias
+        WHERE actividad_id = ? AND fecha BETWEEN ? AND ?
+    ");
+    $stmt_asistencias->execute([$actividadId, $fechaInicio, $fechaFin]);
+    
+    // Organizar las asistencias por usuario y fecha
+    $asistencias_por_usuario = [];
+    while ($row = $stmt_asistencias->fetch(PDO::FETCH_ASSOC)) {
+        $asistencias_por_usuario[$row['usuario_id']][$row['fecha']] = $row['asistio'];
+    }
+    
     // Generar el nombre del archivo
     // Formato: Actividad_Grupo_Instalacion_Centro_Fecha
     $fecha_hoy = date('Y-m-d');
