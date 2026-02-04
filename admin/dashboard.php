@@ -378,6 +378,16 @@ $admin_info = getAdminInfo();
                         <span class="field-error" id="activityGroup-error"></span>
                     </div>
 
+                    <!-- Tipo de Control -->
+                    <div class="form-group">
+                        <label for="activityTipoControl">Tipo de Control *</label>
+                        <select id="activityTipoControl" name="tipo_control" class="form-control">
+                            <option value="asistencia" selected>Control de asistencia (lista de inscritos)</option>
+                            <option value="aforo">Solo control de aforo (número de personas)</option>
+                        </select>
+                        <small class="form-text">El aforo permite registrar cantidad de personas sin lista de inscritos.</small>
+                    </div>
+
                     <!-- Días de la semana -->
                     <div class="form-group">
                         <label>Días de la semana *</label>
@@ -728,6 +738,7 @@ $admin_info = getAdminInfo();
                             <li><strong>Hora inicio</strong> - Hora de inicio (opcional, ej: 09:00)</li>
                             <li><strong>Hora fin</strong> - Hora de fin (opcional, ej: 10:00)</li>
                             <li><strong>Días</strong> - Días de la semana (ej: "Lunes, Miércoles" o en columnas separadas)</li>
+                            <li><strong>Tipo</strong> - (Opcional) Vacío=asistencia, A=aforo</li>
                         </ol>
                     </div>
                     <div class="table-wrapper bulk-table-wrapper">
@@ -744,6 +755,7 @@ $admin_info = getAdminInfo();
                                     <th>H. Inicio</th>
                                     <th>H. Fin</th>
                                     <th>Días</th>
+                                    <th>Tipo</th>
                                     <th></th>
                                 </tr>
                             </thead>

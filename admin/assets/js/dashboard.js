@@ -2100,6 +2100,7 @@ async function createActivity() {
         const data = {
             nombre: formData.get('nombre'),
             grupo: formData.get('grupo') || null,
+            tipo_control: formData.get('tipo_control') || 'asistencia',
             instalacion_id: formData.get('instalacion_id'),
             dias_semana: diasSemana,
             hora_inicio: formData.get('hora_inicio'),
@@ -3251,6 +3252,7 @@ function addBulkImportRow() {
         <td><input type="text" class="bulk-hora-inicio" placeholder="Opcional"></td>
         <td><input type="text" class="bulk-hora-fin" placeholder="Opcional"></td>
         <td><input type="text" class="bulk-dias" placeholder="Lunes, Miércoles..."></td>
+        <td><input type="text" class="bulk-tipo" placeholder="A=aforo"></td>
         <td><button type="button" class="btn-remove-row" onclick="removeBulkImportRow(this)">&times;</button></td>
     `;
     tbody.appendChild(row);
@@ -3332,15 +3334,20 @@ function handleBulkImportPaste(event) {
             
             if (parts.length < 2) return;
 
-            let nombre, apellidos, centro, instalacion, actividad, grupo, fechaInicio, fechaFin, horaInicio, horaFin, dias;
+            let nombre, apellidos, centro, instalacion, actividad, grupo, fechaInicio, fechaFin, horaInicio, horaFin, dias, tipoControl;
 
-            if (parts.length >= 11) {
-                // Formato completo: Nombre, Apellidos, Centro, Instalación, Actividad, Grupo, F.Inicio, F.Fin, H.Inicio, H.Fin, Días
+            if (parts.length >= 12) {
+                // Formato completo con tipo: Nombre, Apellidos, Centro, Instalación, Actividad, Grupo, F.Inicio, F.Fin, H.Inicio, H.Fin, Días, Tipo
+                [nombre, apellidos, centro, instalacion, actividad, grupo, fechaInicio, fechaFin, horaInicio, horaFin, dias, tipoControl] = parts;
+            } else if (parts.length >= 11) {
+                // Formato sin tipo: Nombre, Apellidos, Centro, Instalación, Actividad, Grupo, F.Inicio, F.Fin, H.Inicio, H.Fin, Días
                 [nombre, apellidos, centro, instalacion, actividad, grupo, fechaInicio, fechaFin, horaInicio, horaFin, dias] = parts;
+                tipoControl = '';
             } else if (parts.length >= 10) {
                 // Formato anterior: Nombre, Apellidos, Centro, Instalación, Actividad, F.Inicio, F.Fin, H.Inicio, H.Fin, Días
                 [nombre, apellidos, centro, instalacion, actividad, fechaInicio, fechaFin, horaInicio, horaFin, dias] = parts;
                 grupo = '';
+                tipoControl = '';
             } else {
                 // Otros formatos... (intentar asignar lo que haya)
                 [nombre, apellidos, centro, instalacion, actividad] = parts;
@@ -3350,6 +3357,7 @@ function handleBulkImportPaste(event) {
                 horaFin = parts[8] || '';
                 dias = parts[9] || '';
                 grupo = '';
+                tipoControl = '';
             }
             
             // Crear fila
@@ -3365,6 +3373,7 @@ function handleBulkImportPaste(event) {
                 <td><input type="text" class="bulk-hora-inicio" value="${escapeHtml(horaInicio)}"></td>
                 <td><input type="text" class="bulk-hora-fin" value="${escapeHtml(horaFin)}"></td>
                 <td><input type="text" class="bulk-dias" value="${escapeHtml(dias)}"></td>
+                <td><input type="text" class="bulk-tipo" value="${escapeHtml(tipoControl || '')}" placeholder="A=aforo"></td>
                 <td><button type="button" class="btn-remove-row" onclick="removeBulkImportRow(this)">&times;</button></td>
             `;
             tbody.appendChild(row);
@@ -3410,7 +3419,8 @@ async function executeBulkImport() {
             fecha_fin: row.querySelector('.bulk-fecha-fin').value.trim(),
             hora_inicio: row.querySelector('.bulk-hora-inicio').value.trim(),
             hora_fin: row.querySelector('.bulk-hora-fin').value.trim(),
-            dias_semana: row.querySelector('.bulk-dias').value.trim()
+            dias_semana: row.querySelector('.bulk-dias').value.trim(),
+            tipo_control: row.querySelector('.bulk-tipo')?.value.trim() || ''
         };
         
         // Solo añadir filas que tengan al menos nombre

@@ -111,6 +111,10 @@ try {
         $horaFin = isset($row['hora_fin']) ? trim((string)$row['hora_fin']) : '';
         $diasSemana = isset($row['dias_semana']) ? $row['dias_semana'] : [];
         
+        // Tipo de control: vacío o 'asistencia' = asistencia, 'A' o 'aforo' = aforo
+        $tipoControlRaw = isset($row['tipo_control']) ? strtolower(trim((string)$row['tipo_control'])) : '';
+        $tipoControl = ($tipoControlRaw === 'a' || $tipoControlRaw === 'aforo') ? 'aforo' : 'asistencia';
+        
         // Normalizar días si viene como string separado por comas
         if (is_string($diasSemana)) {
             $diasSemana = array_map('trim', explode(',', $diasSemana));
@@ -240,12 +244,13 @@ try {
             $horario = implode(' y ', $horarioPartes); // Campo legacy
 
             $stmtActIns = $pdo->prepare("
-                INSERT INTO actividades (nombre, grupo, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO actividades (nombre, grupo, tipo_control, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmtActIns->execute([
                 $actividadNombre,
                 $grupo,
+                $tipoControl,
                 $horario,
                 $diasSemanaStr,
                 $horaInicioNorm,
