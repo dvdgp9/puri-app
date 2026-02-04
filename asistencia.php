@@ -244,7 +244,7 @@ $extraStyles = "
       border-radius: 8px;
       font-size: 1rem;
     }
-    .aforo-form input[type="number"] {
+    .aforo-form input[type='number'] {
       font-size: 1.5rem;
       font-weight: 700;
       text-align: center;
