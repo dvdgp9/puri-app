@@ -418,16 +418,17 @@ $admin_info = getAdminInfo();
                     </div>
 
                     <!-- Horarios -->
-                    <div class="form-row">
+                    <div class="form-row" id="activityHoursRow">
                         <div class="form-group col-md-6">
-                            <label for="activityStartTime">Hora de inicio *</label>
-                            <input type="time" id="activityStartTime" name="hora_inicio" required>
+                            <label for="activityStartTime"><span id="activityStartTimeLabel">Hora de inicio *</span></label>
+                            <input type="time" id="activityStartTime" name="hora_inicio">
+                            <small class="form-text" id="activityHoursNote" style="display:none;">Opcional para control de aforo.</small>
                             <span class="field-error" id="activityStartTime-error"></span>
                         </div>
                         
                         <div class="form-group col-md-6">
-                            <label for="activityEndTime">Hora de finalización *</label>
-                            <input type="time" id="activityEndTime" name="hora_fin" required>
+                            <label for="activityEndTime"><span id="activityEndTimeLabel">Hora de finalización *</span></label>
+                            <input type="time" id="activityEndTime" name="hora_fin">
                             <span class="field-error" id="activityEndTime-error"></span>
                         </div>
                     </div>

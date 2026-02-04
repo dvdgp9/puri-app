@@ -2056,6 +2056,35 @@ function showCreateActivityModal() {
         // Establecer fecha de inicio por defecto
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('activityStartDate').value = today;
+        
+        // Configurar listener para tipo de control
+        const tipoSelect = document.getElementById('activityTipoControl');
+        if (tipoSelect) {
+            tipoSelect.value = 'asistencia';
+            updateHoursRequirement('asistencia');
+            tipoSelect.addEventListener('change', function() {
+                updateHoursRequirement(this.value);
+            });
+        }
+    }
+}
+
+/**
+ * Actualizar requisito de horas según tipo de control
+ */
+function updateHoursRequirement(tipoControl) {
+    const startLabel = document.getElementById('activityStartTimeLabel');
+    const endLabel = document.getElementById('activityEndTimeLabel');
+    const hoursNote = document.getElementById('activityHoursNote');
+    
+    if (tipoControl === 'aforo') {
+        if (startLabel) startLabel.textContent = 'Hora de inicio';
+        if (endLabel) endLabel.textContent = 'Hora de finalización';
+        if (hoursNote) hoursNote.style.display = 'block';
+    } else {
+        if (startLabel) startLabel.textContent = 'Hora de inicio *';
+        if (endLabel) endLabel.textContent = 'Hora de finalización *';
+        if (hoursNote) hoursNote.style.display = 'none';
     }
 }
 
@@ -2125,8 +2154,9 @@ async function createActivity() {
             return;
         }
         
-        if (!data.hora_inicio || !data.hora_fin) {
-            showFieldError('activityStartTime', 'Las horas son obligatorias');
+        // Horas solo obligatorias para asistencia, no para aforo
+        if (data.tipo_control !== 'aforo' && (!data.hora_inicio || !data.hora_fin)) {
+            showFieldError('activityStartTime', 'Las horas son obligatorias para control de asistencia');
             return;
         }
         

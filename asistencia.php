@@ -486,7 +486,7 @@ require_once 'includes/header.php';
       </div>
       <div class="activity-header">
         <div>
-          <h2 class="activity-title"><?php echo formatearNombreActividad($actividad['nombre'], $actividad['grupo'] ?? null); ?></h2>
+          <h2 class="activity-title"><?php echo formatearNombreActividad($actividad['nombre'], $actividad['grupo'] ?? null); ?><?php if ($es_aforo): ?> <span class="tipo-badge aforo">Aforo</span><?php endif; ?></h2>
           <div class="activity-subinfo">
             <?php echo htmlspecialchars(html_entity_decode($actividad['centro_nombre'])); ?> · <?php echo htmlspecialchars(html_entity_decode($actividad['instalacion_nombre'])); ?>
             <?php if ($dias_letters): ?> · <?php echo htmlspecialchars($dias_letters); ?><?php endif; ?>
