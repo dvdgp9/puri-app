@@ -181,6 +181,14 @@ try {
                         <input type="text" id="activityGroup" name="grupo" placeholder="Ejemplo: 1, A, Avanzado (opcional)">
                         <small class="form-text">Identificador opcional para diferenciar grupos de la misma actividad.</small>
                     </div>
+                    <div class="form-group">
+                        <label for="activityTipoControl">Tipo de control *</label>
+                        <select id="activityTipoControl" name="tipo_control" class="form-select">
+                            <option value="asistencia" selected>Control de asistencia (lista de inscritos)</option>
+                            <option value="aforo">Solo control de aforo (sin inscritos)</option>
+                        </select>
+                        <small class="form-text">Las actividades de aforo solo registran número de personas, sin lista nominal.</small>
+                    </div>
                     <!-- Días de la semana -->
                     <div class="form-group">
                         <label>Días de la semana *</label>
@@ -229,22 +237,6 @@ try {
                             <input type="date" id="activityDateEnd" name="fecha_fin">
                         </div>
                     </div>
-                    <!-- Tipo de control -->
-                    <div class="form-group">
-                        <label>Tipo de control</label>
-                        <div class="radio-group">
-                            <label class="radio-inline">
-                                <input type="radio" name="tipo_control" value="asistencia" checked>
-                                Asistencia individual
-                                <small class="form-text-inline">Lista de participantes con control por persona</small>
-                            </label>
-                            <label class="radio-inline">
-                                <input type="radio" name="tipo_control" value="aforo">
-                                Solo control de aforo
-                                <small class="form-text-inline">Registro del número total de asistentes (sin lista)</small>
-                            </label>
-                        </div>
-                    </div>
                     <input type="hidden" name="instalacion_id" value="<?= (int)$instalacion['id'] ?>">
                 </form>
             </div>
@@ -274,6 +266,14 @@ try {
                         <label for="editActivityGroup">Grupo</label>
                         <input type="text" id="editActivityGroup" name="grupo" placeholder="Ejemplo: 1, A, Avanzado (opcional)">
                         <small class="form-text">Identificador opcional para diferenciar grupos de la misma actividad.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="editActivityTipoControl">Tipo de control *</label>
+                        <select id="editActivityTipoControl" name="tipo_control" class="form-select">
+                            <option value="asistencia">Control de asistencia (lista de inscritos)</option>
+                            <option value="aforo">Solo control de aforo (sin inscritos)</option>
+                        </select>
+                        <small class="form-text">Las actividades de aforo solo registran número de personas, sin lista nominal.</small>
                     </div>
                     <!-- Días de la semana -->
                     <div class="form-group">
@@ -321,23 +321,6 @@ try {
                         <div class="form-group">
                             <label for="editActivityDateEnd">Fecha fin (opcional)</label>
                             <input type="date" id="editActivityDateEnd" name="fecha_fin">
-                        </div>
-                    </div>
-                    <!-- Tipo de control -->
-                    <div class="form-group">
-                        <label>Tipo de control</label>
-                        <div class="radio-group">
-                            <label class="radio-inline">
-                                <input type="radio" name="edit_tipo_control" value="asistencia" checked>
-                                Asistencia individual
-                            </label>
-                            <label class="radio-inline">
-                                <input type="radio" name="edit_tipo_control" value="aforo">
-                                Solo control de aforo
-                            </label>
-                        </div>
-                        <div id="edit-tipo-control-warning" class="alert-warning-inline" style="display:none; margin-top:8px; padding:8px; background:#fff3cd; border:1px solid #ffc107; border-radius:4px; font-size:0.85em;">
-                            ⚠️ Esta actividad tiene datos registrados. Cambiar el tipo no eliminará los datos existentes.
                         </div>
                     </div>
                 </form>

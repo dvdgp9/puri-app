@@ -33,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $hora_fin = filter_input(INPUT_POST, 'hora_fin', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $fecha_inicio = filter_input(INPUT_POST, 'fecha_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $fecha_fin = filter_input(INPUT_POST, 'fecha_fin', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $tipo_control = isset($_POST['tipo_control']) && $_POST['tipo_control'] === 'aforo' ? 'aforo' : 'asistencia';
     
     // Mantener compatibilidad con campo legacy
     $horario = '';
@@ -44,8 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($nombre) || empty($dias_semana) || empty($fecha_inicio)) {
         $error = "El nombre, los días de la semana y la fecha de inicio son obligatorios.";
     } else {
-        $stmt = $pdo->prepare("INSERT INTO actividades (nombre, grupo, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin, tipo_control) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $result = $stmt->execute([$nombre, $grupo, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null, $tipo_control]);
+        $stmt = $pdo->prepare("INSERT INTO actividades (nombre, grupo, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $result = $stmt->execute([$nombre, $grupo, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null]);
 
         if ($result) {
             header("Location: actividades.php?instalacion_id=" . $instalacion_id);
@@ -190,27 +189,6 @@ require_once 'includes/header.php';
                        name="fecha_fin" 
                        value="<?php echo isset($_POST['fecha_fin']) ? htmlspecialchars($_POST['fecha_fin']) : ''; ?>">
                 <small class="form-text">Opcional. Dejar en blanco si la actividad no tiene fecha de finalización definida.</small>
-            </div>
-
-            <!-- Tipo de control -->
-            <div class="form-group">
-                <label>
-                    <i class="fas fa-clipboard-check"></i> Tipo de control
-                </label>
-                <div class="radio-group">
-                    <label class="radio-inline">
-                        <input type="radio" name="tipo_control" value="asistencia" 
-                               <?php echo (!isset($_POST['tipo_control']) || $_POST['tipo_control'] === 'asistencia') ? 'checked' : ''; ?>>
-                        <i class="fas fa-user-check"></i> Asistencia individual
-                        <small class="form-text-inline">Lista de participantes con control de asistencia por persona</small>
-                    </label>
-                    <label class="radio-inline">
-                        <input type="radio" name="tipo_control" value="aforo" 
-                               <?php echo (isset($_POST['tipo_control']) && $_POST['tipo_control'] === 'aforo') ? 'checked' : ''; ?>>
-                        <i class="fas fa-users"></i> Solo control de aforo
-                        <small class="form-text-inline">Registro del número total de asistentes (sin lista de nombres)</small>
-                    </label>
-                </div>
             </div>
 
             <div class="button-group">

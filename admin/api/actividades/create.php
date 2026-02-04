@@ -36,7 +36,12 @@ try {
     $hora_fin = trim($input['hora_fin'] ?? '');
     $fecha_inicio = trim($input['fecha_inicio'] ?? '');
     $fecha_fin = trim($input['fecha_fin'] ?? '') ?: null;
-    $tipo_control = isset($input['tipo_control']) && $input['tipo_control'] === 'aforo' ? 'aforo' : 'asistencia';
+    $tipo_control = trim($input['tipo_control'] ?? 'asistencia');
+    
+    // Validar tipo_control
+    if (!in_array($tipo_control, ['asistencia', 'aforo'])) {
+        $tipo_control = 'asistencia';
+    }
 
     // Validaciones
     if (empty($nombre)) {
@@ -85,21 +90,21 @@ try {
     
     // Crear la actividad
     $stmt = $pdo->prepare("
-        INSERT INTO actividades (nombre, grupo, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin, tipo_control) 
+        INSERT INTO actividades (nombre, grupo, tipo_control, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
     
     $result = $stmt->execute([
         $nombre,
         $grupo,
+        $tipo_control,
         $horario, 
         $dias_semana_string, 
         $hora_inicio, 
         $hora_fin, 
         $instalacion_id, 
         $fecha_inicio, 
-        $fecha_fin,
-        $tipo_control
+        $fecha_fin
     ]);
     
     if ($result) {

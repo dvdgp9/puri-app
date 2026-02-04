@@ -57,7 +57,12 @@ try {
     $hora_fin = array_key_exists('hora_fin', $input) ? trim((string)$input['hora_fin']) : null;
     $fecha_inicio = array_key_exists('fecha_inicio', $input) ? trim((string)$input['fecha_inicio']) : null;
     $fecha_fin = array_key_exists('fecha_fin', $input) ? (trim((string)$input['fecha_fin']) ?: null) : null;
-    $tipo_control = array_key_exists('tipo_control', $input) ? (in_array($input['tipo_control'], ['asistencia', 'aforo']) ? $input['tipo_control'] : null) : null;
+    $tipo_control = array_key_exists('tipo_control', $input) ? trim((string)$input['tipo_control']) : null;
+    
+    // Validar tipo_control si se proporciona
+    if ($tipo_control !== null && !in_array($tipo_control, ['asistencia', 'aforo'])) {
+        $tipo_control = null; // Ignorar valor inválido
+    }
 
     if ($nombre !== null && $nombre === '') {
         http_response_code(400);

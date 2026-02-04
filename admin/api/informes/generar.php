@@ -23,11 +23,9 @@ try {
             a.nombre as actividad_nombre,
             a.horario as actividad_horario,
             a.grupo as actividad_grupo,
+            a.tipo_control,
             a.fecha_inicio,
             a.fecha_fin as actividad_fecha_fin,
-            a.tipo_control,
-            a.hora_inicio,
-            a.hora_fin,
             i.nombre as instalacion_nombre,
             i.centro_id,
             c.nombre as centro_nombre
@@ -42,9 +40,6 @@ try {
     if (!$info) {
         die('Actividad no encontrada');
     }
-    
-    // Determinar tipo de control
-    $es_aforo = ($info['tipo_control'] ?? 'asistencia') === 'aforo';
     
     // Verificar permisos del admin sobre el centro (excepto superadmin)
     if (!isSuperAdmin()) {
@@ -61,6 +56,133 @@ try {
             $info[$campo] = mb_convert_encoding($info[$campo], 'UTF-8', 'auto');
         }
     }
+    
+    // Determinar tipo de control
+    $es_aforo = ($info['tipo_control'] ?? 'asistencia') === 'aforo';
+    
+    // ============================================================
+    // INFORME DE AFORO (formato diferente)
+    // ============================================================
+    if ($es_aforo) {
+        // Obtener registros de aforo
+        $stmt_aforo = $pdo->prepare("
+            SELECT fecha, hora, num_personas, created_at
+            FROM registros_aforo
+            WHERE actividad_id = ? AND fecha BETWEEN ? AND ?
+            ORDER BY fecha, hora
+        ");
+        $stmt_aforo->execute([$actividadId, $fechaInicio, $fechaFin]);
+        $registros_aforo = $stmt_aforo->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Generar nombre del archivo
+        $fecha_hoy = date('Y-m-d');
+        $actividad_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['actividad_nombre']);
+        $grupo_slug = !empty($info['actividad_grupo']) ? '_' . preg_replace('/[^a-z0-9]+/i', '_', $info['actividad_grupo']) : '';
+        $instalacion_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['instalacion_nombre']);
+        $centro_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['centro_nombre']);
+        
+        $filename = sprintf(
+            'Aforo_%s%s_%s_%s_%s.xls',
+            $actividad_slug,
+            $grupo_slug,
+            $instalacion_slug,
+            $centro_slug,
+            $fecha_hoy
+        );
+        
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        
+        // Calcular totales por día
+        $totales_por_dia = [];
+        foreach ($registros_aforo as $r) {
+            if (!isset($totales_por_dia[$r['fecha']])) {
+                $totales_por_dia[$r['fecha']] = 0;
+            }
+            $totales_por_dia[$r['fecha']] += $r['num_personas'];
+        }
+        $total_general = array_sum($totales_por_dia);
+        
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Informe de Aforo</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .header-row { background-color: #e6e6e6; font-weight: bold; }
+        .total-row { font-weight: bold; background-color: #f9f9f9; }
+        .day-header { background-color: #dbeafe; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <table>
+        <tr class="header-row">
+            <td colspan="3">' . htmlspecialchars($info['centro_nombre']) . '</td>
+        </tr>
+        <tr class="header-row">
+            <td colspan="3">' . htmlspecialchars($info['instalacion_nombre']) . '</td>
+        </tr>
+        <tr class="header-row">
+            <td colspan="3">' . htmlspecialchars($info['actividad_nombre']) . ' | ' . htmlspecialchars($info['actividad_horario'] ?? '') . ' (AFORO)</td>
+        </tr>
+        <tr class="header-row">
+            <td>Período:</td>
+            <td colspan="2">' . $fechaInicio . ' a ' . $fechaFin . '</td>
+        </tr>
+        <tr>
+            <td colspan="3"></td>
+        </tr>
+        <tr>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Nº Personas</th>
+        </tr>';
+        
+        $fecha_actual = '';
+        foreach ($registros_aforo as $r) {
+            $fecha_fmt = date('d/m/Y', strtotime($r['fecha']));
+            $hora_fmt = substr($r['hora'], 0, 5);
+            
+            // Mostrar cabecera de día con total
+            if ($r['fecha'] !== $fecha_actual) {
+                if ($fecha_actual !== '') {
+                    // Fila de total del día anterior
+                    echo '<tr class="total-row"><td colspan="2">Total día</td><td>' . $totales_por_dia[$fecha_actual] . '</td></tr>';
+                }
+                $fecha_actual = $r['fecha'];
+            }
+            
+            echo '<tr>
+                <td>' . $fecha_fmt . '</td>
+                <td>' . $hora_fmt . '</td>
+                <td>' . $r['num_personas'] . '</td>
+            </tr>';
+        }
+        
+        // Total del último día
+        if ($fecha_actual !== '') {
+            echo '<tr class="total-row"><td colspan="2">Total día</td><td>' . $totales_por_dia[$fecha_actual] . '</td></tr>';
+        }
+        
+        // Total general
+        echo '<tr><td colspan="3"></td></tr>';
+        echo '<tr class="total-row"><td colspan="2">TOTAL PERÍODO</td><td>' . $total_general . '</td></tr>';
+        
+        if (empty($registros_aforo)) {
+            echo '<tr><td colspan="3" style="text-align:center; color:#666;">No hay registros de aforo en este período</td></tr>';
+        }
+        
+        echo '</table></body></html>';
+        exit;
+    }
+    
+    // ============================================================
+    // INFORME DE ASISTENCIA (formato original)
+    // ============================================================
     
     // Obtener fechas con asistencias
     $stmt_fechas = $pdo->prepare("
@@ -151,102 +273,6 @@ try {
         $mes = date('m', strtotime($fecha));
         $fecha_headers[] = $dia . '/' . $mes;
     }
-    
-    // Si es actividad de AFORO, generar informe simplificado
-    if ($es_aforo) {
-        // Obtener registros de aforo para el período
-        $stmt_aforo = $pdo->prepare("
-            SELECT fecha, cantidad, registrado_en
-            FROM aforo_registros
-            WHERE actividad_id = ? AND fecha BETWEEN ? AND ?
-            ORDER BY fecha
-        ");
-        $stmt_aforo->execute([$actividadId, $fechaInicio, $fechaFin]);
-        $registros_aforo = $stmt_aforo->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Calcular total de personas
-        $total_personas = 0;
-        foreach ($registros_aforo as $reg) {
-            $total_personas += (int)$reg['cantidad'];
-        }
-        
-        // Horario formateado
-        $horario_fmt = '';
-        if (!empty($info['hora_inicio']) && !empty($info['hora_fin'])) {
-            $horario_fmt = substr($info['hora_inicio'], 0, 5) . ' - ' . substr($info['hora_fin'], 0, 5);
-        } elseif (!empty($info['actividad_horario'])) {
-            $horario_fmt = $info['actividad_horario'];
-        }
-        
-        // Generar HTML para Excel (AFORO)
-        echo '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Informe de Aforo</title>
-    <style>
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .header-row { background-color: #e6e6e6; font-weight: bold; }
-        .total-row { background-color: #d4edda; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <table>
-        <tr class="header-row">
-            <td colspan="3">' . htmlspecialchars($info['centro_nombre']) . '</td>
-        </tr>
-        <tr class="header-row">
-            <td colspan="3">' . htmlspecialchars($info['instalacion_nombre']) . '</td>
-        </tr>
-        <tr class="header-row">
-            <td colspan="3">' . htmlspecialchars($info['actividad_nombre']) . ($info['actividad_grupo'] ? ' (' . htmlspecialchars($info['actividad_grupo']) . ')' : '') . '</td>
-        </tr>
-        <tr class="header-row">
-            <td colspan="3">Horario: ' . htmlspecialchars($horario_fmt) . '</td>
-        </tr>
-        <tr class="header-row">
-            <td colspan="3">Período: ' . $fechaInicio . ' a ' . $fechaFin . '</td>
-        </tr>
-        <tr class="header-row">
-            <td colspan="3"><strong>INFORME DE AFORO</strong></td>
-        </tr>
-        <tr>
-            <td colspan="3"></td>
-        </tr>
-        <tr>
-            <th>Fecha</th>
-            <th>Personas</th>
-            <th>Observaciones</th>
-        </tr>';
-        
-        foreach ($registros_aforo as $reg) {
-            $fecha_fmt = date('d/m/Y', strtotime($reg['fecha']));
-            $observacion = isset($observaciones_por_fecha[$reg['fecha']]) ? $observaciones_por_fecha[$reg['fecha']] : '';
-            $observacion = html_entity_decode($observacion, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            $observacion = htmlspecialchars($observacion);
-            
-            echo '<tr>
-                <td>' . $fecha_fmt . '</td>
-                <td>' . (int)$reg['cantidad'] . '</td>
-                <td>' . $observacion . '</td>
-            </tr>';
-        }
-        
-        // Fila de totales
-        echo '<tr class="total-row">
-                <td>TOTAL</td>
-                <td>' . $total_personas . '</td>
-                <td>' . count($registros_aforo) . ' sesión(es)</td>
-            </tr>';
-        
-        echo '</table></body></html>';
-        exit;
-    }
-    
-    // --- MODO ASISTENCIA: Informe tradicional con lista de participantes ---
     
     // Generar HTML para Excel
     $colspan = count($fechas) + 2;

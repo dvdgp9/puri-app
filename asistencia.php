@@ -76,7 +76,11 @@ $hora_ini = isset($actividad['hora_inicio']) && $actividad['hora_inicio'] ? subs
 $hora_fin = isset($actividad['hora_fin']) && $actividad['hora_fin'] ? substr($actividad['hora_fin'], 0, 5) : '';
 $hora_range = trim(($hora_ini ?: '') . ($hora_fin ? '–' . $hora_fin : ''));
 
-// Consultar los inscritos en la actividad
+// Determinar tipo de control (asistencia o aforo)
+$tipo_control = $actividad['tipo_control'] ?? 'asistencia';
+$es_aforo = ($tipo_control === 'aforo');
+
+// Consultar los inscritos en la actividad (solo para asistencia)
 $stmtUsuarios = $pdo->prepare("
     SELECT id, nombre, apellidos 
     FROM inscritos 
@@ -98,18 +102,6 @@ $stmt->execute([$actividad_id, $fecha_seleccionada]);
 $asistencias = [];
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $asistencias[$row['usuario_id']] = $row['asistio'];
-}
-
-// Determinar tipo de control
-$tipo_control = $actividad['tipo_control'] ?? 'asistencia';
-$es_aforo = ($tipo_control === 'aforo');
-
-// Si es aforo, obtener el registro de aforo para la fecha seleccionada
-$aforo_cantidad = 0;
-if ($es_aforo) {
-    $stmtAforo = $pdo->prepare("SELECT cantidad FROM aforo_registros WHERE actividad_id = ? AND fecha = ?");
-    $stmtAforo->execute([$actividad_id, $fecha_seleccionada]);
-    $aforo_cantidad = $stmtAforo->fetchColumn() ?: 0;
 }
 
 $pageTitle = $es_aforo ? "Control de Aforo" : "Control de Asistencia";
@@ -216,6 +208,124 @@ $extraStyles = "
     .status-scheduled { color: #92400e; background: #fffbeb; border-color: #fcd34d; }
     .status-ended { color: #991b1b; background: #fef2f2; border-color: #fecaca; }
     .dates-chip { font-size: 0.85rem; color: #374151; }
+    
+    /* Estilos para Control de Aforo */
+    .aforo-container {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 16px;
+    }
+    .aforo-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 16px;
+      align-items: end;
+    }
+    @media (max-width: 600px) {
+      .aforo-form {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .aforo-form .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .aforo-form label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #374151;
+    }
+    .aforo-form input, .aforo-form select {
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    .aforo-form input[type="number"] {
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-align: center;
+      width: 100%;
+    }
+    .aforo-btn {
+      background: #23AAC5;
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      height: fit-content;
+    }
+    .aforo-btn:hover { background: #1d8fa6; }
+    .aforo-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+    
+    .aforo-historico {
+      margin-top: 24px;
+    }
+    .aforo-historico h3 {
+      font-size: 1rem;
+      color: #374151;
+      margin-bottom: 12px;
+    }
+    .aforo-registro {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f9fafb;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .aforo-registro-hora {
+      font-weight: 600;
+      color: #111827;
+    }
+    .aforo-registro-personas {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #23AAC5;
+    }
+    .aforo-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: #ecfdf5;
+      border-radius: 8px;
+      margin-top: 16px;
+      border: 1px solid #a7f3d0;
+    }
+    .aforo-total-label {
+      font-weight: 600;
+      color: #065f46;
+    }
+    .aforo-total-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #065f46;
+    }
+    .aforo-empty {
+      text-align: center;
+      padding: 24px;
+      color: #6b7280;
+    }
+    .tipo-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .tipo-badge.aforo {
+      background: #dbeafe;
+      color: #1e40af;
+    }
   </style>
 ";
 require_once 'includes/header.php';
@@ -407,6 +517,129 @@ require_once 'includes/header.php';
       }
       ?>
       
+<?php if ($es_aforo): ?>
+      <!-- UI de Control de Aforo -->
+      <div class="aforo-container">
+        <div class="aforo-form" id="aforo-form">
+          <div class="form-group">
+            <label for="aforo-fecha">Fecha</label>
+            <input type="date" id="aforo-fecha" value="<?php echo date('Y-m-d'); ?>" max="<?php echo date('Y-m-d'); ?>">
+          </div>
+          <div class="form-group">
+            <label for="aforo-hora">Hora</label>
+            <input type="time" id="aforo-hora" value="<?php 
+              // Redondear al cuarto de hora más cercano
+              $now = new DateTime();
+              $min = (int)$now->format('i');
+              $roundedMin = round($min / 15) * 15;
+              if ($roundedMin == 60) { $now->modify('+1 hour'); $roundedMin = 0; }
+              echo $now->format('H') . ':' . str_pad($roundedMin, 2, '0', STR_PAD_LEFT);
+            ?>">
+          </div>
+          <div class="form-group">
+            <label for="aforo-personas">Nº Personas</label>
+            <input type="number" id="aforo-personas" min="0" value="0" placeholder="0">
+          </div>
+          <button type="button" class="aforo-btn" onclick="registrarAforo()">
+            <i class="fas fa-check"></i> Registrar
+          </button>
+        </div>
+        
+        <div class="aforo-historico">
+          <h3>Registros de hoy</h3>
+          <div id="aforo-registros">
+            <div class="aforo-empty">Cargando registros...</div>
+          </div>
+        </div>
+      </div>
+      
+      <script>
+        const ACTIVIDAD_ID = <?php echo (int)$actividad_id; ?>;
+        
+        async function cargarRegistrosAforo() {
+          const fecha = document.getElementById('aforo-fecha').value;
+          try {
+            const resp = await fetch(`api/aforo/listar.php?actividad_id=${ACTIVIDAD_ID}&fecha=${fecha}`);
+            const data = await resp.json();
+            
+            const container = document.getElementById('aforo-registros');
+            
+            if (!data.success) {
+              container.innerHTML = '<div class="aforo-empty">Error al cargar registros</div>';
+              return;
+            }
+            
+            if (data.registros.length === 0) {
+              container.innerHTML = '<div class="aforo-empty">No hay registros para esta fecha</div>';
+              return;
+            }
+            
+            let html = '';
+            data.registros.forEach(r => {
+              const hora = r.hora.substring(0, 5);
+              html += `<div class="aforo-registro">
+                <span class="aforo-registro-hora">${hora}</span>
+                <span class="aforo-registro-personas">${r.num_personas} personas</span>
+              </div>`;
+            });
+            
+            html += `<div class="aforo-total">
+              <span class="aforo-total-label">Total del día</span>
+              <span class="aforo-total-value">${data.total_dia} personas</span>
+            </div>`;
+            
+            container.innerHTML = html;
+          } catch (e) {
+            console.error(e);
+            document.getElementById('aforo-registros').innerHTML = '<div class="aforo-empty">Error de conexión</div>';
+          }
+        }
+        
+        async function registrarAforo() {
+          const fecha = document.getElementById('aforo-fecha').value;
+          const hora = document.getElementById('aforo-hora').value;
+          const num_personas = parseInt(document.getElementById('aforo-personas').value) || 0;
+          
+          if (!fecha || !hora) {
+            showTempMessage('Completa fecha y hora', true);
+            return;
+          }
+          
+          if (num_personas < 0) {
+            showTempMessage('El número de personas no puede ser negativo', true);
+            return;
+          }
+          
+          try {
+            const resp = await fetch('api/aforo/registrar.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ actividad_id: ACTIVIDAD_ID, fecha, hora, num_personas })
+            });
+            const data = await resp.json();
+            
+            if (data.success) {
+              showTempMessage('Aforo registrado correctamente');
+              document.getElementById('aforo-personas').value = '0';
+              cargarRegistrosAforo();
+            } else {
+              showTempMessage(data.message || 'Error al registrar', true);
+            }
+          } catch (e) {
+            console.error(e);
+            showTempMessage('Error de conexión', true);
+          }
+        }
+        
+        // Recargar registros cuando cambia la fecha
+        document.getElementById('aforo-fecha').addEventListener('change', cargarRegistrosAforo);
+        
+        // Cargar registros al inicio
+        document.addEventListener('DOMContentLoaded', cargarRegistrosAforo);
+      </script>
+      
+<?php else: ?>
+      <!-- UI de Control de Asistencia (original) -->
       <div class="date-container">
         <span class="date-display">
             <i class="fas fa-calendar"></i>
@@ -422,70 +655,6 @@ require_once 'includes/header.php';
                    aria-label="Seleccionar fecha">
         </form>
       </div>
-      <?php if ($es_aforo): ?>
-      <!-- MODO AFORO: Formulario simplificado para registro de cantidad -->
-      <form action="registrar_aforo.php" method="post" class="aforo-form">
-        <input type="hidden" name="actividad_id" value="<?php echo $actividad_id; ?>">
-        <input type="hidden" name="fecha" value="<?php echo $fecha_seleccionada; ?>">
-        
-        <div class="aforo-container" style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center;">
-          <div style="margin-bottom: 16px;">
-            <i class="fas fa-users" style="font-size: 3rem; color: #3b82f6;"></i>
-          </div>
-          <h3 style="margin: 0 0 8px 0; font-size: 1.3rem; color: #1e293b;">Registro de Aforo</h3>
-          <p style="margin: 0 0 20px 0; color: #64748b;">Indica el número de personas presentes en esta sesión</p>
-          
-          <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px;">
-            <button type="button" onclick="ajustarAforo(-1)" class="btn-aforo-adjust" style="width: 48px; height: 48px; font-size: 1.5rem; border: none; background: #e2e8f0; border-radius: 8px; cursor: pointer;">−</button>
-            <input type="number" 
-                   id="cantidad_aforo" 
-                   name="cantidad" 
-                   value="<?php echo (int)$aforo_cantidad; ?>" 
-                   min="0" 
-                   max="9999"
-                   style="width: 120px; height: 56px; font-size: 2rem; text-align: center; border: 2px solid #cbd5e1; border-radius: 8px; font-weight: 600;">
-            <button type="button" onclick="ajustarAforo(1)" class="btn-aforo-adjust" style="width: 48px; height: 48px; font-size: 1.5rem; border: none; background: #e2e8f0; border-radius: 8px; cursor: pointer;">+</button>
-          </div>
-          
-          <p style="margin: 0; font-size: 0.9rem; color: #94a3b8;">
-            <i class="fas fa-info-circle"></i> 
-            <?php if ($aforo_cantidad > 0): ?>
-              Último registro: <?php echo (int)$aforo_cantidad; ?> persona(s)
-            <?php else: ?>
-              Sin registro previo para esta fecha
-            <?php endif; ?>
-          </p>
-        </div>
-        <br>
-        
-        <!-- Sección de Observaciones -->
-        <div class="observaciones-container">
-          <h3>Observaciones de la sesión</h3>
-          <textarea name="observaciones" rows="4" class="observaciones-textarea" placeholder="Escribe aquí las observaciones de esta sesión..."><?php 
-            $stmtObs = $pdo->prepare("SELECT observacion FROM observaciones WHERE actividad_id = ? AND fecha = ?");
-            $stmtObs->execute([$actividad_id, $fecha_seleccionada]);
-            $observacion = $stmtObs->fetchColumn();
-            echo htmlspecialchars($observacion ?? '');
-          ?></textarea>
-        </div>
-        <br>
-        
-        <button type="submit" class="confirm-attendance-button" style="background: #3b82f6;">
-          <i class="fas fa-save"></i> Guardar Registro de Aforo
-        </button>
-      </form>
-      
-      <script>
-        function ajustarAforo(delta) {
-          const input = document.getElementById('cantidad_aforo');
-          let val = parseInt(input.value) || 0;
-          val = Math.max(0, Math.min(9999, val + delta));
-          input.value = val;
-        }
-      </script>
-      
-      <?php else: ?>
-      <!-- MODO ASISTENCIA: Formulario tradicional con lista de participantes -->
       <form action="registrar_asistencia.php" method="post">
         <input type="hidden" name="actividad_id" value="<?php echo $actividad_id; ?>">
         <input type="hidden" name="fecha" value="<?php echo $fecha_seleccionada; ?>">
@@ -531,6 +700,7 @@ require_once 'includes/header.php';
         <div class="observaciones-container">
           <h3>Observaciones de la sesión</h3>
           <textarea name="observaciones" rows="4" class="observaciones-textarea" placeholder="Escribe aquí las observaciones de esta sesión..."><?php 
+            // Consultar si hay observaciones para esta fecha y actividad
             $stmtObs = $pdo->prepare("SELECT observacion FROM observaciones WHERE actividad_id = ? AND fecha = ?");
             $stmtObs->execute([$actividad_id, $fecha_seleccionada]);
             $observacion = $stmtObs->fetchColumn();
@@ -541,7 +711,7 @@ require_once 'includes/header.php';
         
         <button type="submit" class="confirm-attendance-button">Confirmar Asistencias</button>
       </form>
-      <?php endif; ?>
+<?php endif; ?>
     </div>
 
     <!-- Enlace para añadir inscritos eliminado para evitar modificaciones desde esta vista -->

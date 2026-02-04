@@ -49,7 +49,6 @@ try {
                 a.hora_fin,
                 a.fecha_inicio,
                 a.fecha_fin,
-                a.tipo_control,
                 i.nombre AS instalacion_nombre,
                 i.id AS instalacion_id,
                 CASE 
@@ -79,7 +78,6 @@ try {
                 a.hora_fin,
                 a.fecha_inicio,
                 a.fecha_fin,
-                a.tipo_control,
                 i.nombre AS instalacion_nombre,
                 i.id AS instalacion_id,
                 CASE 

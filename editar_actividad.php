@@ -33,13 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $fecha_inicio = filter_input(INPUT_POST, 'fecha_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $fecha_fin = filter_input(INPUT_POST, 'fecha_fin', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $tipo_control = isset($_POST['tipo_control']) && $_POST['tipo_control'] === 'aforo' ? 'aforo' : 'asistencia';
 
     if (empty($nombre) || (empty($dias_semana) && empty($_POST['horario'])) || !$instalacion_id || empty($fecha_inicio)) {
         $error = "El nombre, los días de la semana, la instalación y la fecha de inicio son obligatorios.";
     } else {
-        $stmt = $pdo->prepare("UPDATE actividades SET nombre = ?, grupo = ?, horario = ?, dias_semana = ?, hora_inicio = ?, hora_fin = ?, instalacion_id = ?, fecha_inicio = ?, fecha_fin = ?, tipo_control = ? WHERE id = ?");
-        $result = $stmt->execute([$nombre, $grupo, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null, $tipo_control, $id]);
+        $stmt = $pdo->prepare("UPDATE actividades SET nombre = ?, grupo = ?, horario = ?, dias_semana = ?, hora_inicio = ?, hora_fin = ?, instalacion_id = ?, fecha_inicio = ?, fecha_fin = ? WHERE id = ?");
+        $result = $stmt->execute([$nombre, $grupo, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null, $id]);
 
         if ($result) {
              // Redirigir a la lista de actividades, *incluyendo el instalacion_id*
@@ -132,52 +131,6 @@ require_once 'includes/header.php';
         <label for="fecha_fin">Fecha de finalización:</label>
         <input type="date" id="fecha_fin" name="fecha_fin" value="<?php echo htmlspecialchars($actividad['fecha_fin'] ?? ''); ?>">
         <small>Opcional. Dejar en blanco si la actividad no tiene fecha de finalización definida.</small>
-        <br>
-
-        <!-- Tipo de control -->
-        <div class="form-group">
-            <label>
-                <i class="fas fa-clipboard-check"></i> Tipo de control
-            </label>
-            <div class="radio-group">
-                <label class="radio-inline">
-                    <input type="radio" name="tipo_control" value="asistencia" 
-                           <?php echo (!isset($actividad['tipo_control']) || $actividad['tipo_control'] === 'asistencia') ? 'checked' : ''; ?>>
-                    <i class="fas fa-user-check"></i> Asistencia individual
-                    <small class="form-text-inline">Lista de participantes con control de asistencia por persona</small>
-                </label>
-                <label class="radio-inline">
-                    <input type="radio" name="tipo_control" value="aforo" 
-                           <?php echo (isset($actividad['tipo_control']) && $actividad['tipo_control'] === 'aforo') ? 'checked' : ''; ?>>
-                    <i class="fas fa-users"></i> Solo control de aforo
-                    <small class="form-text-inline">Registro del número total de asistentes (sin lista de nombres)</small>
-                </label>
-            </div>
-            <?php 
-            // Advertencia si se cambia el tipo y hay datos existentes
-            $tiene_inscritos = false;
-            $tiene_aforo = false;
-            if (isset($actividad['tipo_control'])) {
-                if ($actividad['tipo_control'] === 'asistencia') {
-                    $stmt_check = $pdo->prepare("SELECT COUNT(*) FROM inscritos WHERE actividad_id = ?");
-                    $stmt_check->execute([$id]);
-                    $tiene_inscritos = $stmt_check->fetchColumn() > 0;
-                } else {
-                    $stmt_check = $pdo->prepare("SELECT COUNT(*) FROM aforo_registros WHERE actividad_id = ?");
-                    $stmt_check->execute([$id]);
-                    $tiene_aforo = $stmt_check->fetchColumn() > 0;
-                }
-            }
-            if ($tiene_inscritos || $tiene_aforo): 
-            ?>
-            <div class="alert alert-warning" style="margin-top: 10px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>Atención:</strong> Esta actividad ya tiene 
-                <?php echo $tiene_inscritos ? 'participantes inscritos y/o registros de asistencia' : 'registros de aforo'; ?>.
-                Cambiar el tipo de control <strong>no eliminará</strong> los datos existentes, pero la nueva interfaz de registro será diferente.
-            </div>
-            <?php endif; ?>
-        </div>
         <br>
         <button type="submit">Guardar Cambios</button>
     </form>

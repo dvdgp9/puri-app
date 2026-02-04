@@ -4,7 +4,7 @@
  * 
  * Recibe:
  * - centro_id: ID del centro seleccionado manualmente
- * - rows: array de filas con { nombre, apellidos, instalacion, actividad, fecha_inicio, dias_semana, tipo_control }
+ * - rows: array de filas con { nombre, apellidos, instalacion, actividad, fecha_inicio, dias_semana }
  * 
  * Lógica:
  * - Instalación: si existe en el centro → reutilizar, si no → crear
@@ -111,21 +111,15 @@ try {
         $horaFin = isset($row['hora_fin']) ? trim((string)$row['hora_fin']) : '';
         $diasSemana = isset($row['dias_semana']) ? $row['dias_semana'] : [];
         
-        // Tipo de control: 'asistencia' (default) o 'aforo'
-        $tipoControlRaw = isset($row['tipo_control']) ? mb_strtolower(trim((string)$row['tipo_control']), 'UTF-8') : '';
-        // Aceptar: 'aforo', 'si' (para aforo), cualquier otra cosa = asistencia
-        $tipoControl = in_array($tipoControlRaw, ['aforo', 'si', 'sí', 's', '1', 'true']) ? 'aforo' : 'asistencia';
-        
         // Normalizar días si viene como string separado por comas
         if (is_string($diasSemana)) {
             $diasSemana = array_map('trim', explode(',', $diasSemana));
             $diasSemana = array_filter($diasSemana);
         }
         
-        // Validar participante: solo obligatorio si NO es aforo
-        // Si es aforo, no necesita nombre de participante
-        if ($tipoControl === 'asistencia' && empty($nombre)) {
-            $stats['errores'][] = "Línea $lineNum: Falta el nombre del participante (requerido para actividades de asistencia)";
+        // Validar participante: solo nombre obligatorio (apellidos opcional)
+        if (empty($nombre)) {
+            $stats['errores'][] = "Línea $lineNum: Falta el nombre del participante";
             continue;
         }
         
@@ -246,8 +240,8 @@ try {
             $horario = implode(' y ', $horarioPartes); // Campo legacy
 
             $stmtActIns = $pdo->prepare("
-                INSERT INTO actividades (nombre, grupo, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin, tipo_control) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO actividades (nombre, grupo, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmtActIns->execute([
                 $actividadNombre,
@@ -258,8 +252,7 @@ try {
                 $horaFinNorm,
                 $instalacion_id,
                 $fechaInicioNorm,
-                $fechaFinNorm,
-                $tipoControl
+                $fechaFinNorm
             ]);
             $actividad_id = $pdo->lastInsertId();
             
@@ -273,15 +266,13 @@ try {
             $stats['actividades_creadas']++;
         }
         
-        // --- Crear participante (solo si es actividad de asistencia y hay nombre) ---
-        if ($tipoControl === 'asistencia' && !empty($nombre)) {
-            $nombre = preg_replace('/\s+/', ' ', $nombre);
-            $apellidos = preg_replace('/\s+/', ' ', $apellidos);
-            
-            $stmtPart = $pdo->prepare("INSERT INTO inscritos (actividad_id, nombre, apellidos) VALUES (?, ?, ?)");
-            $stmtPart->execute([$actividad_id, $nombre, $apellidos]);
-            $stats['participantes_creados']++;
-        }
+        // --- Crear participante ---
+        $nombre = preg_replace('/\s+/', ' ', $nombre);
+        $apellidos = preg_replace('/\s+/', ' ', $apellidos);
+        
+        $stmtPart = $pdo->prepare("INSERT INTO inscritos (actividad_id, nombre, apellidos) VALUES (?, ?, ?)");
+        $stmtPart->execute([$actividad_id, $nombre, $apellidos]);
+        $stats['participantes_creados']++;
     }
 
     $pdo->commit();

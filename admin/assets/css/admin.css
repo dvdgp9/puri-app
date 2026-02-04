@@ -2097,6 +2097,27 @@ body {
     color: #64748b;
 }
 
+/* Badge de tipo de control */
+.tipo-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.tipo-badge.aforo {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.tipo-badge.asistencia {
+    background: #dcfce7;
+    color: #166534;
+}
+
 /* Action buttons */
 .action-buttons {
     display: flex;

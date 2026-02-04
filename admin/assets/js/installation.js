@@ -147,7 +147,7 @@ function renderActivities() {
     <div class="center-item" onclick="goToActivity(${a.id})" style="cursor: pointer;">
       <div class="center-main">
         <div class="center-header">
-          <h3 class="center-name">${escapeHtml(decodeHtml(a.nombre || ''))}${a.grupo ? ' (' + escapeHtml(a.grupo) + ')' : ''}</h3>
+          <h3 class="center-name">${escapeHtml(decodeHtml(a.nombre || ''))}${a.grupo ? ' (' + escapeHtml(a.grupo) + ')' : ''}${a.tipo_control === 'aforo' ? ' <span class="tipo-badge aforo">Aforo</span>' : ''}</h3>
         </div>
         <div class="center-details">
           <span class="center-stat">
@@ -258,6 +258,7 @@ async function handleCreateActivity(e) {
   const form = e.target;
   const nombre = (form.querySelector('#activityName').value || '').trim();
   const grupo = (form.querySelector('#activityGroup').value || '').trim() || null;
+  const tipo_control = form.querySelector('#activityTipoControl')?.value || 'asistencia';
   // recoger días de checkboxes
   const dias_semana = Array.from(form.querySelectorAll('input[name="dias_semana[]"]:checked')).map(el => el.value);
   const hora_inicio = form.querySelector('#activityStart').value || '';
@@ -280,14 +281,11 @@ async function handleCreateActivity(e) {
     showNotification('La fecha de inicio es obligatoria', 'error');
     return;
   }
-  // Obtener tipo_control del radio button
-  const tipo_control = form.querySelector('input[name="tipo_control"]:checked')?.value || 'asistencia';
-  
   try {
     const resp = await fetch('api/actividades/create.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, grupo, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin, instalacion_id: Installation.id, tipo_control })
+      body: JSON.stringify({ nombre, grupo, tipo_control, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin, instalacion_id: Installation.id })
     });
     const result = await resp.json();
     if (result.success) {
@@ -310,6 +308,9 @@ function editActivity(id) {
   document.getElementById('editActivityId').value = id;
   document.getElementById('editActivityName').value = decodeHtml(a.nombre || '');
   document.getElementById('editActivityGroup').value = a.grupo || '';
+  // set tipo_control
+  const tipoSelect = document.getElementById('editActivityTipoControl');
+  if (tipoSelect) tipoSelect.value = a.tipo_control || 'asistencia';
   // set checkboxes for days
   const diasArr = (a.dias_semana || '').split(',').map(s => s.trim()).filter(Boolean);
   document.querySelectorAll('input[name="edit_dias_semana[]"]').forEach(cb => {
@@ -317,16 +318,6 @@ function editActivity(id) {
   });
   document.getElementById('editActivityStart').value = a.hora_inicio || '';
   document.getElementById('editActivityEnd').value = a.hora_fin || '';
-  // tipo_control
-  const tipoControl = a.tipo_control || 'asistencia';
-  document.querySelectorAll('input[name="edit_tipo_control"]').forEach(radio => {
-    radio.checked = radio.value === tipoControl;
-  });
-  // Mostrar advertencia si hay datos (participantes o registros de aforo)
-  const warning = document.getElementById('edit-tipo-control-warning');
-  if (warning) {
-    warning.style.display = (Number(a.participantes_count) > 0 || Number(a.dias_con_lista_28d) > 0) ? 'block' : 'none';
-  }
   // fechas
   if (document.getElementById('editActivityDateStart')) {
     document.getElementById('editActivityDateStart').value = (a.fecha_inicio || '').substring(0,10);
@@ -351,6 +342,7 @@ async function handleEditActivity(e) {
   const id = Number(document.getElementById('editActivityId').value);
   const nombre = String(document.getElementById('editActivityName').value || '').trim();
   const grupo = String(document.getElementById('editActivityGroup').value || '').trim() || null;
+  const tipo_control = document.getElementById('editActivityTipoControl')?.value || 'asistencia';
   const dias_semana = Array.from(document.querySelectorAll('input[name="edit_dias_semana[]"]:checked')).map(el => el.value);
   const hora_inicio = String(document.getElementById('editActivityStart').value || '');
   const hora_fin = String(document.getElementById('editActivityEnd').value || '');
@@ -372,14 +364,11 @@ async function handleEditActivity(e) {
     showNotification('La fecha de inicio es obligatoria', 'error');
     return;
   }
-  // Obtener tipo_control del radio button
-  const tipo_control = document.querySelector('input[name="edit_tipo_control"]:checked')?.value || 'asistencia';
-  
   try {
     const resp = await fetch('api/actividades/update.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, nombre, grupo, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin, tipo_control })
+      body: JSON.stringify({ id, nombre, grupo, tipo_control, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin })
     });
     const result = await resp.json();
     if (result.success) {
