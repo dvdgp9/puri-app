@@ -437,6 +437,23 @@ $admin_info = getAdminInfo();
                             <span class="field-error" id="activityEndDate-error"></span>
                         </div>
                     </div>
+
+                    <!-- Tipo de control -->
+                    <div class="form-group">
+                        <label>Tipo de control</label>
+                        <div class="radio-group">
+                            <label class="radio-inline">
+                                <input type="radio" name="tipo_control" value="asistencia" checked>
+                                Asistencia individual
+                                <small class="form-text-inline">Lista de participantes con control por persona</small>
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="tipo_control" value="aforo">
+                                Solo control de aforo
+                                <small class="form-text-inline">Registro del número total de asistentes (sin lista)</small>
+                            </label>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">

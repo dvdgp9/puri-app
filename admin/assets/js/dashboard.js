@@ -2096,6 +2096,10 @@ async function createActivity() {
             diasSemana.push(checkbox.value);
         });
         
+        // Obtener tipo_control del radio button
+        const tipoControlRadio = form.querySelector('input[name="tipo_control"]:checked');
+        const tipo_control = tipoControlRadio ? tipoControlRadio.value : 'asistencia';
+        
         // Preparar datos
         const data = {
             nombre: formData.get('nombre'),
@@ -2105,7 +2109,8 @@ async function createActivity() {
             hora_inicio: formData.get('hora_inicio'),
             hora_fin: formData.get('hora_fin'),
             fecha_inicio: formData.get('fecha_inicio'),
-            fecha_fin: formData.get('fecha_fin') || null
+            fecha_fin: formData.get('fecha_fin') || null,
+            tipo_control: tipo_control
         };
         
         // Validaciones básicas

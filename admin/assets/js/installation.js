@@ -280,11 +280,14 @@ async function handleCreateActivity(e) {
     showNotification('La fecha de inicio es obligatoria', 'error');
     return;
   }
+  // Obtener tipo_control del radio button
+  const tipo_control = form.querySelector('input[name="tipo_control"]:checked')?.value || 'asistencia';
+  
   try {
     const resp = await fetch('api/actividades/create.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, grupo, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin, instalacion_id: Installation.id })
+      body: JSON.stringify({ nombre, grupo, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin, instalacion_id: Installation.id, tipo_control })
     });
     const result = await resp.json();
     if (result.success) {
@@ -314,6 +317,16 @@ function editActivity(id) {
   });
   document.getElementById('editActivityStart').value = a.hora_inicio || '';
   document.getElementById('editActivityEnd').value = a.hora_fin || '';
+  // tipo_control
+  const tipoControl = a.tipo_control || 'asistencia';
+  document.querySelectorAll('input[name="edit_tipo_control"]').forEach(radio => {
+    radio.checked = radio.value === tipoControl;
+  });
+  // Mostrar advertencia si hay datos (participantes o registros de aforo)
+  const warning = document.getElementById('edit-tipo-control-warning');
+  if (warning) {
+    warning.style.display = (Number(a.participantes_count) > 0 || Number(a.dias_con_lista_28d) > 0) ? 'block' : 'none';
+  }
   // fechas
   if (document.getElementById('editActivityDateStart')) {
     document.getElementById('editActivityDateStart').value = (a.fecha_inicio || '').substring(0,10);
@@ -359,11 +372,14 @@ async function handleEditActivity(e) {
     showNotification('La fecha de inicio es obligatoria', 'error');
     return;
   }
+  // Obtener tipo_control del radio button
+  const tipo_control = document.querySelector('input[name="edit_tipo_control"]:checked')?.value || 'asistencia';
+  
   try {
     const resp = await fetch('api/actividades/update.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, nombre, grupo, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin })
+      body: JSON.stringify({ id, nombre, grupo, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin, tipo_control })
     });
     const result = await resp.json();
     if (result.success) {
