@@ -9,11 +9,15 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 function requireAdminAuth() {
+    global $pdo;
+    
     // Verificar si el administrador está logueado
     if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
         // Intentar restaurar sesión desde cookie "Recordarme"
         if (isset($_COOKIE['admin_remember_token'])) {
-            require_once __DIR__ . '/../config/config.php';
+            if (!$pdo) {
+                require_once __DIR__ . '/../config/config.php';
+            }
             $token = $_COOKIE['admin_remember_token'];
             
             try {
