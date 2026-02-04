@@ -57,6 +57,7 @@ try {
     $hora_fin = array_key_exists('hora_fin', $input) ? trim((string)$input['hora_fin']) : null;
     $fecha_inicio = array_key_exists('fecha_inicio', $input) ? trim((string)$input['fecha_inicio']) : null;
     $fecha_fin = array_key_exists('fecha_fin', $input) ? (trim((string)$input['fecha_fin']) ?: null) : null;
+    $tipo_control = array_key_exists('tipo_control', $input) ? (in_array($input['tipo_control'], ['asistencia', 'aforo']) ? $input['tipo_control'] : null) : null;
 
     if ($nombre !== null && $nombre === '') {
         http_response_code(400);
@@ -83,6 +84,7 @@ try {
     if ($hora_fin !== null) { $fields[] = 'hora_fin = ?'; $params[] = $hora_fin; }
     if ($fecha_inicio !== null) { $fields[] = 'fecha_inicio = ?'; $params[] = $fecha_inicio; }
     if ($fecha_fin !== null || array_key_exists('fecha_fin', $input)) { $fields[] = 'fecha_fin = ?'; $params[] = $fecha_fin; }
+    if ($tipo_control !== null) { $fields[] = 'tipo_control = ?'; $params[] = $tipo_control; }
 
     if (empty($fields)) {
         echo json_encode(['success' => true, 'message' => 'Sin cambios']);

@@ -520,3 +520,111 @@ Trabajadores repiten muchos pasos para pasar lista. Objetivo: reducir fricción 
 ### Open Questions
 - ¿El límite de 3 favoritos es global por dispositivo o por centro? (Propuesta: global por dispositivo)
 - ¿Mostramos favoritos solo en la portada o también como bloque superior en el listado de actividades?
+
+---
+
+## Planner: Control de Aforo para Actividades
+
+### Background and Motivation
+Algunas actividades no requieren control de asistencia individual (marcar quién asiste y quién no), sino simplemente contar el número total de personas presentes (control de aforo). Esto es útil para actividades abiertas, paseos, eventos puntuales, etc.
+
+### Key Challenges and Analysis
+
+**Cambios necesarios en base de datos:**
+1. Tabla `actividades`: añadir campo `tipo_control` (enum: 'asistencia', 'aforo'), default 'asistencia'
+2. Nueva tabla `aforo_registros`: id, actividad_id, fecha, hora, cantidad, registrado_en
+
+**Cambios en frontend:**
+- Formularios de creación/edición de actividades: toggle para seleccionar tipo de control
+- Importación masiva: nueva columna opcional "Tipo Control"
+- Vista de monitor (`asistencia.php`): interfaz simplificada para aforo (input numérico + fecha/hora autoseleccionadas)
+- Informes: formato diferente para actividades de aforo (días, franja horaria, cantidad)
+
+**Consideraciones especiales:**
+- Cambiar el tipo de control de una actividad existente con datos puede ser problemático
+- Las actividades de aforo no tienen "inscritos" como tal
+- Los informes deben distinguir claramente entre asistencia individual y aforo
+
+### High-level Task Breakdown
+
+#### Fase 1: Base de Datos
+1. **Migración SQL**: Añadir `tipo_control` a `actividades` y crear tabla `aforo_registros`
+   - Éxito: Estructura de tablas actualizada, datos existentes intactos
+
+#### Fase 2: Gestión de Actividades (Crear/Editar)
+2. **crear_actividad.php**: Añadir toggle "Solo control de aforo" en el formulario
+   - Éxito: Se puede crear actividad con tipo_control='aforo', guarda correctamente en BD
+   
+3. **editar_actividad.php**: Añadir toggle + advertencia si tiene datos previos
+   - Éxito: Se puede cambiar tipo, con confirmación si ya hay registros de asistencia/aforo
+
+#### Fase 3: Importación Masiva
+4. **bulk_import.php**: Soportar columna opcional "tipo_control" o "aforo"
+   - Éxito: Importación reconoce y aplica el tipo de control
+   - Valores aceptados: 'asistencia', 'aforo', 'si', 'no', vacío (default asistencia)
+
+#### Fase 4: Vista del Monitor (Registro de Aforo)
+5. **asistencia.php**: Detectar tipo_control y mostrar UI apropiada
+   - Si tipo='asistencia': mantener comportamiento actual (lista de inscritos)
+   - Si tipo='aforo': mostrar input numérico + fecha/hora autoseleccionadas
+   
+6. **registrar_aforo.php** (nuevo endpoint): Guardar registro de aforo
+   - Recibe: actividad_id, fecha, hora, cantidad
+   - Valida y guarda en tabla `aforo_registros`
+
+#### Fase 5: Informes
+7. **generar_informe.php**: Adaptar formato para actividades de aforo
+   - Si tipo='aforo': mostrar tabla con fecha, hora, cantidad (no lista de nombres)
+   - Mantener nombre de archivo descriptivo incluyendo instalación
+   
+8. **admin/api/informes/generar.php**: Igual adaptación para informes desde admin
+
+#### Fase 6: APIs y Helpers
+9. **APIs de actividades**: Incluir `tipo_control` en respuestas JSON donde corresponda
+   - `admin/api/actividades/*.php`, `obtener_actividades.php`, etc.
+
+### Success Criteria
+- Se pueden crear actividades de tipo "aforo" desde el formulario y por importación
+- El monitor ve una interfaz simplificada (solo número de personas) para actividades de aforo
+- La fecha y hora se autoseleccionan (día actual, hora más cercana) para rapidez
+- Los informes de aforo muestran días, franja horaria y cantidad de personas
+- Las actividades de asistencia normal siguen funcionando exactamente igual
+
+### Project Status Board (Control de Aforo)
+
+- [x] Fase 1: Migración BD - Añadir tipo_control a actividades y crear tabla aforo_registros
+- [x] Fase 2.1: crear_actividad.php - Toggle para seleccionar tipo de control
+- [x] Fase 2.2: editar_actividad.php - Toggle + advertencia de cambio
+- [x] Fase 3: bulk_import.php - Soporte para columna tipo_control
+- [x] Fase 4.1: asistencia.php - UI condicional según tipo_control
+- [x] Fase 4.2: Crear registrar_aforo.php endpoint
+- [x] Fase 5.1: generar_informe.php - Formato informe para aforo
+- [x] Fase 5.2: admin/api/informes/generar.php - Formato informe para aforo
+- [x] Fase 6: Actualizar APIs para incluir tipo_control
+- [ ] QA: Probar flujo completo crear → registrar aforo → generar informe
+
+### Archivos Modificados/Creados
+
+**Nuevos:**
+- `migrate_control_aforo.sql` - Script de migración BD
+- `registrar_aforo.php` - Endpoint para guardar registros de aforo
+
+**Modificados:**
+- `crear_actividad.php` - Toggle tipo_control
+- `editar_actividad.php` - Toggle + advertencia si hay datos
+- `asistencia.php` - UI condicional (aforo vs asistencia)
+- `generar_informe.php` - Informe simplificado para aforo
+- `admin/api/bulk_import.php` - Columna tipo_control en importación
+- `admin/api/informes/generar.php` - Informe simplificado para aforo
+- `admin/api/informes/actividades.php` - Incluye tipo_control en respuesta
+- `admin/api/actividades/create.php` - Soporta tipo_control
+- `admin/api/actividades/update.php` - Soporta tipo_control
+- `admin/api/actividades/list_by_installation.php` - Incluye tipo_control
+
+### Open Questions / Decisions Needed
+1. ¿Las actividades de aforo pueden cambiarse a asistencia individual (y viceversa) después de tener datos?
+   - Propuesta: Permitir cambio con advertencia, pero los datos anteriores quedan en su tabla original
+2. ¿Las actividades de aforo necesitan algún tipo de "inscripción" o capacidad máxima?
+   - Propuesta: Por ahora no, solo registro de cantidad real
+3. ¿El formato del informe de aforo debe ser diferente (otra hoja/estilo) o simplemente otra tabla?
+   - Propuesta: Mismo archivo Excel, pero tabla simplificada (sin nombres de participantes)

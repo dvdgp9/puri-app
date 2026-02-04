@@ -58,6 +58,7 @@ try {
             a.hora_fin, 
             a.fecha_inicio, 
             a.fecha_fin,
+            a.tipo_control,
             (SELECT COUNT(*) FROM inscritos i WHERE i.actividad_id = a.id) AS participantes_count,
             (SELECT COUNT(DISTINCT fecha) 
              FROM asistencias 

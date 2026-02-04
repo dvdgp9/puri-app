@@ -34,6 +34,9 @@ $stmt = $pdo->prepare("
         a.nombre as actividad_nombre,
         a.horario as actividad_horario,
         a.grupo as actividad_grupo,
+        a.tipo_control,
+        a.hora_inicio,
+        a.hora_fin,
         i.nombre as instalacion_nombre,
         c.nombre as centro_nombre
     FROM actividades a
@@ -43,6 +46,9 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$_POST['actividad_id']]);
 $info = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Determinar tipo de control
+$es_aforo = ($info['tipo_control'] ?? 'asistencia') === 'aforo';
 
 // Asegurarse de que los datos estén en UTF-8
 $info['centro_nombre'] = mb_convert_encoding($info['centro_nombre'], 'UTF-8', 'auto');
@@ -169,6 +175,109 @@ foreach ($fechas as $fecha) {
     
     $fecha_headers[] = $fecha_corta;
 }
+
+// Si es actividad de AFORO, generar informe simplificado
+if ($es_aforo) {
+    // Obtener registros de aforo para el período
+    $stmt_aforo = $pdo->prepare("
+        SELECT fecha, cantidad, registrado_en
+        FROM aforo_registros
+        WHERE actividad_id = ? AND fecha BETWEEN ? AND ?
+        ORDER BY fecha
+    ");
+    $stmt_aforo->execute([
+        $_POST['actividad_id'],
+        $_POST['fecha_inicio'],
+        $_POST['fecha_fin']
+    ]);
+    $registros_aforo = $stmt_aforo->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Calcular total de personas
+    $total_personas = 0;
+    foreach ($registros_aforo as $reg) {
+        $total_personas += (int)$reg['cantidad'];
+    }
+    
+    // Horario formateado
+    $horario_fmt = '';
+    if (!empty($info['hora_inicio']) && !empty($info['hora_fin'])) {
+        $horario_fmt = substr($info['hora_inicio'], 0, 5) . ' - ' . substr($info['hora_fin'], 0, 5);
+    } elseif (!empty($info['actividad_horario'])) {
+        $horario_fmt = $info['actividad_horario'];
+    }
+    
+    // Generar HTML para Excel (AFORO)
+    echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Informe de Aforo</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .header-row { background-color: #e6e6e6; }
+        .total-row { background-color: #d4edda; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <table>
+        <tr class="header-row">
+            <td colspan="3">' . $info['centro_nombre'] . '</td>
+        </tr>
+        <tr class="header-row">
+            <td colspan="3">' . $info['instalacion_nombre'] . '</td>
+        </tr>
+        <tr class="header-row">
+            <td colspan="3">' . $info['actividad_nombre'] . ($info['actividad_grupo'] ? ' (' . $info['actividad_grupo'] . ')' : '') . '</td>
+        </tr>
+        <tr class="header-row">
+            <td colspan="3">Horario: ' . htmlspecialchars($horario_fmt) . '</td>
+        </tr>
+        <tr class="header-row">
+            <td colspan="3">Período: ' . $_POST['fecha_inicio'] . ' a ' . $_POST['fecha_fin'] . '</td>
+        </tr>
+        <tr class="header-row">
+            <td colspan="3"><strong>INFORME DE AFORO</strong></td>
+        </tr>
+        <tr>
+            <td colspan="3"></td>
+        </tr>
+        <tr>
+            <th>Fecha</th>
+            <th>Personas</th>
+            <th>Observaciones</th>
+        </tr>';
+    
+    foreach ($registros_aforo as $reg) {
+        $fecha_fmt = date('d/m/Y', strtotime($reg['fecha']));
+        $observacion = isset($observaciones_por_fecha[$reg['fecha']]) ? $observaciones_por_fecha[$reg['fecha']] : '';
+        $observacion = html_entity_decode($observacion, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $observacion = htmlspecialchars($observacion);
+        
+        echo '<tr>
+            <td>' . $fecha_fmt . '</td>
+            <td>' . (int)$reg['cantidad'] . '</td>
+            <td>' . $observacion . '</td>
+        </tr>';
+    }
+    
+    // Fila de totales
+    echo '<tr class="total-row">
+            <td>TOTAL</td>
+            <td>' . $total_personas . '</td>
+            <td>' . count($registros_aforo) . ' sesión(es)</td>
+        </tr>';
+    
+    echo '</table>
+</body>
+</html>';
+    
+    exit;
+}
+
+// --- MODO ASISTENCIA: Informe tradicional con lista de participantes ---
 
 // Generar HTML para Excel
 echo '<!DOCTYPE html>

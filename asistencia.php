@@ -100,7 +100,19 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $asistencias[$row['usuario_id']] = $row['asistio'];
 }
 
-$pageTitle = "Control de Asistencia";
+// Determinar tipo de control
+$tipo_control = $actividad['tipo_control'] ?? 'asistencia';
+$es_aforo = ($tipo_control === 'aforo');
+
+// Si es aforo, obtener el registro de aforo para la fecha seleccionada
+$aforo_cantidad = 0;
+if ($es_aforo) {
+    $stmtAforo = $pdo->prepare("SELECT cantidad FROM aforo_registros WHERE actividad_id = ? AND fecha = ?");
+    $stmtAforo->execute([$actividad_id, $fecha_seleccionada]);
+    $aforo_cantidad = $stmtAforo->fetchColumn() ?: 0;
+}
+
+$pageTitle = $es_aforo ? "Control de Aforo" : "Control de Asistencia";
 
 $extraStyles = "
   <style>
@@ -410,6 +422,70 @@ require_once 'includes/header.php';
                    aria-label="Seleccionar fecha">
         </form>
       </div>
+      <?php if ($es_aforo): ?>
+      <!-- MODO AFORO: Formulario simplificado para registro de cantidad -->
+      <form action="registrar_aforo.php" method="post" class="aforo-form">
+        <input type="hidden" name="actividad_id" value="<?php echo $actividad_id; ?>">
+        <input type="hidden" name="fecha" value="<?php echo $fecha_seleccionada; ?>">
+        
+        <div class="aforo-container" style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center;">
+          <div style="margin-bottom: 16px;">
+            <i class="fas fa-users" style="font-size: 3rem; color: #3b82f6;"></i>
+          </div>
+          <h3 style="margin: 0 0 8px 0; font-size: 1.3rem; color: #1e293b;">Registro de Aforo</h3>
+          <p style="margin: 0 0 20px 0; color: #64748b;">Indica el número de personas presentes en esta sesión</p>
+          
+          <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px;">
+            <button type="button" onclick="ajustarAforo(-1)" class="btn-aforo-adjust" style="width: 48px; height: 48px; font-size: 1.5rem; border: none; background: #e2e8f0; border-radius: 8px; cursor: pointer;">−</button>
+            <input type="number" 
+                   id="cantidad_aforo" 
+                   name="cantidad" 
+                   value="<?php echo (int)$aforo_cantidad; ?>" 
+                   min="0" 
+                   max="9999"
+                   style="width: 120px; height: 56px; font-size: 2rem; text-align: center; border: 2px solid #cbd5e1; border-radius: 8px; font-weight: 600;">
+            <button type="button" onclick="ajustarAforo(1)" class="btn-aforo-adjust" style="width: 48px; height: 48px; font-size: 1.5rem; border: none; background: #e2e8f0; border-radius: 8px; cursor: pointer;">+</button>
+          </div>
+          
+          <p style="margin: 0; font-size: 0.9rem; color: #94a3b8;">
+            <i class="fas fa-info-circle"></i> 
+            <?php if ($aforo_cantidad > 0): ?>
+              Último registro: <?php echo (int)$aforo_cantidad; ?> persona(s)
+            <?php else: ?>
+              Sin registro previo para esta fecha
+            <?php endif; ?>
+          </p>
+        </div>
+        <br>
+        
+        <!-- Sección de Observaciones -->
+        <div class="observaciones-container">
+          <h3>Observaciones de la sesión</h3>
+          <textarea name="observaciones" rows="4" class="observaciones-textarea" placeholder="Escribe aquí las observaciones de esta sesión..."><?php 
+            $stmtObs = $pdo->prepare("SELECT observacion FROM observaciones WHERE actividad_id = ? AND fecha = ?");
+            $stmtObs->execute([$actividad_id, $fecha_seleccionada]);
+            $observacion = $stmtObs->fetchColumn();
+            echo htmlspecialchars($observacion ?? '');
+          ?></textarea>
+        </div>
+        <br>
+        
+        <button type="submit" class="confirm-attendance-button" style="background: #3b82f6;">
+          <i class="fas fa-save"></i> Guardar Registro de Aforo
+        </button>
+      </form>
+      
+      <script>
+        function ajustarAforo(delta) {
+          const input = document.getElementById('cantidad_aforo');
+          let val = parseInt(input.value) || 0;
+          val = Math.max(0, Math.min(9999, val + delta));
+          input.value = val;
+        }
+      </script>
+      
+      <?php else: ?>
+      <!-- MODO ASISTENCIA: Formulario tradicional con lista de participantes -->
       <form action="registrar_asistencia.php" method="post">
         <input type="hidden" name="actividad_id" value="<?php echo $actividad_id; ?>">
         <input type="hidden" name="fecha" value="<?php echo $fecha_seleccionada; ?>">
@@ -455,7 +531,6 @@ require_once 'includes/header.php';
         <div class="observaciones-container">
           <h3>Observaciones de la sesión</h3>
           <textarea name="observaciones" rows="4" class="observaciones-textarea" placeholder="Escribe aquí las observaciones de esta sesión..."><?php 
-            // Consultar si hay observaciones para esta fecha y actividad
             $stmtObs = $pdo->prepare("SELECT observacion FROM observaciones WHERE actividad_id = ? AND fecha = ?");
             $stmtObs->execute([$actividad_id, $fecha_seleccionada]);
             $observacion = $stmtObs->fetchColumn();
@@ -466,6 +541,7 @@ require_once 'includes/header.php';
         
         <button type="submit" class="confirm-attendance-button">Confirmar Asistencias</button>
       </form>
+      <?php endif; ?>
     </div>
 
     <!-- Enlace para añadir inscritos eliminado para evitar modificaciones desde esta vista -->
