@@ -91,6 +91,25 @@ try {
         exit;
     }
     
+    // Verificar que no existe un registro duplicado (misma fecha y hora)
+    $stmtCheck = $pdo->prepare("
+        SELECT id, num_personas 
+        FROM registros_aforo 
+        WHERE actividad_id = ? AND fecha = ? AND hora = ?
+        LIMIT 1
+    ");
+    $stmtCheck->execute([$actividad_id, $fecha, $hora]);
+    $existe = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+    
+    if ($existe) {
+        http_response_code(409);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Ya existe un registro a las ' . substr($hora, 0, 5) . ' de este día con ' . $existe['num_personas'] . ' personas'
+        ]);
+        exit;
+    }
+    
     // Insertar registro de aforo
     $stmt = $pdo->prepare("
         INSERT INTO registros_aforo (actividad_id, fecha, hora, num_personas, created_by)
