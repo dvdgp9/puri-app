@@ -223,9 +223,45 @@ $extraStyles = "
       gap: 16px;
       align-items: end;
     }
-    @media (max-width: 600px) {
+    @media (max-width: 640px) {
+      .aforo-container {
+        padding: 16px;
+        margin-top: 12px;
+      }
       .aforo-form {
         grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .aforo-form .form-group:last-of-type {
+        grid-column: span 2;
+      }
+      .aforo-form input[type='number'] {
+        font-size: 1.75rem;
+        padding: 14px;
+        min-height: 56px;
+      }
+      .aforo-form input[type='date'],
+      .aforo-form input[type='time'] {
+        font-size: 1rem;
+        padding: 12px;
+        min-height: 48px;
+      }
+      .aforo-btn {
+        grid-column: span 2;
+        width: 100%;
+        padding: 16px 24px;
+        font-size: 1.1rem;
+        min-height: 56px;
+        margin-top: 8px;
+      }
+      .aforo-historico h3 {
+        font-size: 0.95rem;
+      }
+      .aforo-registro {
+        padding: 14px 16px;
+      }
+      .aforo-registro-personas {
+        font-size: 1.1rem;
       }
     }
     .aforo-form .form-group {
@@ -260,6 +296,7 @@ $extraStyles = "
       font-weight: 600;
       cursor: pointer;
       height: fit-content;
+      white-space: nowrap;
     }
     .aforo-btn:hover { background: #1d8fa6; }
     .aforo-btn:disabled { background: #9ca3af; cursor: not-allowed; }
