@@ -181,6 +181,9 @@ if (!$actividad) {
                         <option value="apellidos">Ordenar A-Z</option>
                         <option value="-apellidos">Ordenar Z-A</option>
                     </select>
+                    <button class="btn btn-secondary" type="button" onclick="openAttendanceRangeModal()">
+                        Periodo
+                    </button>
                     <button class="btn btn-primary" onclick="openAddParticipantsModal()">
                         + Añadir Participantes
                     </button>
@@ -189,6 +192,7 @@ if (!$actividad) {
                     </button>
                 </div>
             </div>
+            <div style="padding:0 1.5rem 1rem; color:#6b7280; font-size:0.875rem;" id="attendance-range-summary"></div>
             <div class="centers-content">
                 <div id="participants-list" class="centers-list">
                     <!-- Participantes -->
@@ -426,6 +430,36 @@ if (!$actividad) {
                     <span class="btn-text">Guardar cambios</span>
                     <span class="btn-loading" style="display:none">Guardando...</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Selección de periodo de asistencias -->
+    <div id="attendanceRangeModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="attendanceRangeTitle">
+            <div class="modal-header">
+                <h3 class="modal-title" id="attendanceRangeTitle">Periodo de asistencias</h3>
+                <button class="modal-close" onclick="closeModal('attendanceRangeModal')" aria-label="Cerrar modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="attendanceRangeForm">
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="attendanceDateStart">Fecha inicio *</label>
+                            <input type="date" id="attendanceDateStart" name="fecha_inicio" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="attendanceDateEnd">Fecha fin *</label>
+                            <input type="date" id="attendanceDateEnd" name="fecha_fin" required>
+                        </div>
+                    </div>
+                    <div class="form-error" id="attendanceRangeError"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="resetAttendanceRangeToDefault()">Por defecto</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('attendanceRangeModal')">Cancelar</button>
+                <button type="submit" form="attendanceRangeForm" class="btn btn-primary">Aplicar</button>
             </div>
         </div>
     </div>

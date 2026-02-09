@@ -24,7 +24,7 @@ try {
 
     // Cargar contexto de actividad + instalación + centro
     $stmt = $pdo->prepare(
-        'SELECT a.id AS actividad_id, a.nombre AS actividad_nombre,
+        'SELECT a.id AS actividad_id, a.nombre AS actividad_nombre, a.fecha_inicio, a.fecha_fin,
                 i.id AS instalacion_id, i.nombre AS instalacion_nombre,
                 c.id AS centro_id, c.nombre AS centro_nombre
          FROM actividades a
@@ -52,14 +52,48 @@ try {
         }
     }
 
-    // Obtener el número de días con paso de lista en los últimos 28 días para esta actividad
+    $toDate = static function($value) {
+        if (!is_string($value) || $value === '') {
+            return null;
+        }
+        $dt = DateTime::createFromFormat('Y-m-d', $value);
+        if (!$dt || $dt->format('Y-m-d') !== $value) {
+            return null;
+        }
+        return $value;
+    };
+
+    $today = (new DateTime('today'))->format('Y-m-d');
+    $activityStart = !empty($ctx['fecha_inicio']) ? substr((string)$ctx['fecha_inicio'], 0, 10) : null;
+    $activityEnd = !empty($ctx['fecha_fin']) ? substr((string)$ctx['fecha_fin'], 0, 10) : null;
+
+    $defaultStart = $activityStart ?: $today;
+    $defaultEnd = ($activityEnd && $activityEnd < $today) ? $activityEnd : $today;
+    if ($defaultEnd < $defaultStart) {
+        $defaultEnd = $defaultStart;
+    }
+
+    $requestStart = $toDate($_GET['fecha_inicio'] ?? null);
+    $requestEnd = $toDate($_GET['fecha_fin'] ?? null);
+
+    $rangeStart = $requestStart ?: $defaultStart;
+    $rangeEnd = $requestEnd ?: $defaultEnd;
+    $isDefaultRange = (!$requestStart && !$requestEnd);
+
+    if ($rangeEnd < $rangeStart) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Rango de fechas inválido']);
+        exit;
+    }
+
+    // Obtener el número de días con paso de lista en el periodo seleccionado
     $stmt_dias = $pdo->prepare('
         SELECT COUNT(DISTINCT fecha) as total_dias
         FROM asistencias 
         WHERE actividad_id = ? 
-          AND fecha >= DATE_SUB(CURDATE(), INTERVAL 28 DAY)
+          AND fecha BETWEEN ? AND ?
     ');
-    $stmt_dias->execute([$actividad_id]);
+    $stmt_dias->execute([$actividad_id, $rangeStart, $rangeEnd]);
     $dias_con_lista = (int)$stmt_dias->fetchColumn();
 
     // Listado de participantes (inscritos) de la actividad con estadísticas de asistencia
@@ -73,21 +107,26 @@ try {
              WHERE a.usuario_id = i.id 
                AND a.actividad_id = ? 
                AND a.asistio = 1
-               AND a.fecha >= DATE_SUB(CURDATE(), INTERVAL 28 DAY)) AS asistencias_28d
+               AND a.fecha BETWEEN ? AND ?) AS asistencias_periodo
         FROM inscritos i
         WHERE i.actividad_id = ? 
         ORDER BY i.apellidos ASC, i.nombre ASC
     ');
-    $stmt->execute([$actividad_id, $actividad_id]);
+    $stmt->execute([$actividad_id, $rangeStart, $rangeEnd, $actividad_id]);
     $participants = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Calcular porcentaje para cada participante
     foreach ($participants as &$p) {
-        $p['asistencias_28d'] = (int)$p['asistencias_28d'];
-        $p['dias_con_lista_28d'] = $dias_con_lista;
-        $p['porcentaje_asistencia_28d'] = $dias_con_lista > 0 
-            ? round(($p['asistencias_28d'] / $dias_con_lista) * 100, 0) 
+        $p['asistencias_periodo'] = (int)$p['asistencias_periodo'];
+        $p['dias_con_lista'] = $dias_con_lista;
+        $p['porcentaje_asistencia_periodo'] = $dias_con_lista > 0
+            ? round(($p['asistencias_periodo'] / $dias_con_lista) * 100, 0)
             : 0;
+
+        // Compatibilidad con clientes antiguos
+        $p['asistencias_28d'] = $p['asistencias_periodo'];
+        $p['dias_con_lista_28d'] = $p['dias_con_lista'];
+        $p['porcentaje_asistencia_28d'] = $p['porcentaje_asistencia_periodo'];
     }
     unset($p);
 
@@ -95,10 +134,18 @@ try {
         'success' => true,
         'participants' => $participants,
         'count' => count($participants),
+        'dias_con_lista' => $dias_con_lista,
         'dias_con_lista_28d' => $dias_con_lista,
+        'period' => [
+            'fecha_inicio' => $rangeStart,
+            'fecha_fin' => $rangeEnd,
+            'es_default' => $isDefaultRange
+        ],
         'activity' => [
             'id' => intval($ctx['actividad_id']),
-            'nombre' => $ctx['actividad_nombre']
+            'nombre' => $ctx['actividad_nombre'],
+            'fecha_inicio' => $activityStart,
+            'fecha_fin' => $activityEnd
         ],
         'installation' => [
             'id' => intval($ctx['instalacion_id']),

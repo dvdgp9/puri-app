@@ -10,6 +10,96 @@ if (!window.ActivityPage) {
 if (!window.ActivityPage.participants) {
   window.ActivityPage.participants = [];
 }
+if (!window.ActivityPage.attendanceRange) {
+  window.ActivityPage.attendanceRange = null;
+}
+
+function todayIsoLocal() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function normalizeIsoDate(value) {
+  const str = String(value || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return null;
+  return str;
+}
+
+function getDefaultAttendanceRange() {
+  const today = todayIsoLocal();
+  const startRaw = normalizeIsoDate((ActivityPage.ctx?.fecha_inicio || '').substring(0, 10));
+  const endRaw = normalizeIsoDate((ActivityPage.ctx?.fecha_fin || '').substring(0, 10));
+  const start = startRaw || today;
+  let end = today;
+  if (endRaw && endRaw < today) end = endRaw;
+  if (end < start) end = start;
+  return { start, end, isDefault: true };
+}
+
+function formatDateEs(isoDate) {
+  const d = normalizeIsoDate(isoDate);
+  if (!d) return '-';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function updateAttendanceRangeSummary() {
+  const el = document.getElementById('attendance-range-summary');
+  const range = ActivityPage.attendanceRange;
+  if (!el || !range) return;
+  const suffix = range.isDefault ? ' (por defecto)' : '';
+  el.textContent = `Asistencias: ${formatDateEs(range.start)} → ${formatDateEs(range.end)}${suffix}`;
+}
+
+function openAttendanceRangeModal() {
+  const form = document.getElementById('attendanceRangeForm');
+  const startInput = document.getElementById('attendanceDateStart');
+  const endInput = document.getElementById('attendanceDateEnd');
+  const error = document.getElementById('attendanceRangeError');
+  if (!form || !startInput || !endInput) return;
+  const current = ActivityPage.attendanceRange || getDefaultAttendanceRange();
+  const today = todayIsoLocal();
+  const courseStart = normalizeIsoDate((ActivityPage.ctx?.fecha_inicio || '').substring(0, 10)) || current.start;
+  const courseEndRaw = normalizeIsoDate((ActivityPage.ctx?.fecha_fin || '').substring(0, 10));
+  const maxEnd = courseEndRaw && courseEndRaw < today ? courseEndRaw : today;
+
+  startInput.min = courseStart;
+  startInput.max = maxEnd;
+  endInput.min = courseStart;
+  endInput.max = maxEnd;
+  startInput.value = current.start;
+  endInput.value = current.end;
+  if (error) error.textContent = '';
+  openModal('attendanceRangeModal');
+}
+
+async function handleAttendanceRangeSubmit(e) {
+  e.preventDefault();
+  const startInput = document.getElementById('attendanceDateStart');
+  const endInput = document.getElementById('attendanceDateEnd');
+  const error = document.getElementById('attendanceRangeError');
+  const start = normalizeIsoDate(startInput?.value);
+  const end = normalizeIsoDate(endInput?.value);
+  if (error) error.textContent = '';
+  if (!start || !end) {
+    if (error) error.textContent = 'Selecciona ambas fechas';
+    return;
+  }
+  if (end < start) {
+    if (error) error.textContent = 'La fecha fin no puede ser anterior a la fecha inicio';
+    return;
+  }
+  closeModal('attendanceRangeModal');
+  await loadParticipants({ start, end, isDefault: false });
+}
+
+async function resetAttendanceRangeToDefault() {
+  closeModal('attendanceRangeModal');
+  await loadParticipants(getDefaultAttendanceRange());
+}
 
 // Init
 window.addEventListener('DOMContentLoaded', () => {
@@ -41,6 +131,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // Edit participant form
   const editParticipantForm = document.getElementById('editParticipantForm');
   if (editParticipantForm) editParticipantForm.addEventListener('submit', handleEditParticipantSubmit);
+  const attendanceRangeForm = document.getElementById('attendanceRangeForm');
+  if (attendanceRangeForm) attendanceRangeForm.addEventListener('submit', handleAttendanceRangeSubmit);
 
   // Header profile dropdown toggle
   const profileBtn = document.getElementById('profile-dropdown-btn');
@@ -57,13 +149,31 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // Load participants
-async function loadParticipants() {
+async function loadParticipants(rangeOverride) {
   const list = document.getElementById('participants-list');
   if (list) list.innerHTML = '<div class="loading-card">Cargando participantes...</div>';
   try {
-    const resp = await fetch(`api/participantes/list_by_activity.php?actividad_id=${ActivityPage.id}`);
+    const activeRange = rangeOverride || ActivityPage.attendanceRange || getDefaultAttendanceRange();
+    const params = new URLSearchParams({
+      actividad_id: String(ActivityPage.id),
+      fecha_inicio: activeRange.start,
+      fecha_fin: activeRange.end
+    });
+    const resp = await fetch(`api/participantes/list_by_activity.php?${params.toString()}`);
     const data = await resp.json();
     if (!data.success) throw new Error(data.message || 'Error');
+
+    const period = data.period || {};
+    const currentStart = normalizeIsoDate(period.fecha_inicio) || activeRange.start;
+    const currentEnd = normalizeIsoDate(period.fecha_fin) || activeRange.end;
+    const defaultRange = getDefaultAttendanceRange();
+    ActivityPage.attendanceRange = {
+      start: currentStart,
+      end: currentEnd,
+      isDefault: (currentStart === defaultRange.start && currentEnd === defaultRange.end)
+    };
+    updateAttendanceRangeSummary();
+
     ActivityPage.participants = (data.participants || []).slice().sort((a, b) => {
       const nameA = `${(a.apellidos||'').toString()} ${(a.nombre||'').toString()}`.trim();
       const nameB = `${(b.apellidos||'').toString()} ${(b.nombre||'').toString()}`.trim();
@@ -98,15 +208,15 @@ function renderParticipants() {
         <div class="center-main">
           <div class="center-header">
             <h3 class="center-name">${escapeHtml((p.apellidos || '') + ', ' + (p.nombre || ''))}</h3>
-            ${p.dias_con_lista_28d > 0 ? `<span class="center-status ${p.porcentaje_asistencia_28d >= 75 ? 'active' : p.porcentaje_asistencia_28d >= 50 ? '' : 'inactive'}" title="${p.asistencias_28d}/${p.dias_con_lista_28d} días">${p.porcentaje_asistencia_28d}%</span>` : ''}
+            ${p.dias_con_lista > 0 ? `<span class="center-status ${p.porcentaje_asistencia_periodo >= 75 ? 'active' : p.porcentaje_asistencia_periodo >= 50 ? '' : 'inactive'}" title="${p.asistencias_periodo}/${p.dias_con_lista} días">${p.porcentaje_asistencia_periodo}%</span>` : ''}
           </div>
           <div class="center-details">
-            ${p.dias_con_lista_28d > 0 ? `<span class="center-stat" title="Asistencias en los últimos 28 días">
+            ${p.dias_con_lista > 0 ? `<span class="center-stat" title="Asistencias en el periodo seleccionado">
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
               </svg>
-              ${p.asistencias_28d} de ${p.dias_con_lista_28d} días (28d)
-            </span>` : '<span class="center-stat" style="color:#94a3b8">Sin datos de asistencia</span>'}
+              ${p.asistencias_periodo} de ${p.dias_con_lista} días
+            </span>` : '<span class="center-stat" style="color:#94a3b8">Sin datos de asistencia en este periodo</span>'}
           </div>
         </div>
         <div class="center-actions">
@@ -205,6 +315,11 @@ async function handleEditActivitySubmit(e) {
       ActivityPage.ctx.hora_fin = hora_fin;
       ActivityPage.ctx.fecha_inicio = fecha_inicio;
       ActivityPage.ctx.fecha_fin = fecha_fin;
+      if (ActivityPage.attendanceRange?.isDefault) {
+        await loadParticipants(getDefaultAttendanceRange());
+      } else {
+        updateAttendanceRangeSummary();
+      }
       closeModal('editActivityModal');
       showNotification('Actividad actualizada', 'success');
     } else {
@@ -646,6 +761,8 @@ async function deleteAllParticipants() {
 
 // Expose handlers globally for inline onclick
 if (typeof window !== 'undefined') {
+  window.openAttendanceRangeModal = openAttendanceRangeModal;
+  window.resetAttendanceRangeToDefault = resetAttendanceRangeToDefault;
   window.confirmDeleteAllParticipants = confirmDeleteAllParticipants;
   window.deleteAllParticipants = deleteAllParticipants;
 }
