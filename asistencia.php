@@ -798,7 +798,7 @@ require_once 'includes/header.php';
         </div>
         <br>
         
-        <button type="submit" class="confirm-attendance-button">Confirmar Asistencias</button>
+        <button type="submit" class="confirm-attendance-button">Registrar con comentarios</button>
       </form>
 <?php endif; ?>
     </div>
