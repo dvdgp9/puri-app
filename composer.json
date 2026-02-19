@@ -1,0 +1,11 @@
+{
+    "name": "puri/app",
+    "description": "Sistema de gestión de asistencias",
+    "type": "project",
+    "require": {
+        "phpoffice/phpspreadsheet": "^1.29"
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

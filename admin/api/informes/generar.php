@@ -1,27 +1,65 @@
 <?php
 /**
  * API para generar informe de asistencias
- * Genera archivo CSV compatible con Excel
+ * Genera archivo Excel (.xlsx) con PhpSpreadsheet
  */
 
 require_once '../../../config/config.php';
 require_once '../../auth_middleware.php';
+require_once '../../../vendor/autoload.php';
 
-// Función para escribir línea CSV con UTF-8 BOM compatible con Excel
-function writeCsvLine($handle, $fields, $delimiter = ';') {
-    $line = '';
-    foreach ($fields as $field) {
-        $field = mb_convert_encoding($field, 'UTF-8', 'auto');
-        // Escapar comillas dobles
-        $field = str_replace('"', '""', $field);
-        // Encerrar en comillas si contiene delimitador, saltos de línea o comillas
-        if (strpos($field, $delimiter) !== false || strpos($field, "\n") !== false || strpos($field, '"') !== false) {
-            $field = '"' . $field . '"';
-        }
-        $line .= $field . $delimiter;
-    }
-    $line = rtrim($line, $delimiter) . "\r\n";
-    fwrite($handle, $line);
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+
+// Estilos reutilizables
+function getHeaderStyle() {
+    return [
+        'font' => ['bold' => true, 'size' => 12],
+        'fill' => [
+            'fillType' => Fill::FILL_SOLID,
+            'startColor' => ['rgb' => 'E2E8F0']
+        ],
+        'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT]
+    ];
+}
+
+function getTableHeaderStyle() {
+    return [
+        'font' => ['bold' => true, 'size' => 10],
+        'fill' => [
+            'fillType' => Fill::FILL_SOLID,
+            'startColor' => ['rgb' => 'CBD5E1']
+        ],
+        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        'borders' => [
+            'allBorders' => ['borderStyle' => Border::BORDER_THIN]
+        ]
+    ];
+}
+
+function getTotalsStyle() {
+    return [
+        'font' => ['bold' => true],
+        'fill' => [
+            'fillType' => Fill::FILL_SOLID,
+            'startColor' => ['rgb' => 'FEF3C7']
+        ],
+        'borders' => [
+            'allBorders' => ['borderStyle' => Border::BORDER_THIN]
+        ]
+    ];
+}
+
+function getCellBorderStyle() {
+    return [
+        'borders' => [
+            'allBorders' => ['borderStyle' => Border::BORDER_THIN]
+        ],
+        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+    ];
 }
 
 try {
@@ -99,7 +137,7 @@ try {
         $centro_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['centro_nombre']);
         
         $filename = sprintf(
-            'Aforo_%s%s_%s_%s_%s.csv',
+            'Aforo_%s%s_%s_%s_%s.xlsx',
             $actividad_slug,
             $grupo_slug,
             $instalacion_slug,
@@ -107,13 +145,10 @@ try {
             $fecha_hoy
         );
         
-        // Headers para CSV
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        
-        // Abrir output y escribir BOM para Excel
-        $output = fopen('php://output', 'w');
-        fwrite($output, "\xEF\xBB\xBF"); // UTF-8 BOM
+        // Crear spreadsheet
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Informe Aforo');
         
         // Calcular totales por día
         $totales_por_dia = [];
@@ -125,42 +160,77 @@ try {
         }
         $total_general = array_sum($totales_por_dia);
         
-        // Escribir cabecera
-        writeCsvLine($output, [$info['centro_nombre']]);
-        writeCsvLine($output, [$info['instalacion_nombre']]);
-        writeCsvLine($output, [$info['actividad_nombre'] . ' | ' . ($info['actividad_horario'] ?? '') . ' (AFORO)']);
-        writeCsvLine($output, ['Período:', $fechaInicio . ' a ' . $fechaFin]);
-        writeCsvLine($output, []); // Línea en blanco
-        writeCsvLine($output, ['Fecha', 'Hora', 'Nº Personas']);
+        // Cabecera del informe
+        $sheet->setCellValue('A1', $info['centro_nombre']);
+        $sheet->setCellValue('A2', $info['instalacion_nombre']);
+        $sheet->setCellValue('A3', $info['actividad_nombre'] . ' | ' . ($info['actividad_horario'] ?? '') . ' (AFORO)');
+        $sheet->setCellValue('A4', 'Período: ' . $fechaInicio . ' a ' . $fechaFin);
         
+        // Estilo cabecera
+        $sheet->getStyle('A1:C4')->applyFromArray(getHeaderStyle());
+        $sheet->mergeCells('A1:C1');
+        $sheet->mergeCells('A2:C2');
+        $sheet->mergeCells('A3:C3');
+        $sheet->mergeCells('A4:C4');
+        
+        // Encabezados de tabla
+        $sheet->setCellValue('A6', 'Fecha');
+        $sheet->setCellValue('B6', 'Hora');
+        $sheet->setCellValue('C6', 'Nº Personas');
+        $sheet->getStyle('A6:C6')->applyFromArray(getTableHeaderStyle());
+        
+        // Datos
+        $row = 7;
         $fecha_actual = '';
         foreach ($registros_aforo as $r) {
-            $fecha_fmt = date('d/m/Y', strtotime($r['fecha']));
-            $hora_fmt = substr($r['hora'], 0, 5);
-            
             // Total del día anterior
             if ($r['fecha'] !== $fecha_actual && $fecha_actual !== '') {
-                writeCsvLine($output, ['Total día', '', $totales_por_dia[$fecha_actual]]);
+                $sheet->setCellValue('A' . $row, 'Total día');
+                $sheet->setCellValue('C' . $row, $totales_por_dia[$fecha_actual]);
+                $sheet->getStyle('A' . $row . ':C' . $row)->applyFromArray(getTotalsStyle());
+                $row++;
             }
             $fecha_actual = $r['fecha'];
             
-            writeCsvLine($output, [$fecha_fmt, $hora_fmt, $r['num_personas']]);
+            $sheet->setCellValue('A' . $row, date('d/m/Y', strtotime($r['fecha'])));
+            $sheet->setCellValue('B' . $row, substr($r['hora'], 0, 5));
+            $sheet->setCellValue('C' . $row, $r['num_personas']);
+            $sheet->getStyle('A' . $row . ':C' . $row)->applyFromArray(getCellBorderStyle());
+            $row++;
         }
         
         // Total del último día
         if ($fecha_actual !== '') {
-            writeCsvLine($output, ['Total día', '', $totales_por_dia[$fecha_actual]]);
+            $sheet->setCellValue('A' . $row, 'Total día');
+            $sheet->setCellValue('C' . $row, $totales_por_dia[$fecha_actual]);
+            $sheet->getStyle('A' . $row . ':C' . $row)->applyFromArray(getTotalsStyle());
+            $row++;
         }
         
         // Total general
-        writeCsvLine($output, []);
-        writeCsvLine($output, ['TOTAL PERÍODO', '', $total_general]);
+        $row++;
+        $sheet->setCellValue('A' . $row, 'TOTAL PERÍODO');
+        $sheet->setCellValue('C' . $row, $total_general);
+        $sheet->getStyle('A' . $row . ':C' . $row)->applyFromArray(getTotalsStyle());
+        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(12);
         
         if (empty($registros_aforo)) {
-            writeCsvLine($output, ['No hay registros de aforo en este período']);
+            $sheet->setCellValue('A7', 'No hay registros de aforo en este período');
+            $sheet->mergeCells('A7:C7');
         }
         
-        fclose($output);
+        // Autosize columnas
+        foreach (range('A', 'C') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        // Headers y descarga
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
         exit;
     }
     
@@ -224,7 +294,7 @@ try {
     $centro_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['centro_nombre']);
 
     $filename = sprintf(
-        '%s%s_%s_%s_%s.csv',
+        '%s%s_%s_%s_%s.xlsx',
         $actividad_slug,
         $grupo_slug,
         $instalacion_slug,
@@ -232,14 +302,6 @@ try {
         $fecha_hoy
     );
 
-    // Configurar headers para CSV
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="' . $filename . '"');
-    
-    // Abrir output y escribir BOM para Excel
-    $output = fopen('php://output', 'w');
-    fwrite($output, "\xEF\xBB\xBF"); // UTF-8 BOM
-    
     // Obtener observaciones
     $stmt_obs = $pdo->prepare("
         SELECT fecha, observacion
@@ -254,6 +316,11 @@ try {
         $observaciones_por_fecha[$row['fecha']] = $row['observacion'];
     }
     
+    // Crear spreadsheet
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('Asistencias');
+    
     // Preparar headers de fechas
     $fecha_headers = [];
     foreach ($fechas as $fecha) {
@@ -262,59 +329,103 @@ try {
         $fecha_headers[] = $dia . '/' . $mes;
     }
     
-    // Escribir cabecera del informe
-    writeCsvLine($output, [$info['centro_nombre']]);
-    writeCsvLine($output, [$info['instalacion_nombre']]);
-    writeCsvLine($output, [$info['actividad_nombre'] . ' | ' . ($info['actividad_horario'] ?? '')]);
-    writeCsvLine($output, ['Período:', $fechaInicio . ' a ' . $fechaFin]);
-    writeCsvLine($output, []); // Línea en blanco
+    // Cabecera del informe (filas 1-4)
+    $sheet->setCellValue('A1', $info['centro_nombre']);
+    $sheet->setCellValue('A2', $info['instalacion_nombre']);
+    $sheet->setCellValue('A3', $info['actividad_nombre'] . ' | ' . ($info['actividad_horario'] ?? ''));
+    $sheet->setCellValue('A4', 'Período: ' . $fechaInicio . ' a ' . $fechaFin);
     
-    // Cabecera de columnas
-    $headers = array_merge(['Nombre completo'], $fecha_headers, ['Total']);
-    writeCsvLine($output, $headers);
+    // Calcular última columna
+    $numCols = count($fechas) + 2; // Nombre + fechas + Total
+    $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($numCols);
+    
+    // Estilo cabecera
+    $sheet->getStyle('A1:' . $lastCol . '4')->applyFromArray(getHeaderStyle());
+    $sheet->mergeCells('A1:' . $lastCol . '1');
+    $sheet->mergeCells('A2:' . $lastCol . '2');
+    $sheet->mergeCells('A3:' . $lastCol . '3');
+    $sheet->mergeCells('A4:' . $lastCol . '4');
+    
+    // Encabezados de columnas (fila 6)
+    $sheet->setCellValue('A6', 'Nombre completo');
+    $col = 2;
+    foreach ($fecha_headers as $fh) {
+        $sheet->setCellValueByColumnAndRow($col, 6, $fh);
+        $col++;
+    }
+    $sheet->setCellValueByColumnAndRow($col, 6, 'Total');
+    
+    $sheet->getStyle('A6:' . $lastCol . '6')->applyFromArray(getTableHeaderStyle());
     
     // Contadores por fecha
     $asistencias_por_fecha = array_fill_keys($fechas, 0);
     
-    // Filas de inscritos
+    // Filas de inscritos (desde fila 7)
+    $row = 7;
     foreach ($inscritos as $inscrito) {
-        $row = [$inscrito['apellidos'] . ', ' . $inscrito['nombre']];
-        $total = 0;
+        $sheet->setCellValue('A' . $row, $inscrito['apellidos'] . ', ' . $inscrito['nombre']);
+        $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
         
+        $col = 2;
+        $total = 0;
         foreach ($fechas as $fecha) {
             $asistio = isset($asistencias_por_usuario[$inscrito['id']][$fecha]) && 
                        $asistencias_por_usuario[$inscrito['id']][$fecha] == 1;
             
-            $row[] = $asistio ? 'X' : '';
+            $sheet->setCellValueByColumnAndRow($col, $row, $asistio ? 'X' : '');
             if ($asistio) {
                 $total++;
                 $asistencias_por_fecha[$fecha]++;
             }
+            $col++;
         }
+        $sheet->setCellValueByColumnAndRow($col, $row, $total);
         
-        $row[] = $total;
-        writeCsvLine($output, $row);
+        // Bordes para la fila
+        $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray(getCellBorderStyle());
+        $row++;
     }
     
     // Fila de totales
-    $totales_row = ['Total asistentes:'];
+    $sheet->setCellValue('A' . $row, 'Total asistentes:');
+    $col = 2;
     foreach ($fechas as $fecha) {
-        $totales_row[] = $asistencias_por_fecha[$fecha];
+        $sheet->setCellValueByColumnAndRow($col, $row, $asistencias_por_fecha[$fecha]);
+        $col++;
     }
-    $totales_row[] = '';
-    writeCsvLine($output, $totales_row);
+    $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray(getTotalsStyle());
+    $row++;
     
     // Fila de observaciones
-    $obs_row = ['Observaciones:'];
+    $sheet->setCellValue('A' . $row, 'Observaciones:');
+    $col = 2;
     foreach ($fechas as $fecha) {
         $obs = isset($observaciones_por_fecha[$fecha]) ? $observaciones_por_fecha[$fecha] : '';
         $obs = html_entity_decode($obs, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $obs_row[] = $obs;
+        $sheet->setCellValueByColumnAndRow($col, $row, $obs);
+        $col++;
     }
-    $obs_row[] = '';
-    writeCsvLine($output, $obs_row);
+    $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray([
+        'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F3F4F6']]
+    ]);
     
-    fclose($output);
+    // Autosize primera columna (nombres)
+    $sheet->getColumnDimension('A')->setAutoSize(true);
+    
+    // Ancho fijo para columnas de fechas
+    for ($i = 2; $i <= $numCols; $i++) {
+        $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+        $sheet->getColumnDimension($colLetter)->setWidth(8);
+    }
+    
+    // Headers y descarga
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
     exit;
 
 } catch (Exception $e) {

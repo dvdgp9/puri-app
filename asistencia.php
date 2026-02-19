@@ -171,6 +171,20 @@ $extraStyles = "
     td {
       position: relative;
     }
+    
+    /* Estilos para auto-guardado */
+    .attendance-row {
+      transition: background-color 0.3s ease;
+    }
+    .attendance-row.saving {
+      background-color: #fef9c3 !important;
+    }
+    .attendance-row.saved {
+      background-color: #d1fae5 !important;
+    }
+    .attendance-row.save-error {
+      background-color: #fee2e2 !important;
+    }
 
     .activity-header {
       display: flex;
@@ -368,17 +382,55 @@ $extraStyles = "
 require_once 'includes/header.php';
 ?>
   <script>
-    // Función para marcar el estado de asistencia
-    function marcar(usuarioId, estado) {
+    const ACTIVIDAD_ID_ASIST = <?php echo (int)$actividad_id; ?>;
+    const FECHA_ASIST = '<?php echo htmlspecialchars($fecha_seleccionada); ?>';
+    
+    // Función para marcar el estado de asistencia con auto-guardado
+    async function marcar(usuarioId, estado) {
       // estado: 1 = asiste, 0 = no asiste
       document.getElementById('asist_' + usuarioId).value = estado;
       // Actualizamos la apariencia de los botones
-      document.getElementById('btn_asiste_' + usuarioId).classList.remove('selected');
-      document.getElementById('btn_no_asiste_' + usuarioId).classList.remove('selected');
+      const btnAsiste = document.getElementById('btn_asiste_' + usuarioId);
+      const btnNoAsiste = document.getElementById('btn_no_asiste_' + usuarioId);
+      const row = document.getElementById('row_' + usuarioId);
+      
+      btnAsiste.classList.remove('selected');
+      btnNoAsiste.classList.remove('selected');
       if(estado == 1){
-          document.getElementById('btn_asiste_' + usuarioId).classList.add('selected');
+          btnAsiste.classList.add('selected');
       } else {
-          document.getElementById('btn_no_asiste_' + usuarioId).classList.add('selected');
+          btnNoAsiste.classList.add('selected');
+      }
+      
+      // Auto-guardar vía AJAX
+      row.classList.add('saving');
+      try {
+        const resp = await fetch('api/asistencia/guardar.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            actividad_id: ACTIVIDAD_ID_ASIST,
+            usuario_id: usuarioId,
+            fecha: FECHA_ASIST,
+            asistio: estado
+          })
+        });
+        const data = await resp.json();
+        
+        row.classList.remove('saving');
+        if (data.success) {
+          row.classList.add('saved');
+          setTimeout(() => row.classList.remove('saved'), 1500);
+        } else {
+          row.classList.add('save-error');
+          setTimeout(() => row.classList.remove('save-error'), 3000);
+          console.error('Error guardando:', data.message);
+        }
+      } catch (e) {
+        row.classList.remove('saving');
+        row.classList.add('save-error');
+        setTimeout(() => row.classList.remove('save-error'), 3000);
+        console.error('Error de conexión:', e);
       }
     }
     
