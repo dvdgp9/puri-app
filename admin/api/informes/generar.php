@@ -1,11 +1,28 @@
 <?php
 /**
  * API para generar informe de asistencias
- * Genera archivo Excel para una actividad
+ * Genera archivo CSV compatible con Excel
  */
 
 require_once '../../../config/config.php';
 require_once '../../auth_middleware.php';
+
+// Función para escribir línea CSV con UTF-8 BOM compatible con Excel
+function writeCsvLine($handle, $fields, $delimiter = ';') {
+    $line = '';
+    foreach ($fields as $field) {
+        $field = mb_convert_encoding($field, 'UTF-8', 'auto');
+        // Escapar comillas dobles
+        $field = str_replace('"', '""', $field);
+        // Encerrar en comillas si contiene delimitador, saltos de línea o comillas
+        if (strpos($field, $delimiter) !== false || strpos($field, "\n") !== false || strpos($field, '"') !== false) {
+            $field = '"' . $field . '"';
+        }
+        $line .= $field . $delimiter;
+    }
+    $line = rtrim($line, $delimiter) . "\r\n";
+    fwrite($handle, $line);
+}
 
 try {
     // Verificar datos requeridos
@@ -82,7 +99,7 @@ try {
         $centro_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['centro_nombre']);
         
         $filename = sprintf(
-            'Aforo_%s%s_%s_%s_%s.xls',
+            'Aforo_%s%s_%s_%s_%s.csv',
             $actividad_slug,
             $grupo_slug,
             $instalacion_slug,
@@ -90,8 +107,13 @@ try {
             $fecha_hoy
         );
         
-        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+        // Headers para CSV
+        header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
+        
+        // Abrir output y escribir BOM para Excel
+        $output = fopen('php://output', 'w');
+        fwrite($output, "\xEF\xBB\xBF"); // UTF-8 BOM
         
         // Calcular totales por día
         $totales_por_dia = [];
@@ -103,80 +125,42 @@ try {
         }
         $total_general = array_sum($totales_por_dia);
         
-        echo '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Informe de Aforo</title>
-    <style>
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .header-row { background-color: #e6e6e6; font-weight: bold; }
-        .total-row { font-weight: bold; background-color: #f9f9f9; }
-        .day-header { background-color: #dbeafe; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <table>
-        <tr class="header-row">
-            <td colspan="3">' . htmlspecialchars($info['centro_nombre']) . '</td>
-        </tr>
-        <tr class="header-row">
-            <td colspan="3">' . htmlspecialchars($info['instalacion_nombre']) . '</td>
-        </tr>
-        <tr class="header-row">
-            <td colspan="3">' . htmlspecialchars($info['actividad_nombre']) . ' | ' . htmlspecialchars($info['actividad_horario'] ?? '') . ' (AFORO)</td>
-        </tr>
-        <tr class="header-row">
-            <td>Período:</td>
-            <td colspan="2">' . $fechaInicio . ' a ' . $fechaFin . '</td>
-        </tr>
-        <tr>
-            <td colspan="3"></td>
-        </tr>
-        <tr>
-            <th>Fecha</th>
-            <th>Hora</th>
-            <th>Nº Personas</th>
-        </tr>';
+        // Escribir cabecera
+        writeCsvLine($output, [$info['centro_nombre']]);
+        writeCsvLine($output, [$info['instalacion_nombre']]);
+        writeCsvLine($output, [$info['actividad_nombre'] . ' | ' . ($info['actividad_horario'] ?? '') . ' (AFORO)']);
+        writeCsvLine($output, ['Período:', $fechaInicio . ' a ' . $fechaFin]);
+        writeCsvLine($output, []); // Línea en blanco
+        writeCsvLine($output, ['Fecha', 'Hora', 'Nº Personas']);
         
         $fecha_actual = '';
         foreach ($registros_aforo as $r) {
             $fecha_fmt = date('d/m/Y', strtotime($r['fecha']));
             $hora_fmt = substr($r['hora'], 0, 5);
             
-            // Mostrar cabecera de día con total
-            if ($r['fecha'] !== $fecha_actual) {
-                if ($fecha_actual !== '') {
-                    // Fila de total del día anterior
-                    echo '<tr class="total-row"><td colspan="2">Total día</td><td>' . $totales_por_dia[$fecha_actual] . '</td></tr>';
-                }
-                $fecha_actual = $r['fecha'];
+            // Total del día anterior
+            if ($r['fecha'] !== $fecha_actual && $fecha_actual !== '') {
+                writeCsvLine($output, ['Total día', '', $totales_por_dia[$fecha_actual]]);
             }
+            $fecha_actual = $r['fecha'];
             
-            echo '<tr>
-                <td>' . $fecha_fmt . '</td>
-                <td>' . $hora_fmt . '</td>
-                <td>' . $r['num_personas'] . '</td>
-            </tr>';
+            writeCsvLine($output, [$fecha_fmt, $hora_fmt, $r['num_personas']]);
         }
         
         // Total del último día
         if ($fecha_actual !== '') {
-            echo '<tr class="total-row"><td colspan="2">Total día</td><td>' . $totales_por_dia[$fecha_actual] . '</td></tr>';
+            writeCsvLine($output, ['Total día', '', $totales_por_dia[$fecha_actual]]);
         }
         
         // Total general
-        echo '<tr><td colspan="3"></td></tr>';
-        echo '<tr class="total-row"><td colspan="2">TOTAL PERÍODO</td><td>' . $total_general . '</td></tr>';
+        writeCsvLine($output, []);
+        writeCsvLine($output, ['TOTAL PERÍODO', '', $total_general]);
         
         if (empty($registros_aforo)) {
-            echo '<tr><td colspan="3" style="text-align:center; color:#666;">No hay registros de aforo en este período</td></tr>';
+            writeCsvLine($output, ['No hay registros de aforo en este período']);
         }
         
-        echo '</table></body></html>';
+        fclose($output);
         exit;
     }
     
@@ -240,7 +224,7 @@ try {
     $centro_slug = preg_replace('/[^a-z0-9]+/i', '_', $info['centro_nombre']);
 
     $filename = sprintf(
-        '%s%s_%s_%s_%s.xls',
+        '%s%s_%s_%s_%s.csv',
         $actividad_slug,
         $grupo_slug,
         $instalacion_slug,
@@ -248,9 +232,13 @@ try {
         $fecha_hoy
     );
 
-    // Configurar headers para descarga
-    header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+    // Configurar headers para CSV
+    header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
+    
+    // Abrir output y escribir BOM para Excel
+    $output = fopen('php://output', 'w');
+    fwrite($output, "\xEF\xBB\xBF"); // UTF-8 BOM
     
     // Obtener observaciones
     $stmt_obs = $pdo->prepare("
@@ -274,90 +262,59 @@ try {
         $fecha_headers[] = $dia . '/' . $mes;
     }
     
-    // Generar HTML para Excel
-    $colspan = count($fechas) + 2;
+    // Escribir cabecera del informe
+    writeCsvLine($output, [$info['centro_nombre']]);
+    writeCsvLine($output, [$info['instalacion_nombre']]);
+    writeCsvLine($output, [$info['actividad_nombre'] . ' | ' . ($info['actividad_horario'] ?? '')]);
+    writeCsvLine($output, ['Período:', $fechaInicio . ' a ' . $fechaFin]);
+    writeCsvLine($output, []); // Línea en blanco
     
-    echo '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Informe de Asistencias</title>
-    <style>
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .header-row { background-color: #e6e6e6; font-weight: bold; }
-        .total-row { font-weight: bold; background-color: #f9f9f9; }
-    </style>
-</head>
-<body>
-    <table>
-        <tr class="header-row">
-            <td colspan="' . $colspan . '">' . htmlspecialchars($info['centro_nombre']) . '</td>
-        </tr>
-        <tr class="header-row">
-            <td colspan="' . $colspan . '">' . htmlspecialchars($info['instalacion_nombre']) . '</td>
-        </tr>
-        <tr class="header-row">
-            <td colspan="' . $colspan . '">' . htmlspecialchars($info['actividad_nombre']) . ' | ' . htmlspecialchars($info['actividad_horario'] ?? '') . '</td>
-        </tr>
-        <tr class="header-row">
-            <td>Período:</td>
-            <td colspan="' . ($colspan - 1) . '">' . $fechaInicio . ' a ' . $fechaFin . '</td>
-        </tr>
-        <tr>
-            <td colspan="' . $colspan . '"></td>
-        </tr>
-        <tr>
-            <th>Nombre completo</th>';
-
-    foreach ($fecha_headers as $fh) {
-        echo '<th>' . $fh . '</th>';
-    }
-    echo '<th>Total</th></tr>';
+    // Cabecera de columnas
+    $headers = array_merge(['Nombre completo'], $fecha_headers, ['Total']);
+    writeCsvLine($output, $headers);
     
     // Contadores por fecha
     $asistencias_por_fecha = array_fill_keys($fechas, 0);
     
     // Filas de inscritos
     foreach ($inscritos as $inscrito) {
-        $nombreCompleto = htmlspecialchars($inscrito['apellidos'] . ', ' . $inscrito['nombre']);
-        echo '<tr><td>' . $nombreCompleto . '</td>';
-        
+        $row = [$inscrito['apellidos'] . ', ' . $inscrito['nombre']];
         $total = 0;
+        
         foreach ($fechas as $fecha) {
             $asistio = isset($asistencias_por_usuario[$inscrito['id']][$fecha]) && 
                        $asistencias_por_usuario[$inscrito['id']][$fecha] == 1;
             
-            echo '<td>' . ($asistio ? 'X' : '') . '</td>';
+            $row[] = $asistio ? 'X' : '';
             if ($asistio) {
                 $total++;
                 $asistencias_por_fecha[$fecha]++;
             }
         }
         
-        echo '<td>' . $total . '</td></tr>';
+        $row[] = $total;
+        writeCsvLine($output, $row);
     }
     
     // Fila de totales
-    echo '<tr class="total-row"><td>Total asistentes:</td>';
+    $totales_row = ['Total asistentes:'];
     foreach ($fechas as $fecha) {
-        echo '<td>' . $asistencias_por_fecha[$fecha] . '</td>';
+        $totales_row[] = $asistencias_por_fecha[$fecha];
     }
-    echo '<td></td></tr>';
+    $totales_row[] = '';
+    writeCsvLine($output, $totales_row);
     
     // Fila de observaciones
-    echo '<tr><td>Observaciones:</td>';
+    $obs_row = ['Observaciones:'];
     foreach ($fechas as $fecha) {
         $obs = isset($observaciones_por_fecha[$fecha]) ? $observaciones_por_fecha[$fecha] : '';
         $obs = html_entity_decode($obs, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $obs = htmlspecialchars($obs);
-        echo '<td>' . $obs . '</td>';
+        $obs_row[] = $obs;
     }
-    echo '<td></td></tr>';
+    $obs_row[] = '';
+    writeCsvLine($output, $obs_row);
     
-    echo '</table></body></html>';
+    fclose($output);
     exit;
 
 } catch (Exception $e) {
