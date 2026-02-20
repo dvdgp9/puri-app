@@ -59,7 +59,7 @@ try {
             <div class="title">Puri: Gestión de centros deportivos</div>
         </div>
         <div class="actions">
-            <a href="../informes.php" class="btn btn-secondary">
+            <a href="informes.php" class="btn btn-secondary">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6l3 3v-3h2V9h-2M4 4h11v8H9l-3 3v-3H4V4z"/>
                 </svg>
