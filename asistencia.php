@@ -377,6 +377,62 @@ $extraStyles = "
       background: #dbeafe;
       color: #1e40af;
     }
+
+    .attendance-summary-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1200;
+      background: rgba(17, 24, 39, 0.96);
+      color: #fff;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(6px);
+    }
+    .attendance-summary-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    .summary-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.95;
+    }
+    .summary-item strong {
+      font-size: 1rem;
+      color: #fff;
+    }
+    .summary-item.total strong { color: #93c5fd; }
+    .summary-item.presentes strong { color: #86efac; }
+    .summary-item.ausentes strong { color: #fca5a5; }
+    .summary-updated {
+      font-size: 0.78rem;
+      opacity: 0.8;
+      font-weight: 500;
+    }
+    .with-summary-bar {
+      padding-bottom: 72px;
+    }
+    @media (max-width: 640px) {
+      .attendance-summary-inner {
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+      }
+      .summary-updated {
+        width: 100%;
+        text-align: right;
+      }
+    }
   </style>
 ";
 require_once 'includes/header.php';
@@ -384,6 +440,32 @@ require_once 'includes/header.php';
   <script>
     const ACTIVIDAD_ID_ASIST = <?php echo (int)$actividad_id; ?>;
     const FECHA_ASIST = '<?php echo htmlspecialchars($fecha_seleccionada); ?>';
+    let attendanceSummaryTimer = null;
+
+    async function actualizarResumenAsistencia() {
+      const totalEl = document.getElementById('summary-total');
+      if (!totalEl) return;
+      try {
+        const resp = await fetch(`api/asistencia/resumen.php?actividad_id=${encodeURIComponent(ACTIVIDAD_ID_ASIST)}&fecha=${encodeURIComponent(FECHA_ASIST)}`, {
+          cache: 'no-store'
+        });
+        const data = await resp.json();
+        if (!data.success) return;
+        document.getElementById('summary-total').textContent = data.total;
+        document.getElementById('summary-presentes').textContent = data.presentes;
+        document.getElementById('summary-ausentes').textContent = data.ausentes;
+        const updatedEl = document.getElementById('summary-updated-at');
+        if (updatedEl) {
+          const now = new Date();
+          const hh = String(now.getHours()).padStart(2, '0');
+          const mm = String(now.getMinutes()).padStart(2, '0');
+          const ss = String(now.getSeconds()).padStart(2, '0');
+          updatedEl.textContent = `Actualizado ${hh}:${mm}:${ss}`;
+        }
+      } catch (e) {
+        console.error('Error actualizando resumen de asistencia:', e);
+      }
+    }
     
     // Función para marcar el estado de asistencia con auto-guardado
     async function marcar(usuarioId, estado) {
@@ -420,6 +502,7 @@ require_once 'includes/header.php';
         row.classList.remove('saving');
         if (data.success) {
           row.classList.add('saved');
+          actualizarResumenAsistencia();
           setTimeout(() => row.classList.remove('saved'), 1500);
         } else {
           row.classList.add('save-error');
@@ -436,6 +519,16 @@ require_once 'includes/header.php';
     
     // Script para ocultar los mensajes de confirmación y error después de 5 segundos
     document.addEventListener('DOMContentLoaded', function() {
+      actualizarResumenAsistencia();
+      if (!attendanceSummaryTimer) {
+        attendanceSummaryTimer = setInterval(actualizarResumenAsistencia, 8000);
+      }
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+          actualizarResumenAsistencia();
+        }
+      });
+
       const mensajes = document.querySelectorAll('.mensaje-exito, .mensaje-error');
       
       mensajes.forEach(function(mensaje) {
@@ -558,7 +651,7 @@ require_once 'includes/header.php';
     });
   </script>
 
-  <div class="content-wrapper">
+  <div class="content-wrapper <?php echo !$es_aforo ? 'with-summary-bar' : ''; ?>">
     <div class="content-container">
       <div class="actions-row">
         <button type="button" class="btn-primary btn-action btn-block-mobile" onclick="copyActivityLink()" aria-label="Copiar enlace a actividad">
@@ -800,6 +893,15 @@ require_once 'includes/header.php';
         
         <button type="submit" class="confirm-attendance-button">Registrar con comentarios</button>
       </form>
+
+      <div class="attendance-summary-bar" aria-live="polite">
+        <div class="attendance-summary-inner">
+          <span class="summary-item total">Total: <strong id="summary-total"><?php echo count($usuarios); ?></strong></span>
+          <span class="summary-item presentes">Asisten: <strong id="summary-presentes">0</strong></span>
+          <span class="summary-item ausentes">No asisten: <strong id="summary-ausentes"><?php echo count($usuarios); ?></strong></span>
+          <span class="summary-updated" id="summary-updated-at">Actualizando...</span>
+        </div>
+      </div>
 <?php endif; ?>
     </div>
 
