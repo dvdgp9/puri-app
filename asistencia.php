@@ -379,23 +379,17 @@ $extraStyles = "
     }
 
     .attendance-summary-bar {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 1200;
-      background: rgba(17, 24, 39, 0.96);
-      color: #fff;
-      border-top: 1px solid rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(6px);
+      margin-top: 16px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
     .attendance-summary-inner {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 10px 16px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       gap: 16px;
       flex-wrap: wrap;
       font-size: 0.95rem;
@@ -405,32 +399,29 @@ $extraStyles = "
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      opacity: 0.95;
+      color: #4b5563;
     }
     .summary-item strong {
       font-size: 1rem;
-      color: #fff;
+      color: #111827;
     }
-    .summary-item.total strong { color: #93c5fd; }
-    .summary-item.presentes strong { color: #86efac; }
-    .summary-item.ausentes strong { color: #fca5a5; }
+    .summary-item.total strong { color: #2563eb; }
+    .summary-item.presentes strong { color: #059669; }
+    .summary-item.ausentes strong { color: #dc2626; }
     .summary-updated {
       font-size: 0.78rem;
-      opacity: 0.8;
+      color: #6b7280;
       font-weight: 500;
-    }
-    .with-summary-bar {
-      padding-bottom: 72px;
     }
     @media (max-width: 640px) {
       .attendance-summary-inner {
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 10px;
         padding: 10px 12px;
       }
       .summary-updated {
         width: 100%;
-        text-align: right;
+        text-align: left;
       }
     }
   </style>
@@ -651,7 +642,7 @@ require_once 'includes/header.php';
     });
   </script>
 
-  <div class="content-wrapper <?php echo !$es_aforo ? 'with-summary-bar' : ''; ?>">
+  <div class="content-wrapper">
     <div class="content-container">
       <div class="actions-row">
         <button type="button" class="btn-primary btn-action btn-block-mobile" onclick="copyActivityLink()" aria-label="Copiar enlace a actividad">
@@ -876,6 +867,15 @@ require_once 'includes/header.php';
             <?php endforeach; ?>
           </tbody>
         </table>
+        
+        <div class="attendance-summary-bar" aria-live="polite">
+          <div class="attendance-summary-inner">
+            <span class="summary-item total">Total: <strong id="summary-total"><?php echo count($usuarios); ?></strong></span>
+            <span class="summary-item presentes">Asisten: <strong id="summary-presentes">0</strong></span>
+            <span class="summary-item ausentes">No asisten: <strong id="summary-ausentes"><?php echo count($usuarios); ?></strong></span>
+            <span class="summary-updated" id="summary-updated-at">Actualizando...</span>
+          </div>
+        </div>
         <br>
         
         <!-- Sección de Observaciones -->
@@ -894,14 +894,6 @@ require_once 'includes/header.php';
         <button type="submit" class="confirm-attendance-button">Registrar con comentarios</button>
       </form>
 
-      <div class="attendance-summary-bar" aria-live="polite">
-        <div class="attendance-summary-inner">
-          <span class="summary-item total">Total: <strong id="summary-total"><?php echo count($usuarios); ?></strong></span>
-          <span class="summary-item presentes">Asisten: <strong id="summary-presentes">0</strong></span>
-          <span class="summary-item ausentes">No asisten: <strong id="summary-ausentes"><?php echo count($usuarios); ?></strong></span>
-          <span class="summary-updated" id="summary-updated-at">Actualizando...</span>
-        </div>
-      </div>
 <?php endif; ?>
     </div>
 
