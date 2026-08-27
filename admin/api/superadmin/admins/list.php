@@ -25,7 +25,8 @@ try {
     $where = '';
     $params = [];
     if ($search !== '') {
-        $where = 'WHERE (a.username LIKE ? OR a.nombre LIKE ? OR a.apellidos LIKE ?)';
+        $where = 'WHERE (a.username LIKE ? OR a.nombre LIKE ? OR a.apellidos LIKE ? OR a.email LIKE ?)';
+        $params[] = "%$search%";
         $params[] = "%$search%";
         $params[] = "%$search%";
         $params[] = "%$search%";
@@ -37,6 +38,7 @@ try {
             a.username, 
             a.nombre,
             a.apellidos,
+            a.email,
             a.role, 
             a.created_at,
             (SELECT COUNT(*) FROM admin_asignaciones WHERE admin_id = a.id) AS centers_count

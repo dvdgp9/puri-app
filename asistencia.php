@@ -689,6 +689,16 @@ require_once 'includes/header.php';
           unset($_SESSION['mensaje_error']); // Eliminar el mensaje después de mostrarlo
       }
       ?>
+
+      <section id="monitor-evaluations-section" class="monitor-evaluations-section" aria-labelledby="monitor-evaluations-title" hidden>
+        <div class="monitor-evaluations-header">
+          <div>
+            <h3 id="monitor-evaluations-title">Evaluaciones</h3>
+            <p>Pruebas disponibles para realizar en cualquiera de las clases del período.</p>
+          </div>
+        </div>
+        <div id="monitor-evaluations-list" class="monitor-evaluations-list" aria-live="polite"></div>
+      </section>
       
 <?php if ($es_aforo): ?>
       <!-- UI de Control de Aforo -->
@@ -899,5 +909,14 @@ require_once 'includes/header.php';
 
     <!-- Enlace para añadir inscritos eliminado para evitar modificaciones desde esta vista -->
   </div>
+
+  <script>
+    window.MonitorEvaluationsContext = {
+      view: 'activity',
+      activityId: <?php echo (int)$actividad_id; ?>,
+      today: <?php echo json_encode(date('Y-m-d')); ?>
+    };
+  </script>
+  <script src="public/assets/js/evaluaciones-monitor.js"></script>
 
   <?php require_once 'includes/footer.php'; ?>

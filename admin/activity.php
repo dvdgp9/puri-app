@@ -106,7 +106,7 @@ if (!$actividad) {
             <span class="breadcrumb-separator">/</span>
             <a href="installation.php?id=<?= (int)$actividad['instalacion_id'] ?>"><?= htmlspecialchars($actividad['instalacion_nombre']) ?></a>
             <span class="breadcrumb-separator">/</span>
-            <span class="breadcrumb-current">Participantes</span>
+            <span class="breadcrumb-current">Actividad</span>
         </nav>
 
         <!-- Activity Header -->
@@ -171,8 +171,30 @@ if (!$actividad) {
             </div>
         </div>
 
+        <nav class="activity-section-tabs" role="tablist" aria-label="Contenido de la actividad">
+            <button
+                type="button"
+                class="activity-section-tab active"
+                id="participants-tab"
+                role="tab"
+                aria-selected="true"
+                aria-controls="participants-panel">
+                Participantes
+            </button>
+            <button
+                type="button"
+                class="activity-section-tab"
+                id="evaluations-tab"
+                role="tab"
+                aria-selected="false"
+                aria-controls="evaluations-panel">
+                Evaluaciones
+                <span class="activity-tab-count" id="evaluations-tab-count" hidden>0</span>
+            </button>
+        </nav>
+
         <!-- Panel Participantes -->
-        <div class="centers-panel">
+        <section class="centers-panel activity-section-panel" id="participants-panel" role="tabpanel" aria-labelledby="participants-tab">
             <div class="centers-header">
                 <h2 class="centers-title">Participantes</h2>
                 <div class="centers-actions">
@@ -198,7 +220,27 @@ if (!$actividad) {
                     <!-- Participantes -->
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- Panel Evaluaciones: solo se carga al abrir esta sección -->
+        <section class="centers-panel activity-section-panel" id="evaluations-panel" role="tabpanel" aria-labelledby="evaluations-tab" hidden>
+            <div class="centers-header evaluations-panel-header">
+                <div>
+                    <h2 class="centers-title">Evaluaciones</h2>
+                    <p class="evaluations-panel-copy">Planifica qué se medirá y durante qué período. El monitor elegirá el día concreto.</p>
+                </div>
+                <button class="btn btn-primary" type="button" onclick="openCreateEvaluationModal()">
+                    Nueva evaluación
+                </button>
+            </div>
+            <div class="centers-content">
+                <div id="evaluations-list" class="evaluations-list" aria-live="polite">
+                    <div class="evaluation-list-skeleton" aria-label="Cargando evaluaciones">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script>
@@ -460,6 +502,111 @@ if (!$actividad) {
                 <button type="button" class="btn btn-secondary" onclick="resetAttendanceRangeToDefault()">Por defecto</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal('attendanceRangeModal')">Cancelar</button>
                 <button type="submit" form="attendanceRangeForm" class="btn btn-primary">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Crear o editar evaluación -->
+    <div id="evaluationModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal modal-medium" role="dialog" aria-modal="true" aria-labelledby="evaluationModalTitle">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title" id="evaluationModalTitle">Nueva evaluación</h3>
+                    <p class="modal-intro">El monitor decidirá la fecha real dentro del período indicado.</p>
+                </div>
+                <button class="modal-close" type="button" onclick="closeModal('evaluationModal')" aria-label="Cerrar modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="evaluationForm" novalidate>
+                    <input type="hidden" id="evaluationId" name="evaluacion_id">
+                    <div class="form-group">
+                        <label for="evaluationName">Nombre de la evaluación *</label>
+                        <input type="text" id="evaluationName" name="nombre" maxlength="150" autocomplete="off" required>
+                        <p class="form-hint">Ejemplo: Burpees en 1 minuto.</p>
+                        <span class="field-error" id="evaluationName-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="evaluationInstructions">Indicaciones para el monitor</label>
+                        <textarea id="evaluationInstructions" name="instrucciones" rows="3" placeholder="Describe cómo realizar la prueba de forma breve."></textarea>
+                        <span class="field-error" id="evaluationInstructions-error"></span>
+                    </div>
+                    <fieldset class="evaluation-form-section">
+                        <legend>Período disponible</legend>
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label for="evaluationDateStart">Desde *</label>
+                                <input type="date" id="evaluationDateStart" name="fecha_inicio" required>
+                                <span class="field-error" id="evaluationDateStart-error"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="evaluationDateEnd">Hasta *</label>
+                                <input type="date" id="evaluationDateEnd" name="fecha_fin" required>
+                                <span class="field-error" id="evaluationDateEnd-error"></span>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset class="evaluation-form-section">
+                        <legend>Dato que se registrará</legend>
+                        <div class="form-group">
+                            <label for="evaluationFieldName">Nombre del dato *</label>
+                            <input type="text" id="evaluationFieldName" name="campo_nombre" maxlength="150" autocomplete="off" required>
+                            <p class="form-hint">Ejemplo: Número de burpees.</p>
+                            <span class="field-error" id="evaluationFieldName-error"></span>
+                        </div>
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label for="evaluationDataType">Formato *</label>
+                                <select id="evaluationDataType" name="tipo_dato" required>
+                                    <option value="entero">Número entero</option>
+                                    <option value="decimal">Número con decimales</option>
+                                    <option value="duracion">Duración</option>
+                                    <option value="texto_corto">Texto corto</option>
+                                </select>
+                                <span class="field-error" id="evaluationDataType-error"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="evaluationUnit">Unidad</label>
+                                <input type="text" id="evaluationUnit" name="unidad" maxlength="50" placeholder="repeticiones">
+                                <span class="field-error" id="evaluationUnit-error"></span>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="form-error evaluation-form-error" id="evaluationFormError" role="alert"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('evaluationModal')">Cancelar</button>
+                <button type="submit" form="evaluationForm" class="btn btn-primary" id="saveEvaluationBtn">
+                    <span class="btn-text">Guardar evaluación</span>
+                    <span class="btn-loading">Guardando...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Resultados de evaluación -->
+    <div id="evaluationResultsModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal modal-large evaluation-results-modal" role="dialog" aria-modal="true" aria-labelledby="evaluationResultsTitle">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title" id="evaluationResultsTitle">Resultados</h3>
+                    <p class="modal-intro" id="evaluationResultsMeta"></p>
+                </div>
+                <button class="modal-close" type="button" onclick="closeModal('evaluationResultsModal')" aria-label="Cerrar modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="evaluation-results-toolbar">
+                    <p id="evaluationResultsCoverage" aria-live="polite"></p>
+                    <button class="btn btn-secondary" type="button" id="reopenEvaluationBtn" onclick="reopenEvaluation()" hidden>Reabrir para el monitor</button>
+                </div>
+                <div id="evaluation-results-list" class="evaluation-results-list" aria-live="polite">
+                    <div class="evaluation-list-skeleton" aria-label="Cargando resultados">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('evaluationResultsModal')">Cerrar</button>
             </div>
         </div>
     </div>

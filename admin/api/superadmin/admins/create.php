@@ -29,6 +29,7 @@ try {
     $role = trim($payload['role'] ?? '');
     $nombre = trim($payload['nombre'] ?? '');
     $apellidos = trim($payload['apellidos'] ?? '');
+    $email = strtolower(trim($payload['email'] ?? ''));
 
     // Validaciones
     if ($username === '' || $password === '' || $role === '') {
@@ -50,6 +51,12 @@ try {
         exit;
     }
 
+    if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'El correo de avisos no es válido']);
+        exit;
+    }
+
     // Username único
     $stmt = $pdo->prepare('SELECT id FROM admins WHERE username = ?');
     $stmt->execute([$username]);
@@ -61,12 +68,12 @@ try {
 
     // Crear
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare('INSERT INTO admins (username, password_hash, role, nombre, apellidos) VALUES (?, ?, ?, ?, ?)');
-    $stmt->execute([$username, $password_hash, $role, $nombre ?: null, $apellidos ?: null]);
+    $stmt = $pdo->prepare('INSERT INTO admins (username, password_hash, role, nombre, apellidos, email) VALUES (?, ?, ?, ?, ?, ?)');
+    $stmt->execute([$username, $password_hash, $role, $nombre ?: null, $apellidos ?: null, $email ?: null]);
     $newId = (int)$pdo->lastInsertId();
 
     // Recuperar registro creado
-    $stmt = $pdo->prepare('SELECT id, username, nombre, apellidos, role, created_at FROM admins WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, username, nombre, apellidos, email, role, created_at FROM admins WHERE id = ?');
     $stmt->execute([$newId]);
     $created = $stmt->fetch(PDO::FETCH_ASSOC);
 

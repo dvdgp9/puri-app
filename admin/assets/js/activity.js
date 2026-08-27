@@ -13,6 +13,18 @@ if (!window.ActivityPage.participants) {
 if (!window.ActivityPage.attendanceRange) {
   window.ActivityPage.attendanceRange = null;
 }
+ActivityPage.evaluations = ActivityPage.evaluations || [];
+ActivityPage.evaluationsLoaded = false;
+ActivityPage.currentEvaluationDetail = null;
+const EvaluationAdminApi = Object.freeze({
+  list: 'api/evaluaciones/list_by_activity.php',
+  detail: 'api/evaluaciones/detail.php',
+  create: 'api/evaluaciones/create.php',
+  update: 'api/evaluaciones/update.php',
+  archive: 'api/evaluaciones/archive.php',
+  reopen: 'api/evaluaciones/reopen.php',
+  updateResult: 'api/evaluaciones/update_result.php'
+});
 
 function todayIsoLocal() {
   const now = new Date();
@@ -133,6 +145,16 @@ window.addEventListener('DOMContentLoaded', () => {
   if (editParticipantForm) editParticipantForm.addEventListener('submit', handleEditParticipantSubmit);
   const attendanceRangeForm = document.getElementById('attendanceRangeForm');
   if (attendanceRangeForm) attendanceRangeForm.addEventListener('submit', handleAttendanceRangeSubmit);
+  const evaluationForm = document.getElementById('evaluationForm');
+  if (evaluationForm) evaluationForm.addEventListener('submit', handleEvaluationSubmit);
+
+  const participantsTab = document.getElementById('participants-tab');
+  const evaluationsTab = document.getElementById('evaluations-tab');
+  if (participantsTab) participantsTab.addEventListener('click', () => switchActivitySection('participants'));
+  if (evaluationsTab) evaluationsTab.addEventListener('click', () => switchActivitySection('evaluations'));
+  if (window.location.hash === '#evaluaciones') {
+    switchActivitySection('evaluations');
+  }
 
   // Header profile dropdown toggle
   const profileBtn = document.getElementById('profile-dropdown-btn');
@@ -594,6 +616,461 @@ async function handleUploadCsvSubmit(e) {
   } finally {
     const btn = document.getElementById('uploadParticipantsCsvBtn');
     setBtnLoading(btn, false);
+  }
+}
+
+// Evaluations: contextual Admin section
+function switchActivitySection(section) {
+  const showEvaluations = section === 'evaluations';
+  const participantsTab = document.getElementById('participants-tab');
+  const evaluationsTab = document.getElementById('evaluations-tab');
+  const participantsPanel = document.getElementById('participants-panel');
+  const evaluationsPanel = document.getElementById('evaluations-panel');
+
+  if (!participantsTab || !evaluationsTab || !participantsPanel || !evaluationsPanel) return;
+
+  participantsTab.classList.toggle('active', !showEvaluations);
+  participantsTab.setAttribute('aria-selected', showEvaluations ? 'false' : 'true');
+  evaluationsTab.classList.toggle('active', showEvaluations);
+  evaluationsTab.setAttribute('aria-selected', showEvaluations ? 'true' : 'false');
+  participantsPanel.hidden = showEvaluations;
+  evaluationsPanel.hidden = !showEvaluations;
+
+  const nextHash = showEvaluations ? '#evaluaciones' : '';
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${nextHash}`);
+  }
+
+  if (showEvaluations && !ActivityPage.evaluationsLoaded) loadEvaluations();
+}
+
+function evaluationApiMessage(result, fallback) {
+  return result?.error?.message || result?.message || fallback;
+}
+
+async function evaluationApiRequest(url, options = {}) {
+  const response = await fetch(url, options);
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('El servidor no devolvió una respuesta válida.');
+  }
+  if (!response.ok || !result.success) {
+    const apiError = new Error(evaluationApiMessage(result, 'No se pudo completar la operación.'));
+    apiError.fields = result?.error?.fields || {};
+    throw apiError;
+  }
+  return result.data;
+}
+
+async function loadEvaluations() {
+  const container = document.getElementById('evaluations-list');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="evaluation-list-skeleton" aria-label="Cargando evaluaciones">
+      <span></span><span></span><span></span>
+    </div>`;
+
+  try {
+    const data = await evaluationApiRequest(`${EvaluationAdminApi.list}?actividad_id=${encodeURIComponent(ActivityPage.id)}&include_archived=1`);
+    ActivityPage.evaluations = Array.isArray(data.evaluaciones) ? data.evaluaciones : [];
+    ActivityPage.evaluationsLoaded = true;
+    renderEvaluations();
+    updateEvaluationTabCount(ActivityPage.evaluations.length);
+  } catch (error) {
+    console.error('Error cargando evaluaciones de la actividad:', error);
+    ActivityPage.evaluationsLoaded = false;
+    container.innerHTML = `
+      <div class="evaluation-empty-state evaluation-error-state">
+        <strong>No se pudieron cargar las evaluaciones</strong>
+        <p>${escapeHtml(error.message)}</p>
+        <button class="btn btn-secondary" type="button" onclick="loadEvaluations()">Reintentar</button>
+      </div>`;
+  }
+}
+
+function updateEvaluationTabCount(count) {
+  const badge = document.getElementById('evaluations-tab-count');
+  if (!badge) return;
+  badge.textContent = String(count);
+  badge.hidden = count === 0;
+}
+
+function evaluationStateLabel(state) {
+  return ({
+    programada: 'Programada',
+    pendiente: 'Pendiente',
+    en_curso: 'En curso',
+    en_curso_fuera_de_plazo: 'En curso · fuera de plazo',
+    finalizada: 'Finalizada',
+    fuera_de_plazo: 'Fuera de plazo',
+    archivada: 'Archivada'
+  })[state] || 'Sin estado';
+}
+
+function evaluationTypeLabel(type) {
+  return ({
+    entero: 'Número entero',
+    decimal: 'Número decimal',
+    duracion: 'Duración',
+    texto_corto: 'Texto corto'
+  })[type] || type || 'Dato';
+}
+
+function renderEvaluations() {
+  const container = document.getElementById('evaluations-list');
+  if (!container) return;
+
+  if (!ActivityPage.evaluations.length) {
+    container.innerHTML = `
+      <div class="evaluation-empty-state">
+        <strong>No hay evaluaciones</strong>
+        <p>Crea la primera cuando tengas definido qué dato debe registrar el monitor.</p>
+        <button class="btn btn-primary" type="button" onclick="openCreateEvaluationModal()">Nueva evaluación</button>
+      </div>`;
+    return;
+  }
+
+  const statePriority = {
+    en_curso: 0,
+    en_curso_fuera_de_plazo: 1,
+    pendiente: 2,
+    programada: 3,
+    fuera_de_plazo: 4,
+    finalizada: 5,
+    archivada: 6
+  };
+  const sorted = ActivityPage.evaluations.slice().sort((a, b) => {
+    const stateOrder = (statePriority[a.estado] ?? 99) - (statePriority[b.estado] ?? 99);
+    if (stateOrder !== 0) return stateOrder;
+    return String(b.fecha_inicio).localeCompare(String(a.fecha_inicio));
+  });
+
+  container.innerHTML = sorted.map(evaluation => {
+    const field = evaluation.campos?.[0] || {};
+    const coverage = evaluation.cobertura || {};
+    const measured = Number(coverage.medidos || 0);
+    const total = Number(coverage.total_participantes || 0);
+    const hasSession = Boolean(evaluation.sesion?.id);
+    const isArchived = evaluation.estado === 'archivada';
+    const coverageText = hasSession
+      ? `${measured} de ${total} registrados`
+      : 'Todavía no realizada';
+    const unitText = field.unidad ? ` · ${field.unidad}` : '';
+
+    return `
+      <article class="evaluation-row${isArchived ? ' is-archived' : ''}">
+        <div class="evaluation-row-main">
+          <div class="evaluation-row-heading">
+            <h3>${escapeHtml(evaluation.nombre)}</h3>
+            <span class="evaluation-state evaluation-state-${escapeHtml(evaluation.estado)}">${escapeHtml(evaluationStateLabel(evaluation.estado))}</span>
+          </div>
+          <p class="evaluation-period">${formatDateEs(evaluation.fecha_inicio)} → ${formatDateEs(evaluation.fecha_fin)}</p>
+          <p class="evaluation-metadata">${escapeHtml(field.nombre || 'Dato sin nombre')} · ${escapeHtml(evaluationTypeLabel(field.tipo_dato))}${escapeHtml(unitText)} · ${escapeHtml(coverageText)}</p>
+        </div>
+        <div class="evaluation-row-actions">
+          ${hasSession ? `<button class="btn btn-primary" type="button" onclick="openEvaluationResults(${Number(evaluation.id)})">Ver resultados</button>` : ''}
+          <button class="btn btn-secondary" type="button" onclick="openEditEvaluationModal(${Number(evaluation.id)})">Editar</button>
+          ${!isArchived ? `<button class="btn btn-secondary btn-subtle-danger" type="button" onclick="archiveEvaluation(${Number(evaluation.id)})">Archivar</button>` : ''}
+        </div>
+      </article>`;
+  }).join('');
+}
+
+function clearEvaluationFormErrors() {
+  document.querySelectorAll('#evaluationForm .field-error').forEach(element => { element.textContent = ''; });
+  const formError = document.getElementById('evaluationFormError');
+  if (formError) formError.textContent = '';
+}
+
+function setEvaluationFormError(field, message) {
+  const fieldMap = {
+    nombre: 'evaluationName-error',
+    instrucciones: 'evaluationInstructions-error',
+    fecha_inicio: 'evaluationDateStart-error',
+    fecha_fin: 'evaluationDateEnd-error',
+    'campo.nombre': 'evaluationFieldName-error',
+    'campo.tipo_dato': 'evaluationDataType-error',
+    'campo.unidad': 'evaluationUnit-error'
+  };
+  const target = document.getElementById(fieldMap[field] || '');
+  if (target) target.textContent = message;
+}
+
+function resetEvaluationForm() {
+  const form = document.getElementById('evaluationForm');
+  if (form) form.reset();
+  const idInput = document.getElementById('evaluationId');
+  if (idInput) idInput.value = '';
+  const typeInput = document.getElementById('evaluationDataType');
+  if (typeInput) typeInput.value = 'entero';
+  clearEvaluationFormErrors();
+}
+
+function openCreateEvaluationModal() {
+  resetEvaluationForm();
+  const title = document.getElementById('evaluationModalTitle');
+  if (title) title.textContent = 'Nueva evaluación';
+  const start = document.getElementById('evaluationDateStart');
+  const end = document.getElementById('evaluationDateEnd');
+  const activityStart = normalizeIsoDate(String(ActivityPage.ctx?.fecha_inicio || '').substring(0, 10));
+  const activityEnd = normalizeIsoDate(String(ActivityPage.ctx?.fecha_fin || '').substring(0, 10));
+  if (start) start.value = activityStart || todayIsoLocal();
+  if (end) end.value = activityEnd || start?.value || todayIsoLocal();
+  openModal('evaluationModal');
+  document.getElementById('evaluationName')?.focus();
+}
+
+function openEditEvaluationModal(evaluationId) {
+  const evaluation = ActivityPage.evaluations.find(item => Number(item.id) === Number(evaluationId));
+  if (!evaluation) return;
+  resetEvaluationForm();
+  const field = evaluation.campos?.[0] || {};
+  const values = {
+    evaluationId: evaluation.id,
+    evaluationName: evaluation.nombre || '',
+    evaluationInstructions: evaluation.instrucciones || '',
+    evaluationDateStart: evaluation.fecha_inicio || '',
+    evaluationDateEnd: evaluation.fecha_fin || '',
+    evaluationFieldName: field.nombre || '',
+    evaluationDataType: field.tipo_dato || 'entero',
+    evaluationUnit: field.unidad || ''
+  };
+  Object.entries(values).forEach(([id, value]) => {
+    const element = document.getElementById(id);
+    if (element) element.value = value;
+  });
+  const title = document.getElementById('evaluationModalTitle');
+  if (title) title.textContent = 'Editar evaluación';
+  openModal('evaluationModal');
+  document.getElementById('evaluationName')?.focus();
+}
+
+async function handleEvaluationSubmit(event) {
+  event.preventDefault();
+  clearEvaluationFormErrors();
+  const evaluationId = Number(document.getElementById('evaluationId')?.value || 0);
+  const payload = {
+    actividad_id: Number(ActivityPage.id),
+    nombre: String(document.getElementById('evaluationName')?.value || '').trim(),
+    instrucciones: String(document.getElementById('evaluationInstructions')?.value || '').trim() || null,
+    fecha_inicio: document.getElementById('evaluationDateStart')?.value || '',
+    fecha_fin: document.getElementById('evaluationDateEnd')?.value || '',
+    campo: {
+      nombre: String(document.getElementById('evaluationFieldName')?.value || '').trim(),
+      tipo_dato: document.getElementById('evaluationDataType')?.value || '',
+      unidad: String(document.getElementById('evaluationUnit')?.value || '').trim() || null
+    }
+  };
+  if (evaluationId) payload.evaluacion_id = evaluationId;
+
+  const button = document.getElementById('saveEvaluationBtn');
+  setBtnLoading(button, true);
+  try {
+    await evaluationApiRequest(evaluationId ? EvaluationAdminApi.update : EvaluationAdminApi.create, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    closeModal('evaluationModal');
+    ActivityPage.evaluationsLoaded = false;
+    await loadEvaluations();
+    showNotification(evaluationId ? 'Evaluación actualizada' : 'Evaluación creada', 'success');
+  } catch (error) {
+    console.error('Error guardando evaluación:', error);
+    Object.entries(error.fields || {}).forEach(([field, message]) => setEvaluationFormError(field, message));
+    const formError = document.getElementById('evaluationFormError');
+    if (formError) formError.textContent = error.message;
+  } finally {
+    setBtnLoading(button, false);
+  }
+}
+
+async function archiveEvaluation(evaluationId) {
+  const evaluation = ActivityPage.evaluations.find(item => Number(item.id) === Number(evaluationId));
+  if (!evaluation) return;
+  if (!window.confirm(`¿Archivar “${evaluation.nombre}”? Seguirá disponible en el histórico de datos.`)) return;
+
+  try {
+    await evaluationApiRequest(EvaluationAdminApi.archive, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ evaluacion_id: Number(evaluationId) })
+    });
+    ActivityPage.evaluationsLoaded = false;
+    await loadEvaluations();
+    showNotification('Evaluación archivada', 'success');
+  } catch (error) {
+    console.error('Error archivando evaluación:', error);
+    showNotification(error.message, 'error');
+  }
+}
+
+async function openEvaluationResults(evaluationId) {
+  const container = document.getElementById('evaluation-results-list');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="evaluation-list-skeleton" aria-label="Cargando resultados">
+      <span></span><span></span><span></span>
+    </div>`;
+  openModal('evaluationResultsModal');
+
+  try {
+    const data = await evaluationApiRequest(`${EvaluationAdminApi.detail}?evaluacion_id=${encodeURIComponent(evaluationId)}`);
+    ActivityPage.currentEvaluationDetail = data;
+    renderEvaluationResults(data);
+  } catch (error) {
+    console.error('Error cargando resultados de evaluación:', error);
+    container.innerHTML = `
+      <div class="evaluation-empty-state evaluation-error-state">
+        <strong>No se pudieron cargar los resultados</strong>
+        <p>${escapeHtml(error.message)}</p>
+      </div>`;
+  }
+}
+
+function renderEvaluationResults(data) {
+  const evaluation = data.evaluacion || {};
+  const participants = Array.isArray(data.participantes) ? data.participantes : [];
+  const title = document.getElementById('evaluationResultsTitle');
+  const meta = document.getElementById('evaluationResultsMeta');
+  const coverage = document.getElementById('evaluationResultsCoverage');
+  const reopenButton = document.getElementById('reopenEvaluationBtn');
+  const container = document.getElementById('evaluation-results-list');
+  const coverageData = evaluation.cobertura || {};
+
+  if (title) title.textContent = evaluation.nombre || 'Resultados';
+  if (meta) {
+    const realDate = evaluation.sesion?.fecha_realizacion
+      ? `Realizada el ${formatDateEs(evaluation.sesion.fecha_realizacion)}`
+      : `Disponible del ${formatDateEs(evaluation.fecha_inicio)} al ${formatDateEs(evaluation.fecha_fin)}`;
+    meta.textContent = realDate;
+  }
+  if (coverage) {
+    coverage.textContent = `${Number(coverageData.medidos || 0)} medidos · ${Number(coverageData.sin_evaluar || 0)} sin evaluar · ${Number(coverageData.total_participantes || 0)} participantes`;
+  }
+  if (reopenButton) reopenButton.hidden = evaluation.sesion?.estado !== 'finalizada';
+  if (!container) return;
+
+  if (!evaluation.sesion?.id) {
+    container.innerHTML = `
+      <div class="evaluation-empty-state">
+        <strong>Todavía no hay una realización</strong>
+        <p>Los resultados aparecerán aquí cuando el monitor empiece la evaluación.</p>
+      </div>`;
+    return;
+  }
+  if (!participants.length) {
+    container.innerHTML = `
+      <div class="evaluation-empty-state">
+        <strong>No hay resultados guardados</strong>
+        <p>La realización existe, pero todavía no contiene participantes.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = participants.map(participant => {
+    const result = participant.resultados?.[0] || {};
+    const isText = result.tipo_dato === 'texto_corto';
+    const disabled = participant.inscripcion_eliminada ? 'disabled' : '';
+    const value = isText ? (result.valor_texto ?? '') : (result.valor_numero ?? '');
+    const qualifier = result.calificador || 'exacto';
+    const step = result.tipo_dato === 'entero' ? '1' : '0.001';
+    return `
+      <div class="evaluation-results-row" data-inscrito-id="${participant.inscrito_id ?? ''}" data-sesion-id="${Number(evaluation.sesion.id)}" data-campo-id="${Number(result.campo_id)}" data-tipo-dato="${escapeHtml(result.tipo_dato || '')}">
+        <div class="evaluation-participant">
+          <strong>${escapeHtml(`${participant.apellidos || ''}, ${participant.nombre || ''}`.replace(/^,\s*/, ''))}</strong>
+          <span>${participant.inscripcion_eliminada ? 'Inscripción eliminada · histórico conservado' : escapeHtml(result.campo_nombre || '')}</span>
+        </div>
+        <div class="evaluation-result-controls">
+          ${!isText ? `
+            <label class="evaluation-qualifier-label">
+              <span class="sr-only">Calificador</span>
+              <select class="evaluation-result-qualifier" ${disabled}>
+                <option value="exacto"${qualifier === 'exacto' ? ' selected' : ''}>=</option>
+                <option value="mayor_que"${qualifier === 'mayor_que' ? ' selected' : ''}>&gt;</option>
+                <option value="menor_que"${qualifier === 'menor_que' ? ' selected' : ''}>&lt;</option>
+              </select>
+            </label>` : ''}
+          <label class="evaluation-result-label">
+            <span class="sr-only">Resultado de ${escapeHtml(`${participant.nombre || ''} ${participant.apellidos || ''}`.trim())}</span>
+            <input class="evaluation-result-input" type="${isText ? 'text' : 'number'}" value="${escapeHtml(String(value))}" ${isText ? 'maxlength="255"' : `step="${step}"`} ${disabled}>
+          </label>
+          ${result.unidad ? `<span class="evaluation-result-unit">${escapeHtml(result.unidad)}</span>` : ''}
+          <button class="btn btn-secondary evaluation-result-save" type="button" onclick="saveAdminEvaluationResult(${participant.inscrito_id ?? 'null'}, this)" ${disabled}>Guardar</button>
+        </div>
+        <p class="evaluation-result-status" aria-live="polite">${result.estado === 'sin_evaluar' ? 'Sin evaluar' : 'Guardado'}</p>
+      </div>`;
+  }).join('');
+}
+
+async function saveAdminEvaluationResult(inscritoId, button) {
+  const row = button?.closest('.evaluation-results-row');
+  if (!row || !inscritoId) return;
+  const input = row.querySelector('.evaluation-result-input');
+  const qualifier = row.querySelector('.evaluation-result-qualifier');
+  const status = row.querySelector('.evaluation-result-status');
+  const value = String(input?.value ?? '').trim();
+  const isText = row.dataset.tipoDato === 'texto_corto';
+  const payload = {
+    sesion_id: Number(row.dataset.sesionId),
+    campo_id: Number(row.dataset.campoId),
+    inscrito_id: Number(inscritoId),
+    estado: value === '' ? 'sin_evaluar' : 'medido'
+  };
+  if (value !== '') {
+    if (isText) payload.valor_texto = value;
+    else {
+      payload.valor_numero = value;
+      payload.calificador = qualifier?.value || 'exacto';
+    }
+  }
+
+  button.disabled = true;
+  if (status) status.textContent = 'Guardando…';
+  try {
+    const data = await evaluationApiRequest(EvaluationAdminApi.updateResult, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (status) status.textContent = payload.estado === 'sin_evaluar' ? 'Sin evaluar · guardado' : 'Guardado';
+    const coverage = document.getElementById('evaluationResultsCoverage');
+    const counts = data.cobertura || {};
+    if (coverage) coverage.textContent = `${Number(counts.medidos || 0)} medidos · ${Number(counts.sin_evaluar || 0)} sin evaluar · ${Number(counts.total_participantes || 0)} participantes`;
+    ActivityPage.evaluationsLoaded = false;
+  } catch (error) {
+    console.error('Error corrigiendo resultado de evaluación:', error);
+    if (status) status.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function reopenEvaluation() {
+  const sessionId = Number(ActivityPage.currentEvaluationDetail?.evaluacion?.sesion?.id || 0);
+  if (!sessionId) return;
+  if (!window.confirm('¿Reabrir esta evaluación? El monitor podrá modificarla de nuevo.')) return;
+
+  const button = document.getElementById('reopenEvaluationBtn');
+  if (button) button.disabled = true;
+  try {
+    const data = await evaluationApiRequest(EvaluationAdminApi.reopen, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sesion_id: sessionId })
+    });
+    ActivityPage.currentEvaluationDetail.evaluacion = data.evaluacion;
+    if (button) button.hidden = true;
+    ActivityPage.evaluationsLoaded = false;
+    await loadEvaluations();
+    showNotification('Evaluación reabierta para el monitor', 'success');
+  } catch (error) {
+    console.error('Error reabriendo evaluación:', error);
+    showNotification(error.message, 'error');
+  } finally {
+    if (button) button.disabled = false;
   }
 }
 

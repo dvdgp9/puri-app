@@ -31,6 +31,7 @@ try {
     $newPassword = isset($payload['new_password']) ? (string)$payload['new_password'] : null;
     $nombre = array_key_exists('nombre', $payload) ? trim($payload['nombre']) : null;
     $apellidos = array_key_exists('apellidos', $payload) ? trim($payload['apellidos']) : null;
+    $email = array_key_exists('email', $payload) ? strtolower(trim($payload['email'])) : null;
 
     if ($id <= 0) {
         http_response_code(400);
@@ -50,6 +51,12 @@ try {
     if ($newPassword !== null && strlen($newPassword) < 8) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'La contraseña debe tener al menos 8 caracteres']);
+        exit;
+    }
+
+    if ($email !== null && $email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'El correo de avisos no es válido']);
         exit;
     }
 
@@ -93,6 +100,10 @@ try {
         $sets[] = 'apellidos = ?';
         $params[] = $apellidos ?: null;
     }
+    if ($email !== null) {
+        $sets[] = 'email = ?';
+        $params[] = $email ?: null;
+    }
 
     if (empty($sets)) {
         echo json_encode(['success' => true, 'data' => $admin]);
@@ -105,7 +116,7 @@ try {
     $stmt->execute($params);
 
     // Devolver el registro actualizado
-    $stmt = $pdo->prepare('SELECT id, username, nombre, apellidos, role, created_at FROM admins WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, username, nombre, apellidos, email, role, created_at FROM admins WHERE id = ?');
     $stmt->execute([$id]);
     $updated = $stmt->fetch(PDO::FETCH_ASSOC);
 

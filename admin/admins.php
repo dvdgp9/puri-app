@@ -116,6 +116,7 @@ $admin_info = getAdminInfo();
                         <tr>
                             <th>Nombre</th>
                             <th>Usuario</th>
+                            <th>Correo de avisos</th>
                             <th>Rol</th>
                             <th>Centros asignados</th>
                             <th>Creado</th>
@@ -124,7 +125,7 @@ $admin_info = getAdminInfo();
                     </thead>
                     <tbody id="admins-tbody">
                         <tr>
-                            <td colspan="6" class="loading-cell">Cargando administradores...</td>
+                            <td colspan="7" class="loading-cell">Cargando administradores...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -152,6 +153,12 @@ $admin_info = getAdminInfo();
                             <input type="text" id="adminApellidos" name="apellidos" class="form-input" placeholder="Apellidos">
                             <div class="form-error" id="adminApellidos-error"></div>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="adminEmail">Correo de avisos</label>
+                        <input type="email" id="adminEmail" name="email" class="form-input" placeholder="coordinacion@ejemplo.org" autocomplete="email">
+                        <p class="form-hint">Recibirá las observaciones de los centros que tenga asignados.</p>
+                        <div class="form-error" id="adminEmail-error"></div>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="adminUsername">Usuario <span class="required">*</span></label>
@@ -226,6 +233,12 @@ $admin_info = getAdminInfo();
                             <input type="text" id="editAdminApellidos" name="apellidos" class="form-input" placeholder="Apellidos">
                             <div class="form-error" id="editAdminApellidos-error"></div>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editAdminEmail">Correo de avisos</label>
+                        <input type="email" id="editAdminEmail" name="email" class="form-input" placeholder="coordinacion@ejemplo.org" autocomplete="email">
+                        <p class="form-hint">Sin email, esta cuenta no recibirá observaciones.</p>
+                        <div class="form-error" id="editAdminEmail-error"></div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Usuario</label>

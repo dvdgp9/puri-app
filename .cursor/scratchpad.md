@@ -658,3 +658,301 @@ Archivos afectados:
 - [x] Informes: `admin/api/informes/generar.php` con formato diferente para aforo
 - [x] UX: badges "Aforo" en listados de actividades
 - [x] CSS: estilos para UI aforo y badges
+
+---
+
+## Planner: Evaluaciones por actividad y correo de observaciones (2026-08-12)
+
+### Background and Motivation
+
+Se solicitan dos ampliaciones de Puri:
+
+1. Registrar evaluaciones de las personas inscritas en una actividad. Cada evaluación pertenece a una actividad y tiene un período de disponibilidad, mide inicialmente una sola variable (burpees, vueltas, tiempo, distancia, etc.) y debe poder realizarse desde la vista operativa de la clase en una fecha elegida por el monitor dentro de ese período. La planificación y edición de la evaluación se realizará siempre desde Admin.
+2. Enviar por correo todas las observaciones no vacías registradas al pasar lista a las personas administradoras/coordinadoras asignadas al centro de la actividad.
+
+La prioridad es evitar que funcionalidades de uso puntual saturen una interfaz corporativa que ya contiene asistencia, aforo, participantes, informes y administración. La solución debe aplicar revelado progresivo: configuración solo en el contexto de la actividad dentro de Admin y una sección operativa secundaria que solo aparezca al monitor cuando la actividad tenga evaluaciones pendientes o en curso.
+
+### Confirmed Requirements
+
+- Una evaluación mide una sola variable en la primera versión, pero el modelo de datos no debe bloquear varias variables futuras.
+- Admin define la evaluación, su período de disponibilidad y su configuración; no fija obligatoriamente el día concreto de realización.
+- Una actividad puede tener distintas evaluaciones y períodos que se solapen.
+- El monitor elige y registra la fecha real dentro del período cuando encuentra una clase adecuada, y rellena el resultado de cada participante.
+- El monitor puede corregir resultados mientras la realización está en curso. Una vez finalizada, las correcciones posteriores y los cambios de definición se hacen desde Admin.
+- Todas las observaciones no vacías deben generar correo para las personas asignadas al centro en Admin.
+- El correo contendrá la observación completa y el contexto de la actividad. La entrega se hará mediante una cuenta SMTP cuyos datos se facilitarán más adelante.
+- Admin incorporará un email para cada persona coordinadora destinataria.
+- No se realizará investigación web para esta planificación, por indicación expresa del usuario.
+
+### Evidence from the Example Workbooks
+
+- `EVALUACIONES HIIT.xlsx` contiene 4 hojas con la misma estructura: participantes en filas, tres campañas (octubre, enero y mayo) y cinco pruebas por campaña.
+- Las cinco pruebas HIIT son: burpees en un minuto, flexibilidad de tronco, flexiones en un minuto, zancadas en un minuto y circuito de agilidad/coordinación.
+- `EVALUACIÓN 70 PLUS.xlsx` contiene una plantilla y 32 grupos con la misma estructura: participantes en filas, las mismas tres campañas y seis pruebas por campaña.
+- Las seis pruebas 70 Plus son: sentadillas en 30 segundos, fondos en pared en 30 segundos, equilibrio a una pierna, vueltas caminando en seis minutos, tiempo de recorrido botando balón y equilibrio en tándem.
+- Los ejemplos combinan recuentos, distancia y duración; además incluyen un resultado acotado como «más de 30 segundos». Por ello, un único campo numérico sin tipo ni unidad sería insuficiente.
+- Los Excel son matrices comparativas, pero la primera necesidad expresada es registrar resultados. Comparativas, gráficas e importación/exportación quedan fuera del MVP para no añadir complejidad antes de validar el uso real.
+
+### Key Challenges and Analysis
+
+#### 1. Encaje UX sin aumentar el ruido global
+
+- No añadir una nueva opción permanente al menú principal, tarjetas en el dashboard ni controles de evaluación en actividades sin evaluaciones.
+- En `admin/activity.php`, incorporar navegación local compacta entre `Participantes` y `Evaluaciones`. El botón `Nueva evaluación` solo aparece dentro de la segunda vista.
+- En la vista de monitor (`asistencia.php`), mostrar una sección secundaria y neutra `Evaluaciones` únicamente si la actividad tiene evaluaciones pendientes o en curso. No se vincula a la sesión ni a la fecha de asistencia actualmente seleccionada.
+- La sección muestra filas compactas con nombre, estado y ventana temporal: `Pendiente · Burpees en 1 min · Del 1 al 31 de octubre`. La acción contextual será `Realizar` o `Continuar`.
+- Abrir una vista de captura dedicada para que la tabla de resultados no compita visualmente con el pase de lista. Al comenzar, pedir `Fecha de realización`, proponiendo hoy y restringiendo el valor al período permitido y a fechas no futuras.
+- Tras finalizar, mover la evaluación al histórico en modo lectura para el monitor; Admin conserva edición y corrección.
+- Usar lista con separadores y jerarquía tipográfica en lugar de una cuadrícula de tarjetas. Mantener una sola acción primaria por contexto.
+
+#### 2. Captura rápida y segura para el monitor
+
+- Mostrar nombre del participante, campo de resultado y unidad visible (`repeticiones`, `vueltas`, `cm`, `segundos`, etc.).
+- Admitir inicialmente tipos `entero`, `decimal`, `duración` y `texto corto`; el Admin elige el tipo y la unidad al crear la evaluación.
+- Validar en la misma fila y proporcionar estados claros de guardando, guardado y error. La interacción debe funcionar con teclado y móvil, con objetivos táctiles mínimos de 44 px.
+- Incluir progreso discreto (`12 de 20 registrados`) y filtros `Todos` / `Pendientes`; no añadir rankings, colores de rendimiento ni comparaciones en esta fase.
+- Mantener `Sin evaluar` como estado válido para no confundir un dato ausente con un cero.
+
+#### 3. Diferenciar configuración, registro y corrección
+
+- Admin crea/edita la evaluación, período, instrucciones, formato y unidad.
+- El monitor inicia la realización desde la clase, selecciona la fecha real y registra resultados.
+- Mientras el estado sea `en curso`, el monitor puede guardar y corregir por participante. Al pulsar `Finalizar evaluación`, la vista queda bloqueada para el monitor y solo Admin puede reabrir o corregir.
+- Si quedan participantes sin evaluar, `Finalizar` mostrará el número pendiente y pedirá confirmación; `Sin evaluar` seguirá siendo un resultado válido.
+- Estados propuestos: `programada` (aún no abre el período), `pendiente`, `en curso`, `finalizada` y `fuera de plazo`. Una evaluación en curso que alcance el fin del período no se pierde: queda visible, pero requiere extensión/reapertura desde Admin para seguir editando.
+
+#### 4. Modelo extensible sin sobreconstruir la primera interfaz
+
+Modelo propuesto:
+
+- `evaluaciones`: planificación con `actividad_id`, `fecha_inicio`, `fecha_fin`, `nombre`, `instrucciones`, marcas de auditoría y archivado opcional.
+- `evaluacion_campos`: uno o más campos pertenecientes a una evaluación, con `nombre`, `tipo_dato`, `unidad`, `orden` y configuración opcional. La UI inicial crea exactamente un campo, pero no será necesaria una migración para admitir más en el futuro.
+- `evaluacion_sesiones`: realización efectiva de una evaluación, con `evaluacion_id`, `fecha_realizacion`, estado `en_curso/finalizada` y marcas de inicio/finalización. Esta separación evita convertir la fecha planificada en una fecha ficticia y permite repeticiones futuras sin rediseñar el esquema.
+- `evaluacion_resultados`: un resultado por `evaluacion_sesion_id`, `evaluacion_campo_id` e `inscrito_id`, con valor numérico o textual, estado `sin_evaluar/medido` y marcas de auditoría. La combinación sesión-campo-participante debe ser única para que el guardado sea idempotente.
+
+Decisiones de integridad:
+
+- No imponer unicidad entre períodos porque varias evaluaciones de una actividad pueden estar disponibles a la vez.
+- Para el MVP, la propuesta es una realización por cada evaluación planificada; repetir la misma prueba en octubre, enero y mayo supone tres planificaciones, que Admin puede crear duplicando la anterior. La tabla de sesiones deja abierta la repetición futura.
+- Validar que `fecha_realizacion` esté dentro del período y no sea futura. Admin puede corregirla posteriormente con auditoría.
+- Verificar siempre que participante, evaluación y actividad pertenecen al mismo centro de la sesión/autorización.
+- Si una evaluación ya tiene resultados, preferir archivar frente a eliminar; una eliminación definitiva debe estar protegida en Admin.
+- Para duraciones, guardar un valor numérico normalizado en segundos y formatearlo en la interfaz. Valores especiales como `>30 s` requieren un calificador opcional o una representación textual controlada, no un número ambiguo.
+
+#### 5. Correos de observaciones y deduplicación
+
+Estado actual comprobado:
+
+- `registrar_asistencia.php` guarda o actualiza una única observación por actividad y fecha.
+- `admins` no dispone de campo `email`.
+- `admin_asignaciones` relaciona administradores con centros; esta relación es la fuente de destinatarios.
+- El proyecto no contiene actualmente librería de correo ni configuración SMTP documentada.
+
+Comportamiento propuesto:
+
+- Añadir `email` a las cuentas Admin y a sus formularios/API de creación y edición.
+- Considerar destinatarios únicamente a los admins asignados explícitamente al centro y con correo válido; deduplicar direcciones. Un superadmin no debe recibir correos de todos los centros solo por su rol.
+- Disparar notificación al crear una observación no vacía o cuando cambia su contenido normalizado. Reenviar el formulario con el mismo texto no debe volver a notificar. Vaciar una observación no genera correo.
+- Resolver centro, instalación, actividad y fecha en servidor. Nunca aceptar destinatarios procedentes del formulario del monitor.
+- El correo incluirá la observación completa y el contexto disponible: centro, instalación, actividad, grupo, días/horario, fecha de la observación y momento de registro. El sistema actual no identifica a un monitor individual porque la sesión pertenece al centro; no se inventará ese dato.
+- El fallo de correo nunca debe deshacer asistencia u observación ya guardadas. Registrar un evento de salida con destinatario, hash de contenido, estado, intentos y último error para deduplicación, diagnóstico y reintento.
+- Los logs técnicos deben incluir IDs, centro y número de destinatarios, pero no el texto de la observación ni datos personales.
+
+### UX Flow Proposed for the MVP
+
+1. En Admin, entrar en una actividad y cambiar de `Participantes` a `Evaluaciones`.
+2. Crear la evaluación indicando período disponible, nombre, instrucciones, formato y unidad. La primera versión presenta un solo campo.
+3. Durante ese período, la vista de clase muestra un bloque secundario `Evaluaciones` con las tareas pendientes o en curso de la actividad.
+4. El monitor pulsa `Realizar`, confirma la fecha efectiva y accede a la lista de participantes.
+5. Los valores se guardan por fila; puede salir y continuar mientras la evaluación esté en curso.
+6. Al finalizar, el monitor confirma los pendientes y la evaluación pasa a lectura. Admin ve fecha real, tipo, unidad, cobertura (`registrados/participantes`) y puede corregir o reabrir.
+
+### Deliberate Non-Goals for the MVP
+
+- No añadir widgets de evaluación al dashboard ni una entrada global al menú.
+- No crear rankings, puntuaciones automáticas, colores de “bueno/malo” o comparativas entre participantes.
+- No añadir gráficas, comparativas entre campañas, exportación Excel ni importación masiva hasta validar el flujo básico.
+- No mostrar controles de creación/configuración en la vista del monitor.
+- No introducir estilos inline nuevos; todo CSS nuevo irá a `public/assets/css/style.css` o `admin/assets/css/admin.css`, según la superficie.
+
+### High-level Task Breakdown
+
+#### Milestone 0 — Cerrar decisiones funcionales
+
+1. Política de corrección confirmada: el monitor edita mientras está en curso; tras finalizar, Admin corrige o reabre.
+   - Éxito: decisión cerrada por el usuario.
+2. Contenido confirmado: observación completa y toda la información disponible de la actividad.
+   - Éxito: decisión cerrada por el usuario.
+3. Transporte confirmado como SMTP; quedan pendientes las credenciales/remitente antes del Milestone 5.
+   - Éxito: la implementación de evaluaciones no queda bloqueada; la entrega de correo no se activa sin configuración real.
+4. Confirmar la regla propuesta de una realización por evaluación planificada dentro del período.
+   - Éxito: decisión confirmada por el usuario; cada planificación se completa una sola vez. Para repetir una prueba, Admin duplica la evaluación y define otro período.
+5. Recopilar y cargar el correo de cada cuenta coordinadora asignada antes de la prueba de entrega.
+   - Éxito: todas las personas que deban recibir notificaciones tienen un email válido en Admin.
+
+#### Milestone 1 — Contrato y migración de evaluaciones
+
+6. Escribir primero pruebas de esquema, autorización y validación para evaluaciones.
+   - Éxito: las pruebas fallan por ausencia de tablas/endpoints y cubren actividad/centro incorrectos, tipos de dato y duplicados.
+7. Crear una migración reversible para `evaluaciones`, `evaluacion_campos`, `evaluacion_sesiones` y `evaluacion_resultados`.
+   - Éxito: se aplica en un entorno no productivo, respeta claves foráneas/índices y puede revertirse sin tocar datos existentes.
+8. Documentar el contrato en `docs/api/evaluaciones.md` antes de conectar la UI.
+   - Éxito: entradas, respuestas, errores, permisos y ejemplos quedan documentados.
+
+#### Milestone 2 — API Admin de evaluaciones
+
+9. Implementar listado y detalle por actividad con control de asignación al centro.
+   - Éxito: admin asignado y superadmin acceden; admin no asignado recibe 403.
+10. Implementar creación y edición de evaluación/campo único.
+   - Éxito: período, nombre, tipo y unidad se validan; no se puede cambiar una actividad fuera de alcance.
+11. Implementar archivado, estados y lectura/edición/reapertura de sesiones y resultados desde Admin.
+   - Éxito: una evaluación con resultados no se elimina accidentalmente y Admin puede corregir valores con auditoría.
+
+#### Milestone 3 — UI Admin contextual
+
+12. Añadir navegación local `Participantes | Evaluaciones` a `admin/activity.php`.
+    - Éxito: la vista por defecto no gana controles adicionales salvo la navegación local y conserva responsive.
+13. Construir listado por estado/período con estados vacío, carga, error y cobertura.
+    - Éxito: pendientes y en curso visibles primero, finalizadas en histórico y una sola acción primaria.
+14. Construir modal de crear/editar y vista de resultados.
+    - Éxito: formulario con etiquetas, ayuda y errores inline; soporta el campo único sin exponer aún campos múltiples.
+
+#### Milestone 4 — API operativa y captura del monitor
+
+15. Escribir primero pruebas para consulta de evaluaciones disponibles, inicio con fecha real, guardado idempotente y finalización.
+    - Éxito: cubren sesión de centro, período, fecha futura/fuera de rango, segunda realización, participante ajeno, cero válido, vacío y tipos de dato.
+16. Implementar endpoints de listado disponible, inicio/continuación, guardado y finalización.
+    - Éxito: solo la sesión del centro correcto puede operar; `Continuar` recupera la misma sesión y una finalizada queda bloqueada para el monitor.
+17. Añadir la sección contextual `Evaluaciones` en `asistencia.php` y la vista de captura dedicada.
+    - Éxito: actividades sin evaluaciones pendientes/en curso permanecen visualmente iguales; con evaluaciones se accede sin asociarlas forzosamente a la fecha de asistencia.
+18. Implementar fecha real, estados por fila, progreso, pendientes, finalizar y comportamiento móvil/teclado.
+    - Éxito: el monitor puede completar o continuar una lista, corregir antes de finalizar y no perder valores por un fallo aislado.
+
+#### Milestone 5 — Destinatarios y entrega de observaciones
+
+19. Escribir primero pruebas de deduplicación, destinatarios y fallo de transporte.
+    - Éxito: vacío o texto sin cambios no envía; cambio real envía una vez por email distinto; un fallo no revierte la asistencia.
+20. Crear migración para `admins.email` y registro/outbox de notificaciones.
+    - Éxito: migración reversible, email inicialmente nullable y restricción/índices de deduplicación definidos.
+21. Actualizar Admin para crear, editar, listar y validar el email de coordinadores.
+    - Éxito: el superadmin ve si una cuenta asignada carece de email y puede corregirlo.
+22. Implementar servicio de notificación desacoplado del guardado de asistencia.
+    - Éxito: destinatarios derivados en servidor, entrega registrada, reintento posible y logging sin contenido sensible.
+23. Integrar el disparo por creación/cambio en `registrar_asistencia.php`.
+    - Éxito: guardar asistencia/observación sigue funcionando aunque el transporte de correo falle.
+24. Documentar el contrato y la configuración en `docs/api/notificaciones-observaciones.md`.
+    - Éxito: remitente, variables de entorno, estados, deduplicación, reintentos y diagnóstico quedan documentados.
+
+#### Milestone 6 — QA transversal
+
+25. Ejecutar pruebas automatizadas y comprobaciones de regresión de asistencia/aforo.
+    - Éxito: flujos existentes sin evaluaciones siguen funcionando y no aparecen errores PHP/SQL.
+26. QA visual en móvil y escritorio, teclado y estados vacíos/carga/error.
+    - Éxito: no hay desbordamiento horizontal, los objetivos táctiles son de al menos 44 px y el foco es visible.
+27. Prueba controlada de correo con dos coordinadores asignados, uno repetido y un fallo simulado.
+    - Éxito: entrega/deduplicación coinciden con el log y ningún dato de asistencia se pierde.
+
+### Success Criteria
+
+- Una actividad sin evaluaciones conserva exactamente el flujo visual actual para el monitor.
+- Admin puede crear y editar una evaluación de una variable para una actividad y período, con tipo y unidad explícitos.
+- El monitor del centro correcto puede elegir una fecha válida dentro del período y registrar `Sin evaluar`, cero y valores válidos para cada participante.
+- El monitor puede continuar y corregir mientras está en curso; una evaluación finalizada queda bloqueada para él y corregible/reabrible desde Admin.
+- El modelo admite períodos solapados, varias realizaciones futuras y varios campos futuros sin cambiar las tablas principales.
+- Admin puede consultar cobertura y corregir resultados; usuarios no asignados no pueden acceder.
+- Cada creación o cambio real de una observación no vacía genera como máximo un correo por dirección asignada distinta.
+- Reenviar el mismo texto, dejarlo vacío o no tener destinatarios no genera duplicados.
+- Un fallo de correo queda diagnosticado y no revierte asistencia ni observación.
+- No se añaden elementos globales, rankings, gráficos ni tarjetas decorativas en el MVP.
+
+### Project Status Board (Evaluaciones y correos de observaciones)
+
+- [x] M0. Decisiones funcionales cerradas; SMTP/remitente e emails destinatarios quedan requeridos antes de M5
+- [x] M1. Pruebas de contrato + migración de evaluaciones + documentación API — validado por el usuario; prueba manual conjunta aplazada
+- [x] M2. API Admin de evaluaciones — validación automática completada; prueba manual agrupada con el usuario
+- [x] M3. UI Admin contextual dentro de la actividad — validación automática completada; prueba visual/manual pendiente
+- [x] M4. API y captura operativa del monitor — validación automática completada; prueba funcional/visual agrupada con el usuario
+- [x] M5. Emails de coordinadores, outbox/deduplicación e integración con observaciones — implementación y pruebas automáticas cerradas; configuración y entrega SMTP real pendientes
+- [ ] M6. QA — automatización y revisión estática completadas; migraciones, prueba funcional/visual y entrega SMTP real pendientes con el usuario
+
+### Current Status / Progress Tracking
+
+**Status**: EXECUTOR MODE — M1–M3 implementados; M4 en ejecución. La migración sigue sin aplicarse a la base de datos.
+
+**Próximo paso**: validación manual del usuario para cerrar M1. Tras su confirmación, marcar M1 completado y comenzar M2 (API Admin de evaluaciones). Los datos SMTP no bloquean M2–M4; serán imprescindibles antes de M5.
+
+**Actualización Executor (2026-08-12)**: M1 iniciado con autorización del usuario. Alcance limitado a pruebas de contrato, archivos SQL de subida/bajada y documentación; la migración no se ejecutará contra ninguna base de datos. Antes de M2 se solicitará validación manual conforme al flujo del proyecto.
+
+**Resultado M1 (2026-08-12)**:
+
+- Añadido test autocontenido `tests/evaluaciones_contract_test.php`, sin dependencias ni conexión a BD.
+- Registrado el ciclo TDD: 9 fallos iniciales por ausencia de artefactos; tras implementar, 9 pruebas correctas y 0 fallidas.
+- Añadidas migraciones reversibles `migrations/20260812_create_evaluaciones.up.sql` y `.down.sql` con cuatro tablas y claves/índices de integridad.
+- Añadido contrato `docs/api/evaluaciones.md` con endpoints Admin/monitor, permisos, errores, validación, estados, concurrencia e idempotencia.
+- `git diff --check` correcto. No se aplicó la migración ni se conectó a la base de datos.
+- M1 quedó validado por el usuario en el turno siguiente; la prueba manual se agrupará más adelante.
+
+**Inicio M2 (2026-08-12)**:
+
+- El usuario valida continuar y solicita agrupar la prueba manual para más adelante.
+- Se implementará la API Admin con TDD y comprobaciones automáticas de sintaxis, pero sin conexión a BD.
+- Alcance M2: listado/detalle, creación, edición, archivado, reapertura y corrección de resultados.
+- La UI Admin queda fuera de este milestone y pertenece a M3.
+
+**Resultado M2–M3 (2026-08-12)**:
+
+- Implementada API Admin autenticada para listado/detalle, creación, edición, archivado, reapertura y corrección idempotente de resultados.
+- La autorización se deriva de `admin_asignaciones`, con acceso global únicamente para superadmin; todas las mutaciones usan consultas preparadas, transacciones y auditoría.
+- El resultado conserva una referencia y copia del nombre/apellidos del participante; si posteriormente se elimina su inscripción, el histórico permanece consultable y se marca como no editable.
+- Añadida navegación local `Participantes | Evaluaciones` en `admin/activity.php`; Participantes sigue siendo la vista inicial y las evaluaciones se cargan bajo demanda.
+- Añadidos listado compacto por estado/período, cobertura, estados carga/vacío/error, modal de configuración de un campo y vista Admin de resultados con corrección y reapertura.
+- Todo el CSS nuevo se añadió a `admin/assets/css/admin.css`, con foco visible, objetivos táctiles y adaptación móvil; no se añadieron dependencias.
+- TDD M3: 7 fallos iniciales por interfaz ausente; resultado final 7/7. Suite acumulada: contrato 9/9, API Admin 9/9 y UI Admin 7/7. PHP lint, `node --check` y `git diff --check` correctos.
+- No se aplicó la migración ni se abrió conexión a la base de datos. La prueba funcional con datos se realizará junto al usuario después de completar varias fases.
+
+**Resultado M4 (2026-08-12)**:
+
+- Implementados endpoints de monitor para listar trabajo activo, iniciar/continuar una única realización, consultar detalle, guardar una fila idempotente y finalizar.
+- La sesión PHP del centro es la única fuente de autorización. Actividad, evaluación, realización, campo y participante se resuelven y validan en servidor.
+- El inicio exige que hoy y la fecha real pertenezcan al período y que la fecha real no sea futura; usa bloqueo transaccional, intento único e instantánea de participantes/resultados `sin_evaluar`.
+- Guardar distingue el cero del vacío, reutiliza las validaciones de tipos y bloquea escritura tras finalizar o fuera del período. Finalizar es idempotente y exige confirmar el número de participantes pendientes.
+- En `asistencia.php`, la sección secundaria `Evaluaciones` empieza oculta y solo aparece si hay evaluaciones pendientes o en curso; no se asocia a la fecha de asistencia seleccionada.
+- La fecha real se pide mediante revelado progresivo dentro de la fila. La captura se realiza en `evaluacion.php`, con progreso, filtros Todos/Pendientes, guardado por fila, `Sin evaluar`, finalización y modo lectura.
+- TDD M4: 15 fallos iniciales por API/UI ausentes; resultado final 8/8 API y 7/7 UI. Suite acumulada M1–M4: 40/40, PHP lint, ambos `node --check` y `git diff --check` correctos.
+- La migración continúa sin aplicarse. La verificación funcional con MySQL y la revisión visual se agruparán con el usuario, como pidió.
+
+**Resultado M5 (2026-08-12)**:
+
+- Añadida migración reversible para `admins.email` y una outbox en dos niveles: evento con instantánea completa y entregas por dirección deduplicada.
+- Crear/editar/listar cuentas desde `admin/admins.php` ya admite correo de avisos y señala de forma visible `Sin email`; la API valida con `FILTER_VALIDATE_EMAIL`.
+- La fuente de destinatarios es exclusivamente `admin_asignaciones` del centro. Las direcciones se normalizan, validan y deduplican; superadmin no recibe por rol sin asignación explícita.
+- `registrar_asistencia.php` compara contenido normalizado. Una observación nueva o modificada y no vacía crea outbox; mismo texto o vacío no envían. El contexto se resuelve en servidor e incluye centro, instalación, actividad/grupo, días, horario, período, fecha y observación completa.
+- La outbox usa savepoint dentro de la transacción. La asistencia/observación se confirma y libera la sesión antes del intento SMTP; cualquier fallo de cola o entrega queda diagnosticado y no revierte los datos operativos.
+- Añadidos intento inmediato post-commit, estados por dirección, error limitado, espera progresiva, máximo de cinco intentos y worker CLI `scripts/process_observation_notifications.php`.
+- Añadida documentación de variables, deduplicación, estados, cron/reintento y prueba controlada en `docs/api/notificaciones-observaciones.md`. No se guardan secretos ni contenido de la observación en logs.
+- Añadido PHPMailer 6.12 mediante Composer. La auditoría detectó nueve avisos preexistentes (incluidos críticos) en PhpSpreadsheet 1.30.2; se actualizó dentro de la rama compatible a 1.30.6 junto con dependencias directas necesarias. `composer audit --locked` termina sin avisos.
+- TDD M5: 14 fallos iniciales; resultado final 8/8 notificaciones y 6/6 email de coordinadores. La prueba SMTP real no se ejecuta porque faltan host, puerto, cifrado, remitente y credenciales, tal como estaba previsto.
+
+**QA automático M6 (2026-08-12)**:
+
+- Suite acumulada M1–M5: 54/54 pruebas correctas y 0 fallidas.
+- Sintaxis correcta en las 29 superficies PHP nuevas/modificadas comprobadas y en los tres JavaScript (`node --check`).
+- `composer validate --strict` válido; mantiene el aviso no bloqueante preexistente de que el proyecto no declara licencia.
+- `composer audit --locked`: cero avisos de seguridad tras actualizar PhpSpreadsheet a 1.30.6.
+- Smoke test de PhpSpreadsheet después de la actualización: creación de libro y lectura/escritura de celda correctas.
+- `git diff --check`: correcto.
+- M6 no se cierra aún: faltan aplicar ambas migraciones en un entorno confirmado, prueba funcional/visual en escritorio y móvil, y prueba SMTP controlada. El usuario pidió realizar esas pruebas conjuntamente.
+
+### Executor's Feedback or Assistance Requests
+
+0. M1 introduce el contrato de cuatro tablas nuevas, pero no cambia datos en ejecución. La aplicación real de la migración será una acción crítica posterior y requerirá confirmar entorno, copia de seguridad y versión de MySQL.
+0.1. Para validar M1 manualmente sin tocar la BD, ejecutar `php tests/evaluaciones_contract_test.php` desde la raíz y confirmar `9 correctas, 0 fallidas`.
+1. Antes del Milestone 5, indicar dirección remitente, host, puerto, cifrado y credenciales SMTP. No incluir secretos en el repositorio; se configurarán mediante variables de entorno o configuración externa.
+2. Antes de la prueba final de correo, facilitar o cargar en Admin el email de cada coordinador; el modelo actual no guarda este dato.
+
+### Lessons (Evaluaciones)
+
+- El repositorio no dispone de PHPUnit ni de otro runner de tests. Para M1 se usa un test PHP autocontenido que valida contrato y SQL sin instalar dependencias ni abrir conexiones a la base de datos.
+- Separar `evaluaciones` (ventana planificada) de `evaluacion_sesiones` (fecha real) evita acoplar la evaluación a la fecha de asistencia y preserva flexibilidad operativa.
+- Composer está versionado junto con `vendor`. Al añadir PHPMailer hay que regenerar autoload y auditar el lockfile. El 2026-08-12 la auditoría reveló vulnerabilidades críticas/altas preexistentes en PhpSpreadsheet 1.30.2; la versión 1.30.6 las corrige sin salir de la rama 1.x declarada.
+- La outbox de observaciones debe usar un savepoint: si falla después de insertar el evento pero antes de insertar todos los destinatarios, se revierte solo la cola parcial y se conserva el guardado principal.

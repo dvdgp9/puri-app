@@ -139,7 +139,7 @@ function renderAdmins() {
     if (admins.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="empty-cell">
+                <td colspan="7" class="empty-cell">
                     <div class="empty-state">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -171,6 +171,7 @@ function renderAdmins() {
                     </div>
                 </td>
                 <td><code>${escapeHtml(admin.username)}</code></td>
+                <td>${admin.email ? `<a class="admin-email-link" href="mailto:${escapeHtml(admin.email)}">${escapeHtml(admin.email)}</a>` : '<span class="admin-email-missing">Sin email</span>'}</td>
                 <td><span class="badge ${roleClass}">${roleLabel}</span></td>
                 <td>${centersCount}</td>
                 <td>${createdDate}</td>
@@ -198,7 +199,7 @@ function renderAdminsError() {
     if (!tbody) return;
     tbody.innerHTML = `
         <tr>
-            <td colspan="6" class="error-cell">
+            <td colspan="7" class="error-cell">
                 <div class="error-state">
                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -267,6 +268,7 @@ async function openEditAdmin(id) {
     document.getElementById('editAdminId').value = admin.id;
     document.getElementById('editAdminNombre').value = admin.nombre || '';
     document.getElementById('editAdminApellidos').value = admin.apellidos || '';
+    document.getElementById('editAdminEmail').value = admin.email || '';
     document.getElementById('editAdminUsername').value = admin.username || '';
     document.getElementById('editAdminRole').value = admin.role || 'admin';
     document.getElementById('editAdminNewPassword').value = '';
@@ -478,6 +480,7 @@ async function handleCreateAdmin(e) {
     const data = {
         nombre: formData.get('nombre')?.trim() || '',
         apellidos: formData.get('apellidos')?.trim() || '',
+        email: formData.get('email')?.trim() || '',
         username: formData.get('username')?.trim() || '',
         password: formData.get('password') || '',
         role: formData.get('role') || 'admin'
@@ -490,6 +493,10 @@ async function handleCreateAdmin(e) {
     }
     if (!data.password || data.password.length < 8) {
         showFieldError('adminPassword', 'La contraseña debe tener al menos 8 caracteres');
+        return;
+    }
+    if (data.email && !isValidEmail(data.email)) {
+        showFieldError('adminEmail', 'Introduce un correo válido');
         return;
     }
     
@@ -547,6 +554,7 @@ async function handleEditAdmin(e) {
         id,
         nombre: formData.get('nombre')?.trim() || '',
         apellidos: formData.get('apellidos')?.trim() || '',
+        email: formData.get('email')?.trim() || '',
         role: formData.get('role') || 'admin'
     };
     
@@ -556,6 +564,10 @@ async function handleEditAdmin(e) {
             return;
         }
         data.new_password = newPassword;
+    }
+    if (data.email && !isValidEmail(data.email)) {
+        showFieldError('editAdminEmail', 'Introduce un correo válido');
+        return;
     }
     
     const btn = document.getElementById('saveEditAdminBtn');
@@ -599,6 +611,10 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
 }
 
 function getInitials(nombre, apellidos, username) {
