@@ -4,13 +4,13 @@
  * 
  * Recibe:
  * - centro_id: ID del centro seleccionado manualmente
+ * - modo_importacion: participantes | aforo
  * - rows: array de filas con { nombre, apellidos, instalacion, actividad, fecha_inicio, dias_semana }
  * 
  * Lógica:
  * - Instalación: si existe en el centro → reutilizar, si no → crear
- * - Actividad: si existe en esa instalación CON los mismos días → error
- *              si no existe o días diferentes → crear nueva
- * - Participante: nombre Y apellidos obligatorios, si falta alguno → error en esa fila
+ * - Actividad: se reutiliza solo si coincide su identidad completa de tipo y horario
+ * - Participante: el nombre es obligatorio únicamente en modo participantes
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -38,7 +38,16 @@ try {
     }
 
     $centro_id = intval($input['centro_id'] ?? 0);
+    $modoImportacion = isset($input['modo_importacion'])
+        ? strtolower(trim((string)$input['modo_importacion']))
+        : 'legacy';
     $rows = $input['rows'] ?? [];
+
+    if ($modoImportacion !== 'legacy' && !in_array($modoImportacion, ['participantes', 'aforo'], true)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Modo de importación inválido']);
+        exit;
+    }
 
     if ($centro_id <= 0) {
         http_response_code(400);
@@ -82,15 +91,18 @@ try {
         $instalacionesExistentes[$row['nombre_lower']] = $row;
     }
 
-    // Cache de actividades por instalación: key = instalacion_id, value = array de { id, nombre_lower, grupo_lower, dias_semana }
+    // Cache de actividades por instalación con identidad completa de clase.
     $actividadesCache = [];
+    $actividadesReutilizadas = [];
 
     // Resultados
     $stats = [
         'instalaciones_creadas' => 0,
         'instalaciones_reutilizadas' => 0,
         'actividades_creadas' => 0,
+        'actividades_reutilizadas' => 0,
         'participantes_creados' => 0,
+        'clases_aforo_procesadas' => 0,
         'errores' => []
     ];
 
@@ -113,7 +125,8 @@ try {
         
         // Tipo de control: vacío o 'asistencia' = asistencia, 'A' o 'aforo' = aforo
         $tipoControlRaw = isset($row['tipo_control']) ? strtolower(trim((string)$row['tipo_control'])) : '';
-        $tipoControl = ($tipoControlRaw === 'a' || $tipoControlRaw === 'aforo') ? 'aforo' : 'asistencia';
+        $tipoControlFila = ($tipoControlRaw === 'a' || $tipoControlRaw === 'aforo') ? 'aforo' : 'asistencia';
+        $tipoControl = $modoImportacion === 'aforo' ? 'aforo' : $tipoControlFila;
         
         // Normalizar días si viene como string separado por comas
         if (is_string($diasSemana)) {
@@ -122,7 +135,7 @@ try {
         }
         
         // Validar participante: solo nombre obligatorio (apellidos opcional)
-        if (empty($nombre)) {
+        if ($modoImportacion !== 'aforo' && empty($nombre)) {
             $stats['errores'][] = "Línea $lineNum: Falta el nombre del participante";
             continue;
         }
@@ -206,7 +219,7 @@ try {
         // --- Buscar o crear actividad ---
         // Cargar cache de actividades para esta instalación si no existe
         if (!isset($actividadesCache[$instalacion_id])) {
-            $stmtAct = $pdo->prepare("SELECT id, LOWER(TRIM(nombre)) as nombre_lower, LOWER(TRIM(grupo)) as grupo_lower, dias_semana FROM actividades WHERE instalacion_id = ?");
+            $stmtAct = $pdo->prepare("SELECT id, LOWER(TRIM(nombre)) as nombre_lower, LOWER(TRIM(grupo)) as grupo_lower, dias_semana, tipo_control, fecha_inicio, fecha_fin, hora_inicio, hora_fin FROM actividades WHERE instalacion_id = ?");
             $stmtAct->execute([$instalacion_id]);
             $actividadesCache[$instalacion_id] = [];
             while ($act = $stmtAct->fetch(PDO::FETCH_ASSOC)) {
@@ -218,17 +231,28 @@ try {
         $grupoKey = $grupo ? mb_strtolower(trim($grupo), 'UTF-8') : null;
         $actividad_id = null;
         
-        // Buscar si existe actividad con mismo nombre + mismo grupo + mismos días → REUTILIZAR
+        // Reutilizar solo la misma clase: nombre, grupo, tipo, período, días y horas.
         foreach ($actividadesCache[$instalacion_id] as $actExist) {
-            if ($actExist['nombre_lower'] === $actividadKey && $actExist['grupo_lower'] === $grupoKey) {
+            if (
+                $actExist['nombre_lower'] === $actividadKey
+                && (($actExist['grupo_lower'] ?: null) === $grupoKey)
+                && $actExist['tipo_control'] === $tipoControl
+                && $actExist['fecha_inicio'] === $fechaInicioNorm
+                && (($actExist['fecha_fin'] ?: null) === $fechaFinNorm)
+                && normalizarHoraComparacion($actExist['hora_inicio']) === normalizarHoraComparacion($horaInicioNorm)
+                && normalizarHoraComparacion($actExist['hora_fin']) === normalizarHoraComparacion($horaFinNorm)
+            ) {
                 $diasExistentes = array_map('trim', explode(',', $actExist['dias_semana'] ?? ''));
                 sort($diasExistentes);
                 $diasNuevos = $diasSemana;
                 sort($diasNuevos);
                 
                 if ($diasExistentes == $diasNuevos) {
-                    // Mismo nombre + mismos días = REUTILIZAR esta actividad
                     $actividad_id = $actExist['id'];
+                    if (!isset($actividadesReutilizadas[$actividad_id])) {
+                        $actividadesReutilizadas[$actividad_id] = true;
+                        $stats['actividades_reutilizadas']++;
+                    }
                     break;
                 }
             }
@@ -266,9 +290,19 @@ try {
                 'id' => $actividad_id,
                 'nombre_lower' => $actividadKey,
                 'grupo_lower' => $grupoKey,
-                'dias_semana' => $diasSemanaStr
+                'dias_semana' => $diasSemanaStr,
+                'tipo_control' => $tipoControl,
+                'fecha_inicio' => $fechaInicioNorm,
+                'fecha_fin' => $fechaFinNorm,
+                'hora_inicio' => $horaInicioNorm,
+                'hora_fin' => $horaFinNorm
             ];
             $stats['actividades_creadas']++;
+        }
+
+        if ($modoImportacion === 'aforo') {
+            $stats['clases_aforo_procesadas']++;
+            continue;
         }
         
         // --- Crear participante ---
@@ -293,6 +327,12 @@ try {
     }
     if ($stats['actividades_creadas'] > 0) {
         $partes[] = $stats['actividades_creadas'] . " actividad(es) creada(s)";
+    }
+    if ($stats['actividades_reutilizadas'] > 0) {
+        $partes[] = $stats['actividades_reutilizadas'] . " actividad(es) reutilizada(s)";
+    }
+    if ($stats['clases_aforo_procesadas'] > 0) {
+        $partes[] = $stats['clases_aforo_procesadas'] . " clase(s) de aforo procesada(s)";
     }
     if ($stats['participantes_creados'] > 0) {
         $partes[] = $stats['participantes_creados'] . " participante(s) inscrito(s)";
@@ -350,6 +390,25 @@ function normalizarFecha($fecha) {
     
     $formateada = date('Y-m-d', $timestamp);
     return ($formateada === '0000-00-00' || $formateada === '1970-01-01') ? null : $formateada;
+}
+
+/**
+ * Normaliza horas de entrada y de MySQL para comparar 9:15, 09:15 y 09:15:00.
+ */
+function normalizarHoraComparacion($hora) {
+    if ($hora === null || trim((string)$hora) === '') return null;
+
+    $hora = trim((string)$hora);
+    if (!preg_match('/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $hora, $matches)) {
+        return $hora;
+    }
+
+    $hours = (int)$matches[1];
+    $minutes = (int)$matches[2];
+    $seconds = isset($matches[3]) ? (int)$matches[3] : 0;
+    if ($hours > 23 || $minutes > 59 || $seconds > 59) return $hora;
+
+    return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
 }
 
 /**

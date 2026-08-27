@@ -1737,6 +1737,80 @@ body {
     margin-bottom: 20px;
 }
 
+.bulk-import-mode {
+    margin: 0 0 20px;
+    padding: 0;
+    border: 0;
+}
+
+.bulk-import-mode legend {
+    margin-bottom: 8px;
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.bulk-import-mode-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.bulk-import-mode-option {
+    display: flex;
+    min-height: 64px;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.bulk-import-mode-option:hover {
+    border-color: var(--admin-primary);
+}
+
+.bulk-import-mode-option:has(input:checked) {
+    border-color: var(--admin-primary);
+    background: rgba(35, 170, 197, 0.06);
+}
+
+.bulk-import-mode-option:has(input:focus-visible) {
+    outline: 3px solid rgba(35, 170, 197, 0.24);
+    outline-offset: 2px;
+}
+
+.bulk-import-mode-option input {
+    margin-top: 3px;
+    accent-color: var(--admin-primary);
+}
+
+.bulk-import-mode-option span,
+.bulk-import-mode-option strong,
+.bulk-import-mode-option small {
+    display: block;
+}
+
+.bulk-import-mode-option strong {
+    margin-bottom: 3px;
+    color: var(--text-color);
+    font-size: 13px;
+}
+
+.bulk-import-mode-option small,
+.bulk-import-mode-help {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.bulk-import-mode-help {
+    margin: 8px 0 0;
+}
+
 .info-box {
     display: flex;
     gap: 12px;
@@ -1785,6 +1859,12 @@ body {
     color: var(--text-muted);
 }
 
+.bulk-paste-instructions p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
 .bulk-paste-instructions li {
     margin-bottom: 4px;
 }
@@ -1831,25 +1911,61 @@ body {
 
 /* Anchos de columnas para bulk import */
 #bulkImportTable th:nth-child(1),
-#bulkImportTable td:nth-child(1) { width: 12%; } /* Nombre */
+#bulkImportTable td:nth-child(1) { width: 10%; } /* Nombre */
 #bulkImportTable th:nth-child(2),
-#bulkImportTable td:nth-child(2) { width: 12%; } /* Apellidos */
+#bulkImportTable td:nth-child(2) { width: 10%; } /* Apellidos */
 #bulkImportTable th:nth-child(3),
 #bulkImportTable td:nth-child(3) { width: 12%; } /* Instalación */
 #bulkImportTable th:nth-child(4),
 #bulkImportTable td:nth-child(4) { width: 12%; } /* Actividad */
 #bulkImportTable th:nth-child(5),
-#bulkImportTable td:nth-child(5) { width: 9%; }  /* F. Inicio */
+#bulkImportTable td:nth-child(5) { width: 8%; }  /* Grupo */
 #bulkImportTable th:nth-child(6),
-#bulkImportTable td:nth-child(6) { width: 9%; }  /* F. Fin */
+#bulkImportTable td:nth-child(6) { width: 8%; }  /* F. Inicio */
 #bulkImportTable th:nth-child(7),
-#bulkImportTable td:nth-child(7) { width: 8%; }  /* H. Inicio */
+#bulkImportTable td:nth-child(7) { width: 8%; }  /* F. Fin */
 #bulkImportTable th:nth-child(8),
-#bulkImportTable td:nth-child(8) { width: 8%; }  /* H. Fin */
+#bulkImportTable td:nth-child(8) { width: 7%; }  /* H. Inicio */
 #bulkImportTable th:nth-child(9),
-#bulkImportTable td:nth-child(9) { width: 14%; } /* Días */
+#bulkImportTable td:nth-child(9) { width: 7%; }  /* H. Fin */
 #bulkImportTable th:nth-child(10),
-#bulkImportTable td:nth-child(10) { width: 4%; } /* Botón X */
+#bulkImportTable td:nth-child(10) { width: 10%; } /* Días */
+#bulkImportTable th:nth-child(11),
+#bulkImportTable td:nth-child(11) { width: 5%; } /* Tipo */
+#bulkImportTable th:nth-child(12),
+#bulkImportTable td:nth-child(12) { width: 3%; } /* Botón X */
+
+.bulk-mode-aforo .bulk-participant-column,
+.bulk-mode-aforo .bulk-type-column {
+    display: none;
+}
+
+.bulk-mode-aforo #bulkImportTable th:nth-child(3),
+.bulk-mode-aforo #bulkImportTable td:nth-child(3) {
+    width: 18%;
+}
+
+.bulk-mode-aforo #bulkImportTable th:nth-child(4),
+.bulk-mode-aforo #bulkImportTable td:nth-child(4) {
+    width: 18%;
+}
+
+.bulk-mode-aforo #bulkImportTable th:nth-child(5),
+.bulk-mode-aforo #bulkImportTable td:nth-child(5) { width: 10%; }
+.bulk-mode-aforo #bulkImportTable th:nth-child(6),
+.bulk-mode-aforo #bulkImportTable td:nth-child(6) { width: 9%; }
+.bulk-mode-aforo #bulkImportTable th:nth-child(7),
+.bulk-mode-aforo #bulkImportTable td:nth-child(7) { width: 9%; }
+.bulk-mode-aforo #bulkImportTable th:nth-child(8),
+.bulk-mode-aforo #bulkImportTable td:nth-child(8) { width: 8%; }
+.bulk-mode-aforo #bulkImportTable th:nth-child(9),
+.bulk-mode-aforo #bulkImportTable td:nth-child(9) { width: 8%; }
+.bulk-mode-aforo #bulkImportTable th:nth-child(10),
+.bulk-mode-aforo #bulkImportTable td:nth-child(10) {
+    width: 16%;
+}
+.bulk-mode-aforo #bulkImportTable th:nth-child(12),
+.bulk-mode-aforo #bulkImportTable td:nth-child(12) { width: 4%; }
 
 .bulk-import-preview {
     margin-top: 16px;
@@ -1904,6 +2020,12 @@ body {
     padding-left: 20px;
     font-size: 12px;
     color: #b91c1c;
+}
+
+@media (max-width: 720px) {
+    .bulk-import-mode-options {
+        grid-template-columns: 1fr;
+    }
 }
 
 .bulk-import-errors li {

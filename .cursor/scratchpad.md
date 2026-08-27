@@ -873,7 +873,7 @@ Comportamiento propuesto:
 - [x] M3. UI Admin contextual dentro de la actividad — validación automática completada; prueba visual/manual pendiente
 - [x] M4. API y captura operativa del monitor — validación automática completada; prueba funcional/visual agrupada con el usuario
 - [x] M5. Emails de coordinadores, outbox/deduplicación e integración con observaciones — implementación y pruebas automáticas cerradas; configuración y entrega SMTP real pendientes
-- [ ] M6. QA — automatización y revisión estática completadas; migraciones, prueba funcional/visual y entrega SMTP real pendientes con el usuario
+- [ ] M6. QA — automatización y revisión estática completadas; migraciones aplicadas por el usuario, pendiente desplegar código y hacer prueba funcional/visual y SMTP real
 
 ### Current Status / Progress Tracking
 
@@ -943,6 +943,12 @@ Comportamiento propuesto:
 - `git diff --check`: correcto.
 - M6 no se cierra aún: faltan aplicar ambas migraciones en un entorno confirmado, prueba funcional/visual en escritorio y móvil, y prueba SMTP controlada. El usuario pidió realizar esas pruebas conjuntamente.
 
+**Actualización manual (2026-08-27)**:
+
+- El usuario confirma que ejecutó correctamente las dos migraciones UP de evaluaciones y notificaciones.
+- La interfaz todavía no aparece en la aplicación que está consultando porque los cambios de código permanecen en el workspace local, sin commit/push/despliegue. Las migraciones por sí solas no modifican la UI.
+- Siguiente paso: desplegar el código PHP/JS/CSS y dependencias Composer; después verificar el recorrido Admin → actividad → pestaña `Evaluaciones`.
+
 ### Executor's Feedback or Assistance Requests
 
 0. M1 introduce el contrato de cuatro tablas nuevas, pero no cambia datos en ejecución. La aplicación real de la migración será una acción crítica posterior y requerirá confirmar entorno, copia de seguridad y versión de MySQL.
@@ -956,3 +962,44 @@ Comportamiento propuesto:
 - Separar `evaluaciones` (ventana planificada) de `evaluacion_sesiones` (fecha real) evita acoplar la evaluación a la fecha de asistencia y preserva flexibilidad operativa.
 - Composer está versionado junto con `vendor`. Al añadir PHPMailer hay que regenerar autoload y auditar el lockfile. El 2026-08-12 la auditoría reveló vulnerabilidades críticas/altas preexistentes en PhpSpreadsheet 1.30.2; la versión 1.30.6 las corrige sin salir de la rama 1.x declarada.
 - La outbox de observaciones debe usar un savepoint: si falla después de insertar el evento pero antes de insertar todos los destinatarios, se revierte solo la cola parcial y se conserva el guardado principal.
+
+## Importación por lotes de clases de aforo (2026-08-27)
+
+### Background and Motivation
+
+La subida en lote actual siempre exige un participante y termina creando una fila en `inscritos`. Se necesita un modo explícito para importar únicamente clases con control de aforo a partir de hojas donde Nombre y Apellidos están vacíos, sin recargar la interfaz habitual de participantes.
+
+### Key Challenges and Analysis
+
+- El modo debe seleccionarse una sola vez para toda la importación: `Actividades con participantes` (comportamiento actual) o `Clases de aforo`.
+- En aforo, Nombre, Apellidos y Tipo dejan de ser relevantes y se ocultan mediante revelado progresivo; la hoja completa existente debe seguir pudiéndose pegar sin reorganizar columnas.
+- El servidor debe forzar `tipo_control = aforo`, no exigir nombre y no insertar en `inscritos`, aunque el cliente envíe accidentalmente esos campos.
+- Dos clases con la misma actividad y día pero distinta hora son clases diferentes. La reutilización debe comparar tipo, fechas, días y horas, además de instalación, nombre y grupo.
+
+### High-level Task Breakdown
+
+1. Añadir pruebas de contrato para el modo global, la omisión de participantes y la identidad completa del horario.
+2. Implementar selector y estados UX del modal, recuento/pegado adaptados y payload con modo explícito.
+3. Implementar la validación y creación segura en backend, conservando compatibilidad con clientes antiguos.
+4. Ejecutar pruebas, lint PHP/JS y revisión de whitespace; solicitar prueba manual en el entorno del usuario.
+
+### Project Status Board (Importación de aforo)
+
+- [x] B1. Selector global + backend de clases sin participantes + pruebas automáticas — pendiente de prueba manual del usuario
+
+### Executor's Feedback or Assistance Requests
+
+- No se ejecutarán escrituras contra la base de datos local. Tras superar las validaciones estáticas, se pedirá probar una importación pequeña con dos horarios distintos de la misma actividad antes de cargar la hoja completa.
+
+### Resultado Executor B1 (2026-08-27)
+
+- Añadido selector global con dos opciones. En `Clases de aforo` se ocultan Nombre, Apellidos y Tipo, se adapta el texto de ayuda y la hoja original puede pegarse sin recolocar columnas.
+- El cliente cuenta filas por instalación/actividad en modo aforo y envía `modo_importacion: aforo` de forma explícita.
+- El servidor fuerza `tipo_control = aforo`, no exige nombre y omite completamente el `INSERT` en `inscritos` para esas filas. Sin modo explícito conserva el comportamiento legacy.
+- La reutilización de clases compara instalación, actividad, grupo, tipo, período, días y horas normalizadas. Horarios como `9:15` y `09:15:00` se consideran iguales, pero dos horas distintas crean clases distintas.
+- TDD: 8 fallos iniciales de comportamiento y resultado final 9/9. Suite completa del repositorio: 63/63; lint PHP/JS, `git diff --check` y `composer audit --locked` correctos, sin avisos de seguridad.
+- El skill de diseño llevó a usar selección única, revelado progresivo, ayuda contextual, foco visible y adaptación móvil, manteniendo todo el CSS en `admin/assets/css/admin.css`.
+
+### Lessons (Importación de aforo)
+
+- No identificar una clase únicamente por nombre, grupo y días: en una programación real hay varias sesiones de la misma actividad el mismo día. Tipo de control, fechas y horas también forman parte de la identidad operativa.

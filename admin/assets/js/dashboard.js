@@ -3125,8 +3125,56 @@ function showBulkImportModal() {
     if (modal) {
         modal.classList.add('show');
         initBulkImportCenterSelector();
+        initBulkImportMode();
         initBulkImportTable();
     }
+}
+
+/**
+ * Inicializar el modo global de la importación.
+ */
+function initBulkImportMode() {
+    const modal = document.getElementById('bulkImportModal');
+    if (!modal) return;
+
+    modal.querySelectorAll('input[name="bulk_import_mode"]').forEach(input => {
+        input.onchange = updateBulkImportModeUI;
+    });
+
+    updateBulkImportModeUI();
+}
+
+function getBulkImportMode() {
+    return document.querySelector('input[name="bulk_import_mode"]:checked')?.value || 'participantes';
+}
+
+function updateBulkImportModeUI() {
+    const modal = document.getElementById('bulkImportModal');
+    if (!modal) return;
+
+    const modoImportacion = getBulkImportMode();
+    const esAforo = modoImportacion === 'aforo';
+    modal.classList.toggle('bulk-mode-aforo', esAforo);
+
+    const summary = document.getElementById('bulkImportSummary');
+    const help = document.getElementById('bulkImportModeHelp');
+    const participantInstructions = modal.querySelector('.bulk-instructions-participantes');
+    const capacityInstructions = modal.querySelector('.bulk-instructions-aforo');
+
+    if (summary) {
+        summary.textContent = esAforo
+            ? 'Copia las clases desde tu hoja de cálculo. Se crearán con control de aforo y sin participantes.'
+            : 'Copia las columnas desde tu hoja de cálculo y pégalas aquí. El sistema creará automáticamente las instalaciones, actividades y participantes.';
+    }
+    if (help) {
+        help.textContent = esAforo
+            ? 'Nombre, Apellidos y Tipo se omiten. Cada horario distinto se conserva como una clase independiente.'
+            : 'Usa esta opción para el formato habitual con Nombre y Apellidos.';
+    }
+    if (participantInstructions) participantInstructions.hidden = esAforo;
+    if (capacityInstructions) capacityInstructions.hidden = !esAforo;
+
+    updateBulkImportRowCount();
 }
 
 /**
@@ -3261,6 +3309,7 @@ function initBulkImportTable() {
     
     // Configurar listener para pegado desde Excel
     tbody.addEventListener('paste', handleBulkImportPaste);
+    tbody.oninput = updateBulkImportRowCount;
     
     updateBulkImportRowCount();
 }
@@ -3272,8 +3321,8 @@ function addBulkImportRow() {
     const tbody = document.getElementById('bulkImportBody');
     const row = document.createElement('tr');
     row.innerHTML = `
-        <td><input type="text" class="bulk-nombre" placeholder="Nombre"></td>
-        <td><input type="text" class="bulk-apellidos" placeholder="Apellidos"></td>
+        <td class="bulk-participant-column"><input type="text" class="bulk-nombre" placeholder="Nombre"></td>
+        <td class="bulk-participant-column"><input type="text" class="bulk-apellidos" placeholder="Apellidos"></td>
         <td><input type="text" class="bulk-instalacion" placeholder="Pabellón, Piscina..."></td>
         <td><input type="text" class="bulk-actividad" placeholder="Natación, Karate..."></td>
         <td><input type="text" class="bulk-grupo" placeholder="Opcional"></td>
@@ -3282,7 +3331,7 @@ function addBulkImportRow() {
         <td><input type="text" class="bulk-hora-inicio" placeholder="Opcional"></td>
         <td><input type="text" class="bulk-hora-fin" placeholder="Opcional"></td>
         <td><input type="text" class="bulk-dias" placeholder="Lunes, Miércoles..."></td>
-        <td><input type="text" class="bulk-tipo" placeholder="A=aforo"></td>
+        <td class="bulk-type-column"><input type="text" class="bulk-tipo" placeholder="A=aforo"></td>
         <td><button type="button" class="btn-remove-row" onclick="removeBulkImportRow(this)">&times;</button></td>
     `;
     tbody.appendChild(row);
@@ -3318,12 +3367,18 @@ function clearBulkImportTable() {
 function updateBulkImportRowCount() {
     const tbody = document.getElementById('bulkImportBody');
     const rows = tbody.querySelectorAll('tr');
+    const modoImportacion = getBulkImportMode();
     let filledRows = 0;
     
     rows.forEach(row => {
         const nombre = row.querySelector('.bulk-nombre')?.value?.trim() || '';
         const apellidos = row.querySelector('.bulk-apellidos')?.value?.trim() || '';
-        if (nombre || apellidos) filledRows++;
+        const instalacion = row.querySelector('.bulk-instalacion')?.value?.trim() || '';
+        const actividad = row.querySelector('.bulk-actividad')?.value?.trim() || '';
+        const tieneDatos = modoImportacion === 'aforo'
+            ? Boolean(instalacion || actividad)
+            : Boolean(nombre || apellidos);
+        if (tieneDatos) filledRows++;
     });
     
     const countEl = document.getElementById('bulkImportRowCount');
@@ -3393,17 +3448,17 @@ function handleBulkImportPaste(event) {
             // Crear fila
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td><input type="text" class="bulk-nombre" value="${escapeHtml(nombre)}"></td>
-                <td><input type="text" class="bulk-apellidos" value="${escapeHtml(apellidos)}"></td>
-                <td><input type="text" class="bulk-instalacion" value="${escapeHtml(instalacion)}"></td>
-                <td><input type="text" class="bulk-actividad" value="${escapeHtml(actividad)}"></td>
-                <td><input type="text" class="bulk-grupo" value="${escapeHtml(grupo)}"></td>
-                <td><input type="text" class="bulk-fecha-inicio" value="${escapeHtml(fechaInicio)}"></td>
-                <td><input type="text" class="bulk-fecha-fin" value="${escapeHtml(fechaFin)}"></td>
-                <td><input type="text" class="bulk-hora-inicio" value="${escapeHtml(horaInicio)}"></td>
-                <td><input type="text" class="bulk-hora-fin" value="${escapeHtml(horaFin)}"></td>
-                <td><input type="text" class="bulk-dias" value="${escapeHtml(dias)}"></td>
-                <td><input type="text" class="bulk-tipo" value="${escapeHtml(tipoControl || '')}" placeholder="A=aforo"></td>
+                <td class="bulk-participant-column"><input type="text" class="bulk-nombre" value="${escapeHtml(nombre || '')}"></td>
+                <td class="bulk-participant-column"><input type="text" class="bulk-apellidos" value="${escapeHtml(apellidos || '')}"></td>
+                <td><input type="text" class="bulk-instalacion" value="${escapeHtml(instalacion || '')}"></td>
+                <td><input type="text" class="bulk-actividad" value="${escapeHtml(actividad || '')}"></td>
+                <td><input type="text" class="bulk-grupo" value="${escapeHtml(grupo || '')}"></td>
+                <td><input type="text" class="bulk-fecha-inicio" value="${escapeHtml(fechaInicio || '')}"></td>
+                <td><input type="text" class="bulk-fecha-fin" value="${escapeHtml(fechaFin || '')}"></td>
+                <td><input type="text" class="bulk-hora-inicio" value="${escapeHtml(horaInicio || '')}"></td>
+                <td><input type="text" class="bulk-hora-fin" value="${escapeHtml(horaFin || '')}"></td>
+                <td><input type="text" class="bulk-dias" value="${escapeHtml(dias || '')}"></td>
+                <td class="bulk-type-column"><input type="text" class="bulk-tipo" value="${escapeHtml(tipoControl || '')}" placeholder="A=aforo"></td>
                 <td><button type="button" class="btn-remove-row" onclick="removeBulkImportRow(this)">&times;</button></td>
             `;
             tbody.appendChild(row);
@@ -3427,6 +3482,7 @@ async function executeBulkImport() {
     const centroId = document.getElementById('bulkImportCenter').value;
     const errorEl = document.getElementById('bulkImportError');
     const btn = document.getElementById('bulkImportBtn');
+    const modoImportacion = getBulkImportMode();
     
     // Validar centro
     if (!centroId) {
@@ -3453,8 +3509,11 @@ async function executeBulkImport() {
             tipo_control: row.querySelector('.bulk-tipo')?.value.trim() || ''
         };
         
-        // Solo añadir filas que tengan al menos nombre
-        if (rowData.nombre || rowData.apellidos) {
+        const tieneDatos = modoImportacion === 'aforo'
+            ? Boolean(rowData.instalacion || rowData.actividad)
+            : Boolean(rowData.nombre || rowData.apellidos);
+
+        if (tieneDatos) {
             rows.push(rowData);
         }
     });
@@ -3474,6 +3533,7 @@ async function executeBulkImport() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 centro_id: parseInt(centroId),
+                modo_importacion: modoImportacion,
                 rows: rows
             })
         });
@@ -3526,6 +3586,9 @@ function showBulkImportResults(stats) {
     }
     if (stats.actividades_creadas > 0) {
         html += `<div class="preview-stat"><strong>${stats.actividades_creadas}</strong> actividad(es) creada(s)</div>`;
+    }
+    if (stats.clases_aforo_procesadas > 0) {
+        html += `<div class="preview-stat"><strong>${stats.clases_aforo_procesadas}</strong> clase(s) de aforo procesada(s)</div>`;
     }
     if (stats.participantes_creados > 0) {
         html += `<div class="preview-stat"><strong>${stats.participantes_creados}</strong> participante(s) inscrito(s)</div>`;

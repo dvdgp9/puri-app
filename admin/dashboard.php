@@ -700,10 +700,31 @@ $admin_info = getAdminInfo();
                         </svg>
                         <div>
                             <strong>Importa desde Excel</strong>
-                            <p>Copia las columnas desde tu hoja de cálculo y pégalas aquí. El sistema creará automáticamente las instalaciones, actividades y participantes.</p>
+                            <p id="bulkImportSummary">Copia las columnas desde tu hoja de cálculo y pégalas aquí. El sistema creará automáticamente las instalaciones, actividades y participantes.</p>
                         </div>
                     </div>
                 </div>
+
+                <fieldset class="bulk-import-mode" aria-describedby="bulkImportModeHelp">
+                    <legend>¿Qué vas a importar?</legend>
+                    <div class="bulk-import-mode-options">
+                        <label class="bulk-import-mode-option">
+                            <input type="radio" name="bulk_import_mode" value="participantes" checked>
+                            <span>
+                                <strong>Actividades con participantes</strong>
+                                <small>Crea las clases e inscribe a cada persona de la hoja.</small>
+                            </span>
+                        </label>
+                        <label class="bulk-import-mode-option">
+                            <input type="radio" name="bulk_import_mode" value="aforo">
+                            <span>
+                                <strong>Clases de aforo</strong>
+                                <small>Crea únicamente las clases, sin generar participantes.</small>
+                            </span>
+                        </label>
+                    </div>
+                    <p class="bulk-import-mode-help" id="bulkImportModeHelp">Usa esta opción para el formato habitual con Nombre y Apellidos.</p>
+                </fieldset>
 
                 <!-- Selector de Centro -->
                 <div class="form-group">
@@ -725,7 +746,7 @@ $admin_info = getAdminInfo();
                 <!-- Área de pegado -->
                 <div class="form-group">
                     <label>Pegar datos desde Excel</label>
-                    <div class="bulk-paste-instructions">
+                    <div class="bulk-paste-instructions bulk-instructions-participantes">
                         <strong>Columnas esperadas (en este orden):</strong>
                         <ol>
                             <li><strong>Nombre</strong> - Nombre del participante</li>
@@ -742,12 +763,16 @@ $admin_info = getAdminInfo();
                             <li><strong>Tipo</strong> - (Opcional) Vacío=asistencia, A=aforo</li>
                         </ol>
                     </div>
+                    <div class="bulk-paste-instructions bulk-instructions-aforo" hidden>
+                        <strong>Puedes pegar la hoja tal como está:</strong>
+                        <p>Nombre y Apellidos pueden quedar vacíos. Se usarán Instalación, Actividad, Grupo, fechas, horas y Días; Centro seguirá ignorándose porque se usa el seleccionado arriba.</p>
+                    </div>
                     <div class="table-wrapper bulk-table-wrapper">
                         <table class="editable-table" id="bulkImportTable">
                             <thead>
                                 <tr>
-                                    <th>Nombre</th>
-                                    <th>Apellidos</th>
+                                    <th class="bulk-participant-column">Nombre</th>
+                                    <th class="bulk-participant-column">Apellidos</th>
                                     <th>Instalación</th>
                                     <th>Actividad</th>
                                     <th>Grupo</th>
@@ -756,7 +781,7 @@ $admin_info = getAdminInfo();
                                     <th>H. Inicio</th>
                                     <th>H. Fin</th>
                                     <th>Días</th>
-                                    <th>Tipo</th>
+                                    <th class="bulk-type-column">Tipo</th>
                                     <th></th>
                                 </tr>
                             </thead>
