@@ -44,8 +44,8 @@ try {
         exit;
     }
 
-    $stmtTotal = $pdo->prepare('SELECT COUNT(*) FROM inscritos WHERE actividad_id = ?');
-    $stmtTotal->execute([$actividad_id]);
+    $stmtTotal = $pdo->prepare('SELECT COUNT(*) FROM inscritos i WHERE actividad_id = ? AND (EXISTS (SELECT 1 FROM inscrito_vigencias v WHERE v.inscrito_id = i.id AND v.inicio <= ? AND (v.fin IS NULL OR v.fin > ?)) OR EXISTS (SELECT 1 FROM asistencias a WHERE a.usuario_id = i.id AND a.actividad_id = i.actividad_id AND a.fecha = ?))');
+    $stmtTotal->execute([$actividad_id, $fecha, $fecha, $fecha]);
     $total = (int)$stmtTotal->fetchColumn();
 
     $stmtPresentes = $pdo->prepare("
@@ -76,4 +76,3 @@ try {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
 }
-

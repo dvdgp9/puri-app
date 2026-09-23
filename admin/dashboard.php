@@ -624,8 +624,8 @@ $admin_info = getAdminInfo();
                         <div class="form-group" style="margin-top:12px">
                             <label for="dashCsvImportMode">Modo de importación</label>
                             <select id="dashCsvImportMode" name="mode" class="form-control">
-                                <option value="append">Añadir al listado actual</option>
-                                <option value="replace">Reemplazar listado (borrar todos los participantes actuales)</option>
+                                <option value="sync">Actualizar listado mensual (conservar historial)</option>
+                                <option value="append">Añadir nuevas personas sin desactivar</option>
                             </select>
                         </div>
 

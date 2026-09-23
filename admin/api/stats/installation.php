@@ -53,7 +53,7 @@ try {
     $stats['actividades_programadas'] = (int)($stmt->fetch()['total'] ?? 0);
 
     // Total de participantes inscritos en actividades de esta instalación
-    $stmt = $pdo->prepare("SELECT COUNT(*) AS total FROM inscritos ins INNER JOIN actividades a ON a.id = ins.actividad_id WHERE a.instalacion_id = ?");
+    $stmt = $pdo->prepare("SELECT COUNT(*) AS total FROM inscritos ins INNER JOIN actividades a ON a.id = ins.actividad_id WHERE a.instalacion_id = ? AND ins.activo = 1");
     $stmt->execute([$instalacion_id]);
     $stats['total_participantes'] = (int)($stmt->fetch()['total'] ?? 0);
 

@@ -1,6 +1,7 @@
 <?php
 require_once '../../../config/config.php';
 require_once '../../auth_middleware.php';
+require_once '../../../includes/roster.php';
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -58,7 +59,15 @@ try {
 
     // Transacción e inserciones
     $pdo->beginTransaction();
-    $stmtIns = $pdo->prepare('INSERT INTO inscritos (actividad_id, nombre, apellidos) VALUES (?, ?, ?)');
+    $pdo->prepare('SELECT id FROM actividades WHERE id = ? FOR UPDATE')->execute([$actividad_id]);
+    $stmtExisting = $pdo->prepare('SELECT id, nombre, apellidos, activo FROM inscritos WHERE actividad_id = ?');
+    $stmtExisting->execute([$actividad_id]);
+    $known = [];
+    foreach ($stmtExisting->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $key = rosterKey($row['nombre'], $row['apellidos']);
+        if (isset($known[$key])) throw new DomainException('Hay participantes duplicados en esta actividad. Resuelve el duplicado antes de añadir más.');
+        $known[$key] = $row;
+    }
 
     $inserted = 0;
     $errors = [];
@@ -78,7 +87,17 @@ try {
         $nombre = preg_replace('/\s+/', ' ', $nombre);
         $apellidos = preg_replace('/\s+/', ' ', $apellidos);
 
-        $stmtIns->execute([$actividad_id, $nombre, $apellidos]);
+        $key = rosterKey($nombre, $apellidos);
+        if (isset($known[$key])) {
+            if ((int) $known[$key]['activo'] === 0) {
+                rosterActivate($pdo, (int) $known[$key]['id'], date('Y-m-d'));
+                $known[$key]['activo'] = 1;
+                $inserted++;
+            }
+            continue;
+        }
+        $id = rosterInsert($pdo, $actividad_id, $nombre, $apellidos, date('Y-m-d'));
+        $known[$key] = ['id' => $id, 'activo' => 1];
         $inserted++;
     }
 
@@ -90,6 +109,10 @@ try {
         'errors' => $errors,
         'message' => $inserted > 0 ? 'Participantes añadidos' : 'Sin filas válidas'
     ]);
+} catch (DomainException $e) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
+    http_response_code(409);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 } catch (Throwable $e) {
     if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     error_log('create_multiple error: ' . $e->getMessage());

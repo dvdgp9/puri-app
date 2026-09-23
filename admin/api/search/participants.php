@@ -68,7 +68,7 @@ try {
             INNER JOIN actividades a ON i.actividad_id = a.id
             INNER JOIN instalaciones inst ON a.instalacion_id = inst.id
             INNER JOIN centros c ON inst.centro_id = c.id
-            WHERE (
+            WHERE i.activo = 1 AND (
                 i.nombre LIKE ?
                 OR REPLACE(i.nombre, '*', ' ') LIKE ?
                 OR i.nombre LIKE ?
@@ -137,7 +137,7 @@ try {
             INNER JOIN actividades a ON i.actividad_id = a.id
             INNER JOIN instalaciones inst ON a.instalacion_id = inst.id
             INNER JOIN centros c ON inst.centro_id = c.id
-            WHERE c.id IN ($placeholders)
+            WHERE c.id IN ($placeholders) AND i.activo = 1
               AND (
                   i.nombre LIKE ?
                   OR REPLACE(i.nombre, '*', ' ') LIKE ?

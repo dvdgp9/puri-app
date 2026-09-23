@@ -6,6 +6,7 @@ ini_set('display_errors', 0);
 try {
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    require_once '../../../includes/roster.php';
 
     // Verificar autenticación de admin
     $admin_info = getAdminInfo();
@@ -59,30 +60,18 @@ try {
         }
     }
 
-    // Borrado transaccional: asistencias + inscrito
+    // Baja lógica: las asistencias y evaluaciones siguen ligadas al mismo ID.
     $pdo->beginTransaction();
     try {
-        // Eliminar registros de asistencia relacionados con este inscrito en esta actividad
-        $stmtA = $pdo->prepare('DELETE FROM asistencias WHERE usuario_id = ? AND actividad_id = ?');
-        $stmtA->execute([$id, $actividad_id]);
-
-        // Eliminar el inscrito
-        $stmtI = $pdo->prepare('DELETE FROM inscritos WHERE id = ? AND actividad_id = ?');
-        $stmtI->execute([$id, $actividad_id]);
-
-        if ($stmtI->rowCount() > 0) {
-            $pdo->commit();
-            echo json_encode(['success' => true, 'message' => 'Participante y su historial de asistencia eliminados correctamente']);
-        } else {
-            $pdo->rollBack();
-            http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'No se encontró el participante en esta actividad o no tienes permiso para eliminarlo']);
-        }
+        $pdo->prepare('SELECT id FROM actividades WHERE id = ? FOR UPDATE')->execute([$actividad_id]);
+        rosterDeactivate($pdo, $id, date('Y-m-d'));
+        $pdo->commit();
+        echo json_encode(['success' => true, 'message' => 'Participante desactivado; historial conservado']);
     } catch (Exception $ex) {
         $pdo->rollBack();
         error_log('Tx error deleting participante: ' . $ex->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error al eliminar el participante y su asistencia']);
+        echo json_encode(['success' => false, 'message' => 'Error al desactivar el participante']);
     }
 
 } catch (Exception $e) {

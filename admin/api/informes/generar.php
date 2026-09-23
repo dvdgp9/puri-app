@@ -265,10 +265,15 @@ try {
     $stmt_inscritos = $pdo->prepare("
         SELECT id, nombre, apellidos
         FROM inscritos
-        WHERE actividad_id = ?
+        WHERE actividad_id = ? AND (EXISTS (
+            SELECT 1 FROM inscrito_vigencias v
+            WHERE v.inscrito_id = inscritos.id AND v.inicio <= ? AND (v.fin IS NULL OR v.fin > ?)
+        ) OR EXISTS (
+            SELECT 1 FROM asistencias a WHERE a.usuario_id = inscritos.id AND a.actividad_id = inscritos.actividad_id AND a.fecha BETWEEN ? AND ?
+        ))
         ORDER BY apellidos, nombre
     ");
-    $stmt_inscritos->execute([$actividadId]);
+    $stmt_inscritos->execute([$actividadId, $fechaFin, $fechaInicio, $fechaInicio, $fechaFin]);
     $inscritos = $stmt_inscritos->fetchAll(PDO::FETCH_ASSOC);
     
     // Obtener todas las asistencias para el período

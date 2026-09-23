@@ -6,6 +6,7 @@ ini_set('display_errors', 0);
 try {
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    require_once '../../../includes/roster.php';
 
     // Verificar autenticación de admin
     $admin_info = getAdminInfo();
@@ -73,20 +74,36 @@ try {
         }
     }
 
+    $pdo->beginTransaction();
+    $pdo->prepare('SELECT id FROM actividades WHERE id = ? FOR UPDATE')->execute([$actividad_id]);
+    $duplicateStmt = $pdo->prepare('SELECT nombre, apellidos FROM inscritos WHERE actividad_id = ? AND id <> ?');
+    $duplicateStmt->execute([$actividad_id, $id]);
+    foreach ($duplicateStmt->fetchAll(PDO::FETCH_ASSOC) as $other) {
+        if (rosterKey($nombre, $apellidos) === rosterKey($other['nombre'], $other['apellidos'])) {
+            $pdo->rollBack();
+            http_response_code(409);
+            echo json_encode(['success' => false, 'message' => 'Ya existe una persona con ese nombre y apellidos en esta actividad']);
+            exit;
+        }
+    }
+
     // Actualizar datos del participante
     $stmt = $pdo->prepare("UPDATE inscritos SET nombre = ?, apellidos = ? WHERE id = ?");
     $ok = $stmt->execute([$nombre, $apellidos, $id]);
 
     if ($ok) {
+        $pdo->commit();
         echo json_encode(['success' => true, 'message' => 'Participante actualizado correctamente']);
         exit;
     } else {
+        $pdo->rollBack();
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Error al actualizar el participante']);
         exit;
     }
 
 } catch (Exception $e) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     error_log('Error updating participante: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);

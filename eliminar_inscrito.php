@@ -1,5 +1,6 @@
 <?php
 require_once 'config/config.php';
+require_once 'includes/roster.php';
 
 // Verificar sesión
 if(!isset($_SESSION['centro_id'])){
@@ -40,18 +41,15 @@ if(!$actividad){
 }
 
 try {
-    // Primero eliminar registros de asistencia relacionados
-    $stmtAsistencias = $pdo->prepare("DELETE FROM asistencias WHERE usuario_id = ? AND actividad_id = ?");
-    $stmtAsistencias->execute([$inscrito_id, $actividad_id]);
-    
-    // Luego eliminar el inscrito SOLO de esta actividad específica
-    $stmtInscrito = $pdo->prepare("DELETE FROM inscritos WHERE id = ? AND actividad_id = ?");
+    $stmtInscrito = $pdo->prepare('SELECT id FROM inscritos WHERE id = ? AND actividad_id = ? AND activo = 1');
     $stmtInscrito->execute([$inscrito_id, $actividad_id]);
-    
-    if($stmtInscrito->rowCount() > 0){
+    if ($stmtInscrito->fetchColumn()) {
+        $pdo->beginTransaction();
+        rosterDeactivate($pdo, (int) $inscrito_id, date('Y-m-d'));
+        $pdo->commit();
         $response = [
             'success' => true,
-            'message' => 'Inscrito eliminado correctamente de esta actividad'
+            'message' => 'Inscrito desactivado; historial conservado'
         ];
     } else {
         $response = [
@@ -60,11 +58,12 @@ try {
         ];
     }
 } catch (PDOException $e) {
+    if ($pdo->inTransaction()) $pdo->rollBack();
     $response = [
         'success' => false,
-        'message' => 'Error al eliminar el inscrito: ' . $e->getMessage()
+        'message' => 'Error al desactivar el inscrito'
     ];
 }
 
 echo json_encode($response);
-exit; 
+exit;

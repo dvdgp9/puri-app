@@ -7,6 +7,9 @@ try {
     $input = evaluacionesAdminReadJson();
     $evaluationId = evaluacionesAdminPositiveId($input['evaluacion_id'] ?? null, 'evaluacion_id');
     $current = evaluacionesAdminRequireEvaluation($pdo, $evaluationId, $admin_info);
+    if ($current['serie_id'] !== null) {
+        evaluacionesAdminFail(409, 'PRUEBA_DE_SERIE', 'Las pruebas de una serie mantienen la misma definición. Archiva la serie y crea otra para cambiarla.');
+    }
 
     $fieldStmt = $pdo->prepare(
         'SELECT id, nombre, tipo_dato, unidad, configuracion_json
@@ -119,4 +122,3 @@ try {
     evaluacionesAdminRollback($pdo);
     evaluacionesAdminRespondInternal($exception, 'Error actualizando evaluación');
 }
-

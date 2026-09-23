@@ -64,7 +64,7 @@ try {
                  AND a.fecha_fin < CURDATE() THEN 1 ELSE 0 END), 0) AS actividades_finalizadas,
             (SELECT COUNT(*) FROM inscritos ins 
              INNER JOIN actividades act ON ins.actividad_id = act.id 
-             WHERE act.instalacion_id = i.id) AS total_inscritos,
+             WHERE act.instalacion_id = i.id AND ins.activo = 1) AS total_inscritos,
             (SELECT COUNT(*) FROM asistencias asist 
              INNER JOIN actividades act ON asist.actividad_id = act.id 
              WHERE act.instalacion_id = i.id) AS total_asistencias

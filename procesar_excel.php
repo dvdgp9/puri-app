@@ -1,5 +1,6 @@
 <?php
 require_once 'config/config.php';
+require_once 'includes/roster.php';
 
 // Verificar autenticación
 if (!isset($_SESSION['centro_id'])) {
@@ -96,7 +97,6 @@ try {
         $pdo->beginTransaction();
         
         // Preparar la consulta de inserción
-        $stmt = $pdo->prepare("INSERT INTO inscritos (actividad_id, nombre, apellidos) VALUES (?, ?, ?)");
         
         $rowCount = 0;
         $errors = [];
@@ -127,11 +127,7 @@ try {
             if (!empty($data[0])) {
                 $total_registros++;
                 
-                $stmt->execute([
-                    $actividad_id,
-                    trim($data[0]), // Nombre (columna A)
-                    trim($data[1])  // Apellido (columna B)
-                ]);
+                rosterEnsureActive($pdo, (int) $actividad_id, trim($data[0]), trim($data[1]), date('Y-m-d'));
                 $rowCount++;
             }
         }
@@ -194,4 +190,4 @@ try {
         'file' => $_FILES['excel']['name'],
         'type' => $_FILES['excel']['type']
     ]);
-} 
+}

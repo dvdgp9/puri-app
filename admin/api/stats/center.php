@@ -116,7 +116,7 @@ try {
         FROM inscritos ins
         INNER JOIN actividades a ON ins.actividad_id = a.id
         INNER JOIN instalaciones i ON a.instalacion_id = i.id 
-        WHERE i.centro_id = ?
+        WHERE i.centro_id = ? AND ins.activo = 1
     ");
     $stmt->execute([$centro_id]);
     $stats['total_participantes'] = (int)$stmt->fetch()['total'];

@@ -16,6 +16,7 @@ try {
     }
 
     $actividad_id = isset($_GET['actividad_id']) ? intval($_GET['actividad_id']) : 0;
+    $includeInactive = (string) ($_GET['include_inactive'] ?? '') === '1' ? 1 : 0;
     if ($actividad_id <= 0) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'actividad_id inválido']);
@@ -102,25 +103,34 @@ try {
             i.id, 
             i.nombre, 
             i.apellidos,
+            i.activo,
+            i.baja_at,
             (SELECT COUNT(*) 
              FROM asistencias a 
              WHERE a.usuario_id = i.id 
                AND a.actividad_id = ? 
                AND a.asistio = 1
-               AND a.fecha BETWEEN ? AND ?) AS asistencias_periodo
+               AND a.fecha BETWEEN ? AND ?) AS asistencias_periodo,
+            (SELECT COUNT(DISTINCT a.fecha)
+             FROM asistencias a
+             WHERE a.actividad_id = i.actividad_id
+               AND a.fecha BETWEEN ? AND ?
+               AND EXISTS (SELECT 1 FROM inscrito_vigencias v
+                           WHERE v.inscrito_id = i.id AND v.inicio <= a.fecha AND (v.fin IS NULL OR v.fin > a.fecha))) AS dias_con_lista_persona
         FROM inscritos i
-        WHERE i.actividad_id = ? 
+        WHERE i.actividad_id = ? AND (? = 1 OR i.activo = 1)
         ORDER BY i.apellidos ASC, i.nombre ASC
     ');
-    $stmt->execute([$actividad_id, $rangeStart, $rangeEnd, $actividad_id]);
+    $stmt->execute([$actividad_id, $rangeStart, $rangeEnd, $rangeStart, $rangeEnd, $actividad_id, $includeInactive]);
     $participants = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Calcular porcentaje para cada participante
     foreach ($participants as &$p) {
         $p['asistencias_periodo'] = (int)$p['asistencias_periodo'];
-        $p['dias_con_lista'] = $dias_con_lista;
-        $p['porcentaje_asistencia_periodo'] = $dias_con_lista > 0
-            ? round(($p['asistencias_periodo'] / $dias_con_lista) * 100, 0)
+        $p['dias_con_lista'] = (int) $p['dias_con_lista_persona'];
+        unset($p['dias_con_lista_persona']);
+        $p['porcentaje_asistencia_periodo'] = $p['dias_con_lista'] > 0
+            ? round(($p['asistencias_periodo'] / $p['dias_con_lista']) * 100, 0)
             : 0;
 
         // Compatibilidad con clientes antiguos

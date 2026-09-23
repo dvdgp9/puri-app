@@ -16,6 +16,7 @@ if (!window.ActivityPage.attendanceRange) {
 ActivityPage.evaluations = ActivityPage.evaluations || [];
 ActivityPage.evaluationsLoaded = false;
 ActivityPage.currentEvaluationDetail = null;
+ActivityPage.showInactive = false;
 const EvaluationAdminApi = Object.freeze({
   list: 'api/evaluaciones/list_by_activity.php',
   detail: 'api/evaluaciones/detail.php',
@@ -131,6 +132,10 @@ window.addEventListener('DOMContentLoaded', () => {
   if (search) search.addEventListener('input', filterParticipants);
   const sort = document.getElementById('sort-participants');
   if (sort) sort.addEventListener('change', sortParticipants);
+  document.getElementById('show-inactive-participants')?.addEventListener('change', event => {
+    ActivityPage.showInactive = event.target.checked;
+    loadParticipants();
+  });
 
   // Wire forms
   const editForm = document.getElementById('editActivityForm');
@@ -179,7 +184,8 @@ async function loadParticipants(rangeOverride) {
     const params = new URLSearchParams({
       actividad_id: String(ActivityPage.id),
       fecha_inicio: activeRange.start,
-      fecha_fin: activeRange.end
+      fecha_fin: activeRange.end,
+      include_inactive: ActivityPage.showInactive ? '1' : '0'
     });
     const resp = await fetch(`api/participantes/list_by_activity.php?${params.toString()}`);
     const data = await resp.json();
@@ -226,10 +232,11 @@ function renderParticipants() {
 
   const items = ActivityPage.participants
     .map(p => `
-      <div class="center-item" style="cursor: default;">
+      <div class="center-item${Number(p.activo) === 0 ? ' participant-inactive' : ''}" style="cursor: default;">
         <div class="center-main">
           <div class="center-header">
             <h3 class="center-name">${escapeHtml((p.apellidos || '') + ', ' + (p.nombre || ''))}</h3>
+            ${Number(p.activo) === 0 ? '<span class="center-status inactive">Desactivado</span>' : ''}
             ${p.dias_con_lista > 0 ? `<span class="center-status ${p.porcentaje_asistencia_periodo >= 75 ? 'active' : p.porcentaje_asistencia_periodo >= 50 ? '' : 'inactive'}" title="${p.asistencias_periodo}/${p.dias_con_lista} días">${p.porcentaje_asistencia_periodo}%</span>` : ''}
           </div>
           <div class="center-details">
@@ -250,7 +257,7 @@ function renderParticipants() {
             </button>
             <div class="dropdown-menu" id="participant-dropdown-${p.id}" onclick="event.stopPropagation()">
               <a href="#" onclick="event.preventDefault(); editParticipant(${p.id});">Editar</a>
-              <a href="#" onclick="event.preventDefault(); confirmDeleteParticipant(${p.id});">Eliminar</a>
+              ${Number(p.activo) === 1 ? `<a href="#" onclick="event.preventDefault(); confirmDeleteParticipant(${p.id});">Desactivar</a>` : ''}
             </div>
           </div>
         </div>
@@ -593,11 +600,21 @@ async function handleUploadCsvSubmit(e) {
   try {
     const btn = document.getElementById('uploadParticipantsCsvBtn');
     setBtnLoading(btn, true);
-    const mode = document.getElementById('csvImportMode') ? document.getElementById('csvImportMode').value : 'append';
+    const mode = document.getElementById('csvImportMode') ? document.getElementById('csvImportMode').value : 'sync';
     const fd = new FormData();
     fd.append('csv', file);
     fd.append('actividad_id', String(ActivityPage.id));
     fd.append('mode', mode);
+    fd.append('preview', '1');
+    const previewResp = await fetch('api/participantes/upload_csv.php', { method: 'POST', body: fd });
+    const preview = await previewResp.json();
+    if (!previewResp.ok || !preview.success) throw new Error(preview.message || 'No se pudo revisar el CSV');
+    const counts = preview.counts;
+    const accepted = window.confirm(`Actualizar listado: ${counts.mantenidos} se mantienen, ${counts.nuevos} nuevos, ${counts.desactivados} se desactivan y ${counts.reactivados} se reactivan. ¿Continuar?`);
+    if (!accepted) return;
+    fd.delete('preview');
+    fd.append('expected_counts', JSON.stringify(counts));
+    fd.append('expected_roster_fingerprint', preview.roster_fingerprint);
     const resp = await fetch('api/participantes/upload_csv.php', { method: 'POST', body: fd });
     const result = await resp.json();
     if (result.success) {
@@ -612,7 +629,7 @@ async function handleUploadCsvSubmit(e) {
     }
   } catch (e) {
     console.error(e);
-    showNotification('Error subiendo CSV', 'error');
+    showNotification(e.message || 'Error subiendo CSV', 'error');
   } finally {
     const btn = document.getElementById('uploadParticipantsCsvBtn');
     setBtnLoading(btn, false);
@@ -727,7 +744,7 @@ function renderEvaluations() {
       <div class="evaluation-empty-state">
         <strong>No hay evaluaciones</strong>
         <p>Crea la primera cuando tengas definido qué dato debe registrar el monitor.</p>
-        <button class="btn btn-primary" type="button" onclick="openCreateEvaluationModal()">Nueva evaluación</button>
+        <button class="btn btn-primary" type="button" onclick="openSeriesModal()">Nueva serie</button>
       </div>`;
     return;
   }
@@ -747,17 +764,18 @@ function renderEvaluations() {
     return String(b.fecha_inicio).localeCompare(String(a.fecha_inicio));
   });
 
-  container.innerHTML = sorted.map(evaluation => {
+  const renderRow = evaluation => {
     const field = evaluation.campos?.[0] || {};
     const coverage = evaluation.cobertura || {};
     const measured = Number(coverage.medidos || 0);
-    const total = Number(coverage.total_participantes || 0);
+    const total = Number(coverage.total_resultados || coverage.total_participantes || 0);
     const hasSession = Boolean(evaluation.sesion?.id);
     const isArchived = evaluation.estado === 'archivada';
     const coverageText = hasSession
-      ? `${measured} de ${total} registrados`
+      ? `${measured} de ${total} resultados registrados`
       : 'Todavía no realizada';
     const unitText = field.unidad ? ` · ${field.unidad}` : '';
+    const testsText = (evaluation.campos || []).map(test => test.nombre).join(' · ');
 
     return `
       <article class="evaluation-row${isArchived ? ' is-archived' : ''}">
@@ -766,16 +784,23 @@ function renderEvaluations() {
             <h3>${escapeHtml(evaluation.nombre)}</h3>
             <span class="evaluation-state evaluation-state-${escapeHtml(evaluation.estado)}">${escapeHtml(evaluationStateLabel(evaluation.estado))}</span>
           </div>
-          <p class="evaluation-period">${formatDateEs(evaluation.fecha_inicio)} → ${formatDateEs(evaluation.fecha_fin)}</p>
-          <p class="evaluation-metadata">${escapeHtml(field.nombre || 'Dato sin nombre')} · ${escapeHtml(evaluationTypeLabel(field.tipo_dato))}${escapeHtml(unitText)} · ${escapeHtml(coverageText)}</p>
+          <p class="evaluation-period">${evaluation.serie_id ? `${evaluation.serie_tipo === 'retos' ? 'Día de los retos' : 'Trimestral'} · Ciclo ${Number(evaluation.ciclo)} · ` : ''}${formatDateEs(evaluation.fecha_inicio)} → ${formatDateEs(evaluation.fecha_fin)}</p>
+          <p class="evaluation-metadata">${escapeHtml(testsText || field.nombre || 'Dato sin nombre')}${evaluation.serie_id ? '' : ` · ${escapeHtml(evaluationTypeLabel(field.tipo_dato))}${escapeHtml(unitText)}`} · ${escapeHtml(coverageText)}</p>
         </div>
         <div class="evaluation-row-actions">
           ${hasSession ? `<button class="btn btn-primary" type="button" onclick="openEvaluationResults(${Number(evaluation.id)})">Ver resultados</button>` : ''}
-          <button class="btn btn-secondary" type="button" onclick="openEditEvaluationModal(${Number(evaluation.id)})">Editar</button>
-          ${!isArchived ? `<button class="btn btn-secondary btn-subtle-danger" type="button" onclick="archiveEvaluation(${Number(evaluation.id)})">Archivar</button>` : ''}
+          ${evaluation.serie_id ? `<button class="btn btn-secondary" type="button" onclick="openProgression(${Number(evaluation.serie_id)})">Ver progresión</button>` : `<button class="btn btn-secondary" type="button" onclick="openEditEvaluationModal(${Number(evaluation.id)})">Editar</button>`}
+          ${!isArchived ? (evaluation.serie_id ? (evaluation.serie_archivada_at ? '' : `<button class="btn btn-secondary btn-subtle-danger" type="button" onclick="archiveSeries(${Number(evaluation.serie_id)})">Archivar serie</button>`) : `<button class="btn btn-secondary btn-subtle-danger" type="button" onclick="archiveEvaluation(${Number(evaluation.id)})">Archivar</button>`) : ''}
         </div>
       </article>`;
-  }).join('');
+  };
+  const groups = [
+    { title: 'Día de los retos · mensual', items: sorted.filter(item => item.serie_tipo === 'retos') },
+    { title: 'Evaluaciones trimestrales', items: sorted.filter(item => item.serie_tipo === 'trimestral') },
+    { title: 'Evaluaciones puntuales', items: sorted.filter(item => !item.serie_id) }
+  ];
+  container.innerHTML = groups.filter(group => group.items.length).map(group => `
+    <section class="evaluation-group"><h3 class="evaluation-group-title">${group.title}</h3>${group.items.map(renderRow).join('')}</section>`).join('');
 }
 
 function clearEvaluationFormErrors() {
@@ -970,8 +995,7 @@ function renderEvaluationResults(data) {
     return;
   }
 
-  container.innerHTML = participants.map(participant => {
-    const result = participant.resultados?.[0] || {};
+  container.innerHTML = participants.map(participant => (participant.resultados || []).map(result => {
     const isText = result.tipo_dato === 'texto_corto';
     const disabled = participant.inscripcion_eliminada ? 'disabled' : '';
     const value = isText ? (result.valor_texto ?? '') : (result.valor_numero ?? '');
@@ -1002,7 +1026,7 @@ function renderEvaluationResults(data) {
         </div>
         <p class="evaluation-result-status" aria-live="polite">${result.estado === 'sin_evaluar' ? 'Sin evaluar' : 'Guardado'}</p>
       </div>`;
-  }).join('');
+  }).join('')).join('');
 }
 
 async function saveAdminEvaluationResult(inscritoId, button) {
@@ -1183,7 +1207,7 @@ function confirmDeleteParticipant(id) {
   }
   const p = (ActivityPage.participants || []).find(x => String(x.id) === String(id));
   const nombre = p ? `${p.apellidos || ''}, ${p.nombre || ''}`.trim() : '';
-  const ok = window.confirm(`¿Eliminar al participante${nombre ? ' "' + nombre + '"' : ''}?\n\nSe eliminará también su historial de asistencia para esta actividad.\n\nEsta acción no se puede deshacer.`);
+  const ok = window.confirm(`¿Desactivar al participante${nombre ? ' "' + nombre + '"' : ''}? Su historial seguirá en los informes.`);
   if (ok) {
     deleteParticipant(id);
   }
@@ -1199,20 +1223,20 @@ async function deleteParticipant(id) {
     const result = await resp.json();
     if (result.success) {
       await loadParticipants();
-      showNotification('Participante eliminado', 'success');
+      showNotification('Participante desactivado; historial conservado', 'success');
     } else {
-      showNotification(result.message || 'No se pudo eliminar el participante', 'error');
+      showNotification(result.message || 'No se pudo desactivar el participante', 'error');
     }
   } catch (e) {
     console.error(e);
-    showNotification('Error eliminando participante', 'error');
+    showNotification('Error desactivando participante', 'error');
   }
 }
 
 function confirmDeleteAllParticipants() {
-  const count = (ActivityPage.participants || []).length;
-  if (!count) { showNotification('No hay participantes para eliminar', 'info'); return; }
-  const ok = window.confirm(`¿Eliminar el listado completo de participantes (${count})?\n\nSe eliminarán también todas las asistencias asociadas a esta actividad.\n\nEsta acción no se puede deshacer.`);
+  const count = (ActivityPage.participants || []).filter(person => Number(person.activo) === 1).length;
+  if (!count) { showNotification('No hay participantes para desactivar', 'info'); return; }
+  const ok = window.confirm(`¿Desactivar el listado completo (${count})? Se conservará todo el historial.`);
   if (ok) deleteAllParticipants();
 }
 
@@ -1226,13 +1250,13 @@ async function deleteAllParticipants() {
     const result = await resp.json();
     if (result.success) {
       await loadParticipants();
-      showNotification('Listado eliminado correctamente', 'success');
+      showNotification('Listado desactivado; historial conservado', 'success');
     } else {
-      showNotification(result.message || 'No se pudo eliminar el listado', 'error');
+      showNotification(result.message || 'No se pudo desactivar el listado', 'error');
     }
   } catch (e) {
     console.error(e);
-    showNotification('Error eliminando el listado', 'error');
+    showNotification('Error desactivando el listado', 'error');
   }
 }
 

@@ -1,6 +1,7 @@
 <?php
 require_once 'config/config.php';
 require_once 'includes/actividad_helpers.php';
+require_once 'includes/roster.php';
 
 // Verifica que se haya autenticado el centro
 if(!isset($_SESSION['centro_id'])){
@@ -34,14 +35,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($nombre) || empty($apellidos)) {
         $error = "Todos los campos son obligatorios.";
     } else {
-        $stmt = $pdo->prepare("INSERT INTO inscritos (nombre, apellidos, actividad_id) VALUES (?, ?, ?)");
-        $result = $stmt->execute([$nombre, $apellidos, $actividad_id]);
-
-        if ($result) {
+        try {
+            $pdo->beginTransaction();
+            rosterEnsureActive($pdo, (int) $actividad_id, $nombre, $apellidos, date('Y-m-d'));
+            $pdo->commit();
             header("Location: asistencia.php?actividad_id=" . $actividad_id);
             exit;
-        } else {
-            $error = "Error al crear el inscrito.";
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            $error = $exception instanceof DomainException ? $exception->getMessage() : 'No se pudo crear el inscrito.';
         }
     }
 }

@@ -177,7 +177,7 @@ function evaluacionesMonitorFetchCoverage(PDO $pdo, $sessionId)
             COUNT(*) AS total
          FROM evaluacion_resultados er
          INNER JOIN evaluacion_campos ec ON ec.id = er.evaluacion_campo_id
-         WHERE er.evaluacion_sesion_id = ? AND ec.orden = 1"
+         WHERE er.evaluacion_sesion_id = ?"
     );
     $stmt->execute([(int) $sessionId]);
     $coverage = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -209,9 +209,10 @@ function evaluacionesMonitorFetchFields(PDO $pdo, $evaluationId)
 function evaluacionesMonitorFetchEvaluationDto(PDO $pdo, $evaluationId)
 {
     $stmt = $pdo->prepare(
-        'SELECT e.*, es.id AS sesion_id, es.fecha_realizacion,
+        'SELECT e.*, s.tipo AS serie_tipo, es.id AS sesion_id, es.fecha_realizacion,
                 es.estado AS sesion_estado, es.finalizada_at
          FROM evaluaciones e
+         LEFT JOIN evaluacion_series s ON s.id = e.serie_id
          LEFT JOIN evaluacion_sesiones es
            ON es.evaluacion_id = e.id AND es.numero_intento = 1
          WHERE e.id = ?'
@@ -226,6 +227,9 @@ function evaluacionesMonitorFetchEvaluationDto(PDO $pdo, $evaluationId)
     return [
         'id' => (int) $evaluation['id'],
         'actividad_id' => (int) $evaluation['actividad_id'],
+        'serie_id' => $evaluation['serie_id'] !== null ? (int) $evaluation['serie_id'] : null,
+        'ciclo' => $evaluation['ciclo'] !== null ? (int) $evaluation['ciclo'] : null,
+        'serie_tipo' => $evaluation['serie_tipo'],
         'nombre' => $evaluation['nombre'],
         'instrucciones' => $evaluation['instrucciones'],
         'fecha_inicio' => $evaluation['fecha_inicio'],
@@ -323,4 +327,3 @@ function evaluacionesMonitorRollback(PDO $pdo)
         $pdo->rollBack();
     }
 }
-

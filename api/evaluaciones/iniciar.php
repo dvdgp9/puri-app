@@ -58,9 +58,12 @@ try {
                 COALESCE(ins.nombre, ''), COALESCE(ins.apellidos, ''), 'sin_evaluar', ?
          FROM inscritos ins
          INNER JOIN evaluacion_campos ec ON ec.evaluacion_id = ?
-         WHERE ins.actividad_id = ?"
+         WHERE ins.actividad_id = ? AND EXISTS (
+             SELECT 1 FROM inscrito_vigencias v
+             WHERE v.inscrito_id = ins.id AND v.inicio <= ? AND (v.fin IS NULL OR v.fin > ?)
+         )"
     );
-    $snapshotStmt->execute([$sessionId, $monitor_center_id, $evaluationId, (int) $evaluation['actividad_id']]);
+    $snapshotStmt->execute([$sessionId, $monitor_center_id, $evaluationId, (int) $evaluation['actividad_id'], $realDate, $realDate]);
     $pdo->commit();
 
     evaluacionesMonitorRespondSuccess(

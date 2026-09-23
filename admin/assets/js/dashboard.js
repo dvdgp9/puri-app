@@ -2936,8 +2936,17 @@ async function uploadParticipantCsv() {
         formData.append('csv', fileInput.files[0]);
         formData.append('actividad_id', activityId);
         const modeSel = document.getElementById('dashCsvImportMode');
-        const mode = modeSel ? String(modeSel.value || 'append') : 'append';
+        const mode = modeSel ? String(modeSel.value || 'sync') : 'sync';
         formData.append('mode', mode);
+        formData.append('preview', '1');
+        const previewResponse = await fetch('api/participantes/upload_csv.php', { method: 'POST', body: formData });
+        const preview = await previewResponse.json();
+        if (!previewResponse.ok || !preview.success) throw new Error(preview.message || 'No se pudo revisar el CSV');
+        const counts = preview.counts;
+        if (!window.confirm(`Actualizar listado: ${counts.mantenidos} se mantienen, ${counts.nuevos} nuevos, ${counts.desactivados} se desactivan y ${counts.reactivados} se reactivan. ¿Continuar?`)) return;
+        formData.delete('preview');
+        formData.append('expected_counts', JSON.stringify(counts));
+        formData.append('expected_roster_fingerprint', preview.roster_fingerprint);
         
         // Enviar archivo
         const response = await fetch('api/participantes/upload_csv.php', {
@@ -2958,7 +2967,7 @@ async function uploadParticipantCsv() {
         }
     } catch (error) {
         console.error('Error uploading CSV:', error);
-        showNotification('Error al subir el archivo CSV', 'error');
+        showNotification(error.message || 'Error al subir el archivo CSV', 'error');
     } finally {
         // Ocultar loading
         btn.disabled = false;

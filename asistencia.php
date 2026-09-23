@@ -81,18 +81,21 @@ $tipo_control = $actividad['tipo_control'] ?? 'asistencia';
 $es_aforo = ($tipo_control === 'aforo');
 
 // Consultar los inscritos en la actividad (solo para asistencia)
-$stmtUsuarios = $pdo->prepare("
-    SELECT id, nombre, apellidos 
-    FROM inscritos 
-    WHERE actividad_id = ?
-    ORDER BY apellidos ASC, nombre ASC
-");
-$stmtUsuarios->execute([$actividad_id]);
-$usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
-
 // Obtener la fecha seleccionada o usar la fecha actual
 $fecha_seleccionada = isset($_GET['fecha']) ? $_GET['fecha'] : date('Y-m-d');
 $fecha_mostrar = date('d/m/Y', strtotime($fecha_seleccionada));
+
+$stmtUsuarios = $pdo->prepare("
+    SELECT id, nombre, apellidos
+    FROM inscritos
+    WHERE actividad_id = ? AND EXISTS (
+        SELECT 1 FROM inscrito_vigencias v
+        WHERE v.inscrito_id = inscritos.id AND v.inicio <= ? AND (v.fin IS NULL OR v.fin > ?)
+    )
+    ORDER BY apellidos ASC, nombre ASC
+");
+$stmtUsuarios->execute([$actividad_id, $fecha_seleccionada, $fecha_seleccionada]);
+$usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
 
 // Consultamos las asistencias para esta actividad en la fecha seleccionada
 $stmt = $pdo->prepare("SELECT usuario_id, asistio FROM asistencias 

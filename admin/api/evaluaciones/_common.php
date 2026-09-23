@@ -179,22 +179,23 @@ function evaluacionesAdminRequireSession(PDO $pdo, $sessionId, array $adminInfo)
 
 function evaluacionesAdminFetchCoverage(PDO $pdo, $sessionId, $activityId)
 {
-    $totalStmt = $pdo->prepare('SELECT COUNT(*) FROM inscritos WHERE actividad_id = ?');
+    $totalStmt = $pdo->prepare('SELECT COUNT(*) FROM inscritos WHERE actividad_id = ? AND activo = 1');
     $totalStmt->execute([(int) $activityId]);
     $total = (int) $totalStmt->fetchColumn();
 
     if (!$sessionId) {
-        return ['medidos' => 0, 'sin_evaluar' => 0, 'total_participantes' => $total];
+        return ['medidos' => 0, 'sin_evaluar' => 0, 'total_participantes' => $total, 'total_resultados' => 0];
     }
 
     $stmt = $pdo->prepare(
         "SELECT
             SUM(CASE WHEN er.estado = 'medido' THEN 1 ELSE 0 END) AS medidos,
             SUM(CASE WHEN er.estado = 'sin_evaluar' THEN 1 ELSE 0 END) AS sin_evaluar,
-            COUNT(*) AS total_snapshot
+            COUNT(*) AS total_snapshot,
+            COUNT(DISTINCT er.participante_ref) AS participantes_snapshot
          FROM evaluacion_resultados er
          INNER JOIN evaluacion_campos ec ON ec.id = er.evaluacion_campo_id
-         WHERE er.evaluacion_sesion_id = ? AND ec.orden = 1"
+         WHERE er.evaluacion_sesion_id = ?"
     );
     $stmt->execute([(int) $sessionId]);
     $coverage = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -202,7 +203,8 @@ function evaluacionesAdminFetchCoverage(PDO $pdo, $sessionId, $activityId)
     return [
         'medidos' => (int) ($coverage['medidos'] ?? 0),
         'sin_evaluar' => (int) ($coverage['sin_evaluar'] ?? 0),
-        'total_participantes' => (int) ($coverage['total_snapshot'] ?? 0),
+        'total_participantes' => (int) ($coverage['participantes_snapshot'] ?? 0),
+        'total_resultados' => (int) ($coverage['total_snapshot'] ?? 0),
     ];
 }
 
@@ -260,11 +262,12 @@ function evaluacionesAdminFetchSessionResults(PDO $pdo, $evaluationId, $sessionI
 function evaluacionesAdminFetchEvaluation(PDO $pdo, $evaluationId)
 {
     $stmt = $pdo->prepare(
-        'SELECT e.*,
+        'SELECT e.*, s.tipo AS serie_tipo, s.archivada_at AS serie_archivada_at,
                 es.id AS sesion_id, es.numero_intento, es.fecha_realizacion,
                 es.estado AS sesion_estado, es.iniciada_at, es.finalizada_at,
                 es.reopened_at
          FROM evaluaciones e
+         LEFT JOIN evaluacion_series s ON s.id = e.serie_id
          LEFT JOIN evaluacion_sesiones es
            ON es.evaluacion_id = e.id AND es.numero_intento = 1
          WHERE e.id = ?'
@@ -298,6 +301,10 @@ function evaluacionesAdminFetchEvaluation(PDO $pdo, $evaluationId)
     $dto = [
         'id' => (int) $evaluation['id'],
         'actividad_id' => (int) $evaluation['actividad_id'],
+        'serie_id' => $evaluation['serie_id'] !== null ? (int) $evaluation['serie_id'] : null,
+        'ciclo' => $evaluation['ciclo'] !== null ? (int) $evaluation['ciclo'] : null,
+        'serie_tipo' => $evaluation['serie_tipo'],
+        'serie_archivada_at' => $evaluation['serie_archivada_at'],
         'nombre' => $evaluation['nombre'],
         'instrucciones' => $evaluation['instrucciones'],
         'fecha_inicio' => $evaluation['fecha_inicio'],

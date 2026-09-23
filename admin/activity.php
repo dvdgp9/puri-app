@@ -203,6 +203,7 @@ if (!$actividad) {
                         <option value="apellidos">Ordenar A-Z</option>
                         <option value="-apellidos">Ordenar Z-A</option>
                     </select>
+                    <label class="participant-inactive-toggle"><input type="checkbox" id="show-inactive-participants"> Mostrar desactivados</label>
                     <button class="btn btn-secondary" type="button" onclick="openAttendanceRangeModal()">
                         Periodo
                     </button>
@@ -210,7 +211,7 @@ if (!$actividad) {
                         + Añadir Participantes
                     </button>
                     <button class="btn btn-secondary" style="background:#e53e3e;border-color:#e53e3e;color:#fff" onclick="confirmDeleteAllParticipants()">
-                        Borrar listado
+                        Desactivar listado
                     </button>
                 </div>
             </div>
@@ -229,9 +230,10 @@ if (!$actividad) {
                     <h2 class="centers-title">Evaluaciones</h2>
                     <p class="evaluations-panel-copy">Planifica qué se medirá y durante qué período. El monitor elegirá el día concreto.</p>
                 </div>
-                <button class="btn btn-primary" type="button" onclick="openCreateEvaluationModal()">
-                    Nueva evaluación
-                </button>
+                <div class="centers-actions">
+                    <button class="btn btn-secondary" type="button" onclick="openCreateEvaluationModal()">Evaluación puntual</button>
+                    <button class="btn btn-primary" type="button" onclick="openSeriesModal()">Nueva serie</button>
+                </div>
             </div>
             <div class="centers-content">
                 <div id="evaluations-list" class="evaluations-list" aria-live="polite">
@@ -398,8 +400,8 @@ if (!$actividad) {
                         <div class="form-group">
                             <label for="csvImportMode">Modo de importación</label>
                             <select id="csvImportMode" name="mode" class="form-control">
-                                <option value="append">Añadir al listado actual</option>
-                                <option value="replace">Reemplazar listado (borrar todos los participantes actuales)</option>
+                                <option value="sync">Actualizar listado mensual (conservar historial)</option>
+                                <option value="append">Añadir nuevas personas sin desactivar</option>
                             </select>
                         </div>
 
@@ -611,6 +613,59 @@ if (!$actividad) {
         </div>
     </div>
 
+    <div id="evaluationSeriesModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal modal-large" role="dialog" aria-modal="true" aria-labelledby="evaluationSeriesTitle">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title" id="evaluationSeriesTitle">Nueva serie de evaluaciones</h3>
+                    <p class="modal-intro">Las mismas pruebas se repetirán en cada ciclo.</p>
+                </div>
+                <button class="modal-close" type="button" onclick="closeModal('evaluationSeriesModal')" aria-label="Cerrar modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="evaluationSeriesForm">
+                    <div class="form-grid-2">
+                        <div class="form-group"><label for="seriesName">Nombre *</label><input id="seriesName" maxlength="150" required placeholder="Ej. Día de los retos"></div>
+                        <div class="form-group"><label for="seriesType">Frecuencia *</label><select id="seriesType"><option value="retos">Día de los retos · mensual</option><option value="trimestral">Evaluación trimestral</option></select></div>
+                    </div>
+                    <div class="form-group"><label for="seriesInstructions">Indicaciones para el monitor</label><textarea id="seriesInstructions" rows="2"></textarea></div>
+                    <fieldset class="evaluation-form-section"><legend>Primer período y fin de la serie</legend>
+                        <div class="form-grid-2">
+                            <div class="form-group"><label for="seriesStart">Desde *</label><input id="seriesStart" type="date" required></div>
+                            <div class="form-group"><label for="seriesEnd">Hasta *</label><input id="seriesEnd" type="date" required></div>
+                        </div>
+                        <div class="form-group"><label for="seriesUntil">Repetir hasta *</label><input id="seriesUntil" type="date" required><p class="form-hint">Solo se crearán ciclos que terminen antes de esta fecha.</p></div>
+                    </fieldset>
+                    <fieldset class="evaluation-form-section"><legend>Actividades</legend>
+                        <div class="form-group"><label for="seriesScope">Asignar pruebas a</label>
+                            <select id="seriesScope"><option value="actividad">Esta actividad</option><option value="varias">Varias actividades</option><option value="instalacion">Toda la instalación</option><option value="centro">Todo el centro</option></select>
+                        </div>
+                        <div id="seriesActivities" class="series-activities" hidden></div>
+                        <p class="form-hint">La selección incluye las actividades existentes al crear la serie.</p>
+                    </fieldset>
+                    <fieldset class="evaluation-form-section"><legend>Pruebas que se repetirán</legend>
+                        <div id="seriesFields"></div>
+                        <button class="btn btn-secondary" type="button" onclick="addSeriesField()">+ Añadir prueba</button>
+                    </fieldset>
+                    <div id="seriesFormError" class="form-error" role="alert"></div>
+                </form>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="closeModal('evaluationSeriesModal')">Cancelar</button><button form="evaluationSeriesForm" type="submit" class="btn btn-primary" id="saveSeriesBtn">Crear serie</button></div>
+        </div>
+    </div>
+
+    <div id="evaluationProgressionModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal modal-large" role="dialog" aria-modal="true" aria-labelledby="progressionTitle">
+            <div class="modal-header"><h3 class="modal-title" id="progressionTitle">Progresión</h3><button class="modal-close" type="button" onclick="closeModal('evaluationProgressionModal')" aria-label="Cerrar modal">&times;</button></div>
+            <div class="modal-body">
+                <div class="form-group"><label for="progressionParticipant">Participante</label><select id="progressionParticipant"></select></div>
+                <div id="progressionContent" class="progression-content"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" type="button" onclick="closeModal('evaluationProgressionModal')">Cerrar</button></div>
+        </div>
+    </div>
+
     <script src="assets/js/activity.js"></script>
+    <script src="assets/js/evaluation-series.js"></script>
 </body>
 </html>

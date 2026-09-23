@@ -143,7 +143,7 @@ function renderActivities() {
     return;
   }
 
-  const items = Installation.activities.map(a => `
+  const renderItem = a => `
     <div class="center-item" onclick="goToActivity(${a.id})" style="cursor: pointer;">
       <div class="center-main">
         <div class="center-header">
@@ -196,9 +196,21 @@ function renderActivities() {
         </div>
       </div>
     </div>
-  `).join('');
+  `;
 
-  container.innerHTML = items;
+  const descending = document.getElementById('sort-activities')?.value === '-nombre';
+  const sorted = Installation.activities.slice().sort((a, b) => {
+    const order = String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es');
+    return descending ? -order : order;
+  });
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const current = sorted.filter(a => !a.fecha_fin || String(a.fecha_fin).substring(0, 10) >= today);
+  const finished = sorted.filter(a => a.fecha_fin && String(a.fecha_fin).substring(0, 10) < today);
+  container.innerHTML = `
+    <section class="activities-status-section"><h3>En curso y programadas (${current.length})</h3>${current.map(renderItem).join('') || '<p>No hay actividades en este apartado.</p>'}</section>
+    <section class="activities-status-section"><h3>Finalizadas (${finished.length})</h3>${finished.map(renderItem).join('') || '<p>No hay actividades finalizadas.</p>'}</section>`;
+  filterActivities();
 }
 
 function showActivitiesError() {
@@ -229,15 +241,7 @@ function filterActivities() {
 }
 
 function sortActivities() {
-  const sortValue = document.getElementById('sort-activities').value;
-  const container = document.getElementById('activities-list');
-  const items = Array.from(container.querySelectorAll('.center-item'));
-  items.sort((a, b) => {
-    const nameA = a.querySelector('.center-name').textContent;
-    const nameB = b.querySelector('.center-name').textContent;
-    return sortValue === '-nombre' ? nameB.localeCompare(nameA) : nameA.localeCompare(nameB);
-  });
-  items.forEach(it => container.appendChild(it));
+  renderActivities();
 }
 
 // Forms

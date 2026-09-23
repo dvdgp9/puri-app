@@ -6,6 +6,7 @@ ini_set('display_errors', 0);
 try {
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    require_once '../../../includes/roster.php';
 
     $admin_info = getAdminInfo();
 
@@ -48,22 +49,17 @@ try {
 
     $pdo->beginTransaction();
     try {
-        // Eliminar asistencias de todos los inscritos de la actividad
-        $stmtA = $pdo->prepare('DELETE FROM asistencias WHERE actividad_id = ?');
-        $stmtA->execute([$actividad_id]);
-        $asistencias_eliminadas = $stmtA->rowCount();
-
-        // Eliminar inscritos de la actividad
-        $stmtI = $pdo->prepare('DELETE FROM inscritos WHERE actividad_id = ?');
+        $pdo->prepare('SELECT id FROM actividades WHERE id = ? FOR UPDATE')->execute([$actividad_id]);
+        $stmtI = $pdo->prepare('SELECT id FROM inscritos WHERE actividad_id = ? AND activo = 1');
         $stmtI->execute([$actividad_id]);
-        $inscritos_eliminados = $stmtI->rowCount();
+        $ids = $stmtI->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($ids as $id) rosterDeactivate($pdo, (int) $id, date('Y-m-d'));
 
         $pdo->commit();
         echo json_encode([
             'success' => true,
-            'message' => 'Listado eliminado correctamente',
-            'asistencias_eliminadas' => $asistencias_eliminadas,
-            'inscritos_eliminados' => $inscritos_eliminados
+            'message' => 'Listado desactivado sin borrar el historial',
+            'inscritos_desactivados' => count($ids)
         ]);
     } catch (Exception $ex) {
         $pdo->rollBack();

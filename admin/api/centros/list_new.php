@@ -28,7 +28,7 @@ try {
         FROM centros c
         LEFT JOIN instalaciones i ON c.id = i.centro_id
         LEFT JOIN actividades a ON i.id = a.instalacion_id
-        LEFT JOIN inscritos ins ON a.id = ins.actividad_id
+        LEFT JOIN inscritos ins ON a.id = ins.actividad_id AND ins.activo = 1
     ";
     
     $params = [];

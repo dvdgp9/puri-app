@@ -7,6 +7,7 @@ try {
     // Cargar configuración y autenticación
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    require_once '../../../includes/roster.php';
     
     // Verificar autenticación de admin
     $admin_info = getAdminInfo();
@@ -78,52 +79,36 @@ try {
         }
     }
     
-    // Verificar que no existe ya este participante en la actividad
-    $stmt = $pdo->prepare("SELECT id, nombre, apellidos FROM inscritos WHERE actividad_id = ? AND nombre = ? AND apellidos = ?");
-    $stmt->execute([$actividad_id, $nombre, $apellidos]);
-    
-    $existing = $stmt->fetch();
-    if ($existing) {
-        // Debug: Log para investigar el problema
-        error_log("DUPLICATE CHECK: Actividad ID: $actividad_id, Nombre: '$nombre', Apellidos: '$apellidos'");
-        error_log("EXISTING RECORD: ID: {$existing['id']}, Nombre: '{$existing['nombre']}', Apellidos: '{$existing['apellidos']}'");
-        
+    $pdo->beginTransaction();
+    $pdo->prepare('SELECT id FROM actividades WHERE id = ? FOR UPDATE')->execute([$actividad_id]);
+    $stmt = $pdo->prepare('SELECT id, nombre, apellidos, activo FROM inscritos WHERE actividad_id = ?');
+    $stmt->execute([$actividad_id]);
+    $matches = array_values(array_filter($stmt->fetchAll(PDO::FETCH_ASSOC),
+        static fn($row) => rosterKey($row['nombre'], $row['apellidos']) === rosterKey($nombre, $apellidos)));
+    if (count($matches) > 1) {
+        $pdo->rollBack();
         http_response_code(409);
-        echo json_encode([
-            'success' => false, 
-            'message' => 'Este participante ya está inscrito en la actividad',
-            'debug' => [
-                'input_nombre' => $nombre,
-                'input_apellidos' => $apellidos,
-                'existing_nombre' => $existing['nombre'],
-                'existing_apellidos' => $existing['apellidos'],
-                'actividad_id' => $actividad_id
-            ]
-        ]);
+        echo json_encode(['success' => false, 'message' => 'Hay varios registros con este nombre; resuelve el duplicado']);
         exit;
     }
-    
-    // Crear el participante
-    $stmt = $pdo->prepare("INSERT INTO inscritos (actividad_id, nombre, apellidos) VALUES (?, ?, ?)");
-    
-    $result = $stmt->execute([$actividad_id, $nombre, $apellidos]);
-    
-    if ($result) {
-        $participante_id = $pdo->lastInsertId();
-        
-        echo json_encode([
-            'success' => true, 
-            'message' => 'Participante inscrito exitosamente',
-            'participante_id' => $participante_id
-        ]);
+    if ($matches && (int) $matches[0]['activo'] === 1) {
+        $pdo->rollBack();
+        http_response_code(409);
+        echo json_encode(['success' => false, 'message' => 'Este participante ya está inscrito en la actividad']);
         exit;
+    }
+    if ($matches) {
+        $participante_id = (int) $matches[0]['id'];
+        rosterActivate($pdo, $participante_id, date('Y-m-d'));
     } else {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error al inscribir el participante']);
-        exit;
+        $participante_id = rosterInsert($pdo, $actividad_id, $nombre, $apellidos, date('Y-m-d'));
     }
+    $pdo->commit();
+    echo json_encode(['success' => true, 'message' => $matches ? 'Participante reactivado' : 'Participante inscrito', 'participante_id' => $participante_id]);
+    exit;
     
 } catch (Exception $e) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     error_log("Error creating participante: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);

@@ -8,7 +8,8 @@ const MonitorEvaluationApi = Object.freeze({
 
 const MonitorEvaluationState = {
   detail: null,
-  filter: 'all'
+  filter: 'all',
+  drafts: {}
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -79,6 +80,7 @@ async function initMonitorEvaluationsSection() {
 
 function renderMonitorEvaluationRow(evaluation) {
   const field = evaluation.campos?.[0] || {};
+  const testNames = (evaluation.campos || []).map(test => test.nombre).filter(Boolean).join(' · ');
   const isPending = evaluation.estado === 'pendiente';
   const isExpired = evaluation.estado === 'en_curso_fuera_de_plazo';
   const action = isPending
@@ -96,7 +98,7 @@ function renderMonitorEvaluationRow(evaluation) {
           <h4>${monitorEvaluationEscape(evaluation.nombre)}</h4>
           <span>${monitorEvaluationEscape(status)}</span>
         </div>
-        <p>${monitorEvaluationFormatDate(evaluation.fecha_inicio)} → ${monitorEvaluationFormatDate(evaluation.fecha_fin)} · ${monitorEvaluationEscape(field.nombre || monitorEvaluationTypeLabel(field.tipo_dato))}${monitorEvaluationEscape(unit)}</p>
+        <p>${monitorEvaluationFormatDate(evaluation.fecha_inicio)} → ${monitorEvaluationFormatDate(evaluation.fecha_fin)} · ${monitorEvaluationEscape(testNames || field.nombre || monitorEvaluationTypeLabel(field.tipo_dato))}${evaluation.campos?.length === 1 ? monitorEvaluationEscape(unit) : ''}</p>
       </div>
       <div class="monitor-evaluation-actions">${action}</div>
       <div class="evaluation-start-slot"></div>
@@ -159,7 +161,26 @@ function initMonitorEvaluationCapture() {
   document.getElementById('evaluation-filter-all')?.addEventListener('click', () => setMonitorEvaluationFilter('all'));
   document.getElementById('evaluation-filter-pending')?.addEventListener('click', () => setMonitorEvaluationFilter('pending'));
   document.getElementById('evaluation-finish-button')?.addEventListener('click', () => finishMonitorEvaluation(false));
+  const list = document.getElementById('evaluation-capture-list');
+  list?.addEventListener('input', cacheMonitorEvaluationDraft);
+  list?.addEventListener('change', cacheMonitorEvaluationDraft);
   loadMonitorEvaluationDetail();
+}
+
+function monitorEvaluationDraftKey(row) {
+  return `${row.dataset.inscritoId}:${row.dataset.campoId}`;
+}
+
+function cacheMonitorEvaluationDraft(event) {
+  const row = event.target.closest('.evaluation-capture-row');
+  if (!row || row.querySelector('.evaluation-capture-input')?.disabled) return;
+  MonitorEvaluationState.drafts[monitorEvaluationDraftKey(row)] = {
+    inscrito_id: Number(row.dataset.inscritoId),
+    campo_id: Number(row.dataset.campoId),
+    tipo_dato: row.dataset.tipoDato,
+    value: String(row.querySelector('.evaluation-capture-input')?.value ?? '').trim(),
+    qualifier: row.querySelector('.evaluation-capture-qualifier select')?.value || 'exacto'
+  };
 }
 
 async function loadMonitorEvaluationDetail() {
@@ -253,16 +274,18 @@ function renderMonitorEvaluationParticipants() {
 }
 
 function renderMonitorCaptureRow(participant, isLocked) {
-  const result = participant.resultados?.[0] || {};
+  return (participant.resultados || []).map(result => {
+  const draft = MonitorEvaluationState.drafts[`${participant.id}:${result.campo_id}`];
   const isText = result.tipo_dato === 'texto_corto';
   const isDeleted = Boolean(participant.inscripcion_eliminada);
   const disabled = isLocked || isDeleted ? 'disabled' : '';
-  const value = isText ? (result.valor_texto ?? '') : (result.valor_numero ?? '');
-  const qualifier = result.calificador || 'exacto';
+  const savedValue = isText ? (result.valor_texto ?? '') : (result.valor_numero ?? '');
+  const value = draft ? draft.value : savedValue;
+  const qualifier = draft?.qualifier || result.calificador || 'exacto';
   const step = result.tipo_dato === 'entero' ? '1' : '0.001';
 
   return `
-    <article class="evaluation-capture-row" data-inscrito-id="${participant.id ?? ''}" data-campo-id="${Number(result.campo_id)}" data-tipo-dato="${monitorEvaluationEscape(result.tipo_dato || '')}">
+    <article class="evaluation-capture-row" data-inscrito-id="${participant.id ?? ''}" data-campo-id="${Number(result.campo_id)}" data-tipo-dato="${monitorEvaluationEscape(result.tipo_dato || '')}" data-saved-value="${monitorEvaluationEscape(String(savedValue))}" data-saved-qualifier="${monitorEvaluationEscape(result.calificador || 'exacto')}">
       <div class="evaluation-capture-person">
         <strong>${monitorEvaluationEscape(`${participant.apellidos || ''}, ${participant.nombre || ''}`.replace(/^,\s*/, ''))}</strong>
         <span>${isDeleted ? 'Inscripción eliminada · solo lectura' : monitorEvaluationEscape(result.campo_nombre || monitorEvaluationTypeLabel(result.tipo_dato))}</span>
@@ -289,6 +312,7 @@ function renderMonitorCaptureRow(participant, isLocked) {
       </div>
       <p class="evaluation-capture-save-state" aria-live="polite">${result.estado === 'medido' ? 'Guardado' : 'Sin evaluar'}</p>
     </article>`;
+  }).join('');
 }
 
 async function saveMonitorEvaluationResult(button, forceUnevaluated = false) {
@@ -298,6 +322,7 @@ async function saveMonitorEvaluationResult(button, forceUnevaluated = false) {
   const qualifier = row.querySelector('.evaluation-capture-qualifier select');
   const stateElement = row.querySelector('.evaluation-capture-save-state');
   if (forceUnevaluated && input) input.value = '';
+  cacheMonitorEvaluationDraft({ target: input });
   const value = String(input?.value ?? '').trim();
   const resultState = value === '' ? 'sin_evaluar' : 'medido';
   const isText = row.dataset.tipoDato === 'texto_corto';
@@ -326,6 +351,9 @@ async function saveMonitorEvaluationResult(button, forceUnevaluated = false) {
     const participant = MonitorEvaluationState.detail.participantes.find(item => Number(item.id) === Number(row.dataset.inscritoId));
     const result = participant?.resultados?.find(item => Number(item.campo_id) === Number(row.dataset.campoId));
     if (result) Object.assign(result, data.resultado);
+    delete MonitorEvaluationState.drafts[monitorEvaluationDraftKey(row)];
+    row.dataset.savedValue = value;
+    row.dataset.savedQualifier = qualifier?.value || 'exacto';
     MonitorEvaluationState.detail.cobertura = data.cobertura;
     updateMonitorEvaluationProgress(data.cobertura);
     if (stateElement) stateElement.textContent = resultState === 'medido' ? 'Guardado' : 'Sin evaluar · guardado';
@@ -345,19 +373,47 @@ function markMonitorResultUnevaluated(button) {
   saveMonitorEvaluationResult(button, true);
 }
 
+function monitorEvaluationPendingChanges(drafts, detail) {
+  return Object.values(drafts).filter(draft => {
+    const participant = detail.participantes.find(item => Number(item.id) === draft.inscrito_id);
+    const saved = participant?.resultados?.find(item => Number(item.campo_id) === draft.campo_id);
+    const savedValue = draft.tipo_dato === 'texto_corto' ? (saved?.valor_texto ?? '') : (saved?.valor_numero ?? '');
+    return draft.value !== String(savedValue) || (draft.value !== '' && draft.qualifier !== (saved?.calificador || 'exacto'));
+  }).map(draft => {
+    const value = draft.value;
+    const result = {
+      campo_id: draft.campo_id,
+      inscrito_id: draft.inscrito_id,
+      estado: value === '' ? 'sin_evaluar' : 'medido'
+    };
+    if (value !== '') {
+      if (draft.tipo_dato === 'texto_corto') result.valor_texto = value;
+      else {
+        result.valor_numero = value;
+        result.calificador = draft.qualifier;
+      }
+    }
+    return result;
+  });
+}
+
 async function finishMonitorEvaluation(confirmPending) {
   const button = document.getElementById('evaluation-finish-button');
   if (button) button.disabled = true;
   try {
+    document.querySelectorAll('.evaluation-capture-row').forEach(row => cacheMonitorEvaluationDraft({ target: row.querySelector('.evaluation-capture-input') }));
+    const changed = monitorEvaluationPendingChanges(MonitorEvaluationState.drafts, MonitorEvaluationState.detail);
     const data = await monitorEvaluationRequest(MonitorEvaluationApi.finish, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sesion_id: Number(window.MonitorEvaluationsContext.sessionId),
-        confirmar_pendientes: confirmPending
+        confirmar_pendientes: confirmPending,
+        resultados: changed
       })
     });
     MonitorEvaluationState.detail = data;
+    MonitorEvaluationState.drafts = {};
     renderMonitorEvaluationCapture();
     if (typeof showTempMessage === 'function') showTempMessage('Evaluación finalizada');
   } catch (error) {
@@ -370,10 +426,16 @@ async function finishMonitorEvaluation(confirmPending) {
       }
     } else {
       console.error('Error finalizando evaluación:', error);
+      Object.entries(error.fields || {}).forEach(([key, message]) => {
+        const parts = key.split(':');
+        if (parts[0] !== 'resultado') return;
+        const row = document.querySelector(`.evaluation-capture-row[data-campo-id="${Number(parts[1])}"][data-inscrito-id="${Number(parts[2])}"]`);
+        const state = row?.querySelector('.evaluation-capture-save-state');
+        if (state) state.textContent = message;
+      });
       window.alert(error.message);
     }
   } finally {
     if (button) button.disabled = false;
   }
 }
-

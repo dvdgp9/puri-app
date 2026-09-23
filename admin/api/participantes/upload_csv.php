@@ -1,222 +1,163 @@
 <?php
-header('Content-Type: application/json');
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
+header('Content-Type: application/json; charset=utf-8');
+require_once '../../../config/config.php';
+require_once '../../auth_middleware.php';
+require_once '../../../includes/roster.php';
+
+function rosterResponse(int $status, array $body): void
+{
+    http_response_code($status);
+    echo json_encode($body, JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 try {
-    // Cargar configuración y autenticación
-    require_once '../../../config/config.php';
-    require_once '../../auth_middleware.php';
-    
-    // Verificar autenticación de admin
-    $admin_info = getAdminInfo();
-
-    // Solo aceptar POST
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        http_response_code(405);
-        echo json_encode(['success' => false, 'message' => 'Método no permitido']);
-        exit;
+    $admin = getAdminInfo();
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+        rosterResponse(405, ['success' => false, 'message' => 'Método no permitido']);
     }
-
-    // Verificar que se recibió el archivo y el ID de actividad
-    if (!isset($_FILES['csv']) || !isset($_POST['actividad_id'])) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Faltan datos requeridos']);
-        exit;
+    $activityId = filter_var($_POST['actividad_id'] ?? null, FILTER_VALIDATE_INT);
+    $mode = (string) ($_POST['mode'] ?? 'sync');
+    $preview = (string) ($_POST['preview'] ?? '') === '1';
+    if (!$activityId || !in_array($mode, ['sync', 'append'], true)) {
+        rosterResponse(400, ['success' => false, 'message' => 'Actividad o modo de importación inválido']);
     }
-
-    $actividad_id = intval($_POST['actividad_id']);
-    $mode = isset($_POST['mode']) ? trim($_POST['mode']) : 'append'; // 'append' o 'replace'
-
-    // Verificar que la actividad existe
-    $stmt = $pdo->prepare("SELECT id FROM actividades WHERE id = ?");
-    $stmt->execute([$actividad_id]);
-    
-    if (!$stmt->fetch()) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Actividad no encontrada']);
-        exit;
+    $scope = $pdo->prepare('SELECT i.centro_id FROM actividades a JOIN instalaciones i ON i.id = a.instalacion_id WHERE a.id = ?');
+    $scope->execute([$activityId]);
+    $centerId = $scope->fetchColumn();
+    if ($centerId === false) {
+        rosterResponse(404, ['success' => false, 'message' => 'Actividad no encontrada']);
     }
-    
-    // Autorización: si no es superadmin, validar que la actividad pertenezca a un centro asignado
-    if ($admin_info['role'] !== 'superadmin') {
-        $stmt = $pdo->prepare(
-            "SELECT 1
-             FROM actividades a
-             INNER JOIN instalaciones i ON a.instalacion_id = i.id
-             INNER JOIN admin_asignaciones aa ON aa.centro_id = i.centro_id
-             WHERE a.id = ? AND aa.admin_id = ?"
-        );
-        $stmt->execute([$actividad_id, $admin_info['id']]);
-        if (!$stmt->fetchColumn()) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'message' => 'No autorizado para esta actividad']);
-            exit;
+    if ($admin['role'] !== 'superadmin') {
+        $access = $pdo->prepare('SELECT 1 FROM admin_asignaciones WHERE admin_id = ? AND centro_id = ?');
+        $access->execute([$admin['id'], $centerId]);
+        if (!$access->fetchColumn()) {
+            rosterResponse(403, ['success' => false, 'message' => 'No autorizado para esta actividad']);
         }
     }
-
-    // Verificar que el archivo se subió correctamente
-    if ($_FILES['csv']['error'] !== UPLOAD_ERR_OK) {
-        $error_message = '';
-        switch ($_FILES['csv']['error']) {
-            case UPLOAD_ERR_INI_SIZE:
-                $error_message = "El archivo excede el tamaño máximo permitido";
-                break;
-            case UPLOAD_ERR_NO_FILE:
-                $error_message = "No se seleccionó ningún archivo";
-                break;
-            default:
-                $error_message = "Error al subir el archivo";
-                break;
-        }
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => $error_message]);
-        exit;
+    if (!isset($_FILES['csv']) || $_FILES['csv']['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($_FILES['csv']['tmp_name'])) {
+        rosterResponse(400, ['success' => false, 'message' => 'Selecciona un CSV válido']);
     }
-
-    // Verificar que el archivo existe
-    if (!file_exists($_FILES['csv']['tmp_name'])) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'No se pudo encontrar el archivo temporal']);
-        exit;
+    if (strtolower(pathinfo($_FILES['csv']['name'], PATHINFO_EXTENSION)) !== 'csv') {
+        rosterResponse(400, ['success' => false, 'message' => 'El archivo debe ser CSV']);
     }
-
-    // Verificar extensión del archivo
-    $extension = strtolower(pathinfo($_FILES['csv']['name'], PATHINFO_EXTENSION));
-    if ($extension !== 'csv') {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'El archivo debe ser un archivo CSV (.csv)']);
-        exit;
-    }
-
-    // Leer el contenido del archivo
     $content = file_get_contents($_FILES['csv']['tmp_name']);
-    
-    // Detectar y manejar diferentes encodings
-    $encoding = mb_detect_encoding($content, ['UTF-8', 'UTF-16', 'ISO-8859-1', 'Windows-1252'], true);
-    
-    // Detectar BOM UTF-8 y removerlo si existe
-    if (substr($content, 0, 3) === "\xEF\xBB\xBF") {
-        $content = substr($content, 3);
-        $encoding = 'UTF-8';
+    if ($content === false || strlen($content) > 5 * 1024 * 1024) {
+        rosterResponse(400, ['success' => false, 'message' => 'El CSV no se pudo leer o supera 5 MB']);
     }
-    
-    // Convertir a UTF-8 si es necesario
+    $encoding = mb_detect_encoding($content, ['UTF-8', 'UTF-16', 'Windows-1252', 'ISO-8859-1'], true);
     if ($encoding && $encoding !== 'UTF-8') {
         $content = mb_convert_encoding($content, 'UTF-8', $encoding);
-    } elseif (!$encoding) {
-        // Fallback: intentar con Windows-1252 (común en Excel)
-        $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
     }
-    
-    // Determinar el delimitador
-    $delimiter = (strpos($content, ';') !== false) ? ';' : ',';
-
-    // Procesar CSV
-    $handle = fopen('php://memory', 'w+');
+    if (!mb_check_encoding($content, 'UTF-8')) {
+        rosterResponse(422, ['success' => false, 'message' => 'El CSV debe usar una codificación de texto válida']);
+    }
+    $content = preg_replace('/^\xEF\xBB\xBF/', '', $content);
+    $firstLine = strtok($content, "\r\n") ?: '';
+    $delimiter = substr_count($firstLine, ';') > substr_count($firstLine, ',') ? ';' : ',';
+    $handle = fopen('php://temp', 'w+');
     fwrite($handle, $content);
     rewind($handle);
-
-    // Comenzar transacción
-    $pdo->beginTransaction();
-    
-    // Si modo es 'replace', eliminar todos los participantes y asistencias de la actividad
-    if ($mode === 'replace') {
-        $stmtDelAsist = $pdo->prepare('DELETE FROM asistencias WHERE actividad_id = ?');
-        $stmtDelAsist->execute([$actividad_id]);
-        $stmtDelInsc = $pdo->prepare('DELETE FROM inscritos WHERE actividad_id = ?');
-        $stmtDelInsc->execute([$actividad_id]);
+    $headers = fgetcsv($handle, 0, $delimiter);
+    $headers = array_map(static fn($h) => mb_strtolower(trim((string) $h), 'UTF-8'), $headers ?: []);
+    $nameColumn = null;
+    $surnameColumn = null;
+    foreach ($headers as $index => $header) {
+        if (in_array($header, ['nombre', 'name', 'nombres'], true)) $nameColumn = $index;
+        if (in_array($header, ['apellidos', 'apellido', 'surname', 'last name', 'lastname'], true)) $surnameColumn = $index;
     }
-    
-    // Preparar la consulta de inserción
-    $stmt = $pdo->prepare("INSERT INTO inscritos (actividad_id, nombre, apellidos) VALUES (?, ?, ?)");
-    
-    $rowCount = 0;
-    $errors = [];
-    $lineNumber = 0;
-    $total_registros = 0;
-
-    // Mapeo de columnas detectado automáticamente
-    $colNombre = null;
-    $colApellidos = null;
-    
-    // Leer el archivo CSV línea por línea
-    while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
-        $lineNumber++;
-        
-        // Verificar los encabezados en la primera línea y mapear columnas
-        if ($lineNumber === 1) {
-            for ($i = 0; $i < count($data); $i++) {
-                $header = mb_strtolower(trim($data[$i]), 'UTF-8');
-                if (in_array($header, ['nombre', 'name', 'nombres'])) {
-                    $colNombre = $i;
-                } elseif (in_array($header, ['apellidos', 'apellido', 'surname', 'last name', 'lastname'])) {
-                    $colApellidos = $i;
-                }
-            }
-            if ($colNombre === null || $colApellidos === null) {
-                throw new Exception('El archivo CSV debe contener columnas "Nombre" y "Apellidos" (o variantes reconocidas)');
-            }
-            continue;
-        }
-
-        // Verificar que tenemos todos los datos necesarios
-        if (count($data) <= max($colNombre, $colApellidos)) {
-            $errors[] = "Línea $lineNumber: no tiene todas las columnas requeridas";
-            continue;
-        }
-
-        $nombre = isset($data[$colNombre]) ? trim($data[$colNombre]) : '';
-        $apellidos = isset($data[$colApellidos]) ? trim($data[$colApellidos]) : '';
-        
-        // Normalizar datos (limpiar espacios múltiples y asegurar UTF-8)
-        $nombre = preg_replace('/\s+/', ' ', $nombre);
-        $apellidos = preg_replace('/\s+/', ' ', $apellidos);
-        $nombre = mb_convert_encoding($nombre, 'UTF-8', 'UTF-8'); // Limpiar encoding
-        $apellidos = mb_convert_encoding($apellidos, 'UTF-8', 'UTF-8');
-        
-        // Verificar que la línea tiene datos
-        if (!empty($nombre) && !empty($apellidos)) {
-            $total_registros++;
-            
-            // Insertar sin verificar duplicados (decisión administrativa)
-            $stmt->execute([$actividad_id, $nombre, $apellidos]);
-            $rowCount++;
-        }
+    if ($nameColumn === null || $surnameColumn === null) {
+        rosterResponse(422, ['success' => false, 'message' => 'El CSV necesita columnas Nombre y Apellidos']);
     }
-    
+    $incoming = [];
+    $line = 1;
+    while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+        $line++;
+        if ($row === [null] || $row === []) continue;
+        $name = preg_replace('/\s+/u', ' ', trim((string) ($row[$nameColumn] ?? '')));
+        $surname = preg_replace('/\s+/u', ' ', trim((string) ($row[$surnameColumn] ?? '')));
+        if ($name === '' || $surname === '') {
+            rosterResponse(422, ['success' => false, 'message' => "Línea $line: faltan nombre o apellidos"]);
+        }
+        $key = rosterKey($name, $surname);
+        if (isset($incoming[$key])) {
+            rosterResponse(422, ['success' => false, 'message' => "Línea $line: nombre y apellidos repetidos en el CSV"]);
+        }
+        $incoming[$key] = ['nombre' => $name, 'apellidos' => $surname];
+    }
     fclose($handle);
-    
-    if ($total_registros === 0) {
-        throw new Exception("El archivo no contiene registros válidos para importar");
+    if (!$incoming) {
+        rosterResponse(422, ['success' => false, 'message' => 'El CSV no contiene participantes; no se ha modificado el listado']);
     }
-    
-    // Confirmar transacción
-    $pdo->commit();
-    
-    $action = $mode === 'replace' ? 'Listado reemplazado' : 'Importación completada';
-    $message = "$action: $rowCount participantes inscritos";
-    if (!empty($errors)) {
-        $message .= ". Avisos: " . implode(', ', array_slice($errors, 0, 3));
-        if (count($errors) > 3) {
-            $message .= " y " . (count($errors) - 3) . " más";
+
+    if (!$preview) {
+        $pdo->beginTransaction();
+        $pdo->prepare('SELECT id FROM actividades WHERE id = ? FOR UPDATE')->execute([$activityId]);
+    }
+    $stmt = $pdo->prepare('SELECT id, nombre, apellidos, activo FROM inscritos WHERE actividad_id = ? ORDER BY id');
+    $stmt->execute([$activityId]);
+    $existing = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $person) {
+        $key = rosterKey($person['nombre'], $person['apellidos']);
+        if (isset($existing[$key])) {
+            throw new DomainException('Hay participantes con el mismo nombre y apellidos en esta actividad. Resuelve el duplicado antes de actualizar el listado.');
+        }
+        $existing[$key] = $person;
+    }
+    ksort($existing, SORT_STRING);
+    $rosterFingerprint = hash('sha256', json_encode(array_map(static fn($person) => [
+        'id' => (int) $person['id'],
+        'activo' => (int) $person['activo'],
+        'nombre' => $person['nombre'],
+        'apellidos' => $person['apellidos'],
+    ], $existing), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+    $counts = ['mantenidos' => 0, 'nuevos' => 0, 'desactivados' => 0, 'reactivados' => 0];
+    foreach ($incoming as $key => $person) {
+        if (!isset($existing[$key])) $counts['nuevos']++;
+        elseif ((int) $existing[$key]['activo'] === 0) $counts['reactivados']++;
+        else $counts['mantenidos']++;
+    }
+    if ($mode === 'sync') {
+        foreach ($existing as $key => $person) {
+            if ((int) $person['activo'] === 1 && !isset($incoming[$key])) $counts['desactivados']++;
         }
     }
-    
-    echo json_encode([
-        'success' => true,
-        'message' => $message,
-        'imported' => $rowCount,
-        'errors' => $errors
-    ]);
-    
-} catch (Exception $e) {
-    if (isset($pdo) && $pdo->inTransaction()) {
-        $pdo->rollback();
+    if ($preview) {
+        rosterResponse(200, ['success' => true, 'preview' => true, 'counts' => $counts, 'roster_fingerprint' => $rosterFingerprint]);
     }
-    
-    error_log("Error uploading CSV participantes: " . $e->getMessage());
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    if (isset($_POST['expected_roster_fingerprint']) && !hash_equals($rosterFingerprint, (string) $_POST['expected_roster_fingerprint'])) {
+        $pdo->rollBack();
+        rosterResponse(409, ['success' => false, 'message' => 'El listado cambió desde la vista previa. Revísalo de nuevo antes de actualizar.']);
+    }
+    if (isset($_POST['expected_counts'])) {
+        $expected = json_decode((string) $_POST['expected_counts'], true);
+        if ($expected !== $counts) {
+            $pdo->rollBack();
+            rosterResponse(409, ['success' => false, 'message' => 'El listado cambió desde la vista previa. Revísalo de nuevo antes de actualizar.']);
+        }
+    }
+    $today = date('Y-m-d');
+    foreach ($incoming as $key => $person) {
+        if (!isset($existing[$key])) {
+            rosterInsert($pdo, $activityId, $person['nombre'], $person['apellidos'], $today);
+        } elseif ((int) $existing[$key]['activo'] === 0) {
+            rosterActivate($pdo, (int) $existing[$key]['id'], $today);
+        }
+    }
+    if ($mode === 'sync') {
+        foreach ($existing as $key => $person) {
+            if ((int) $person['activo'] === 1 && !isset($incoming[$key])) {
+                rosterDeactivate($pdo, (int) $person['id'], $today);
+            }
+        }
+    }
+    $pdo->commit();
+    rosterResponse(200, ['success' => true, 'message' => 'Listado actualizado sin borrar el historial', 'counts' => $counts]);
+} catch (DomainException $exception) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
+    rosterResponse(422, ['success' => false, 'message' => $exception->getMessage()]);
+} catch (Throwable $exception) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
+    error_log('Error importando listado: ' . $exception->getMessage());
+    rosterResponse(500, ['success' => false, 'message' => 'No se pudo importar el listado']);
 }
-?>

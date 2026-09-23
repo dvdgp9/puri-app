@@ -20,6 +20,7 @@ ini_set('display_errors', 0);
 try {
     require_once '../../config/config.php';
     require_once '../auth_middleware.php';
+    require_once '../../includes/roster.php';
     
     $admin_info = getAdminInfo();
 
@@ -309,9 +310,8 @@ try {
         $nombre = preg_replace('/\s+/', ' ', $nombre);
         $apellidos = preg_replace('/\s+/', ' ', $apellidos);
         
-        $stmtPart = $pdo->prepare("INSERT INTO inscritos (actividad_id, nombre, apellidos) VALUES (?, ?, ?)");
-        $stmtPart->execute([$actividad_id, $nombre, $apellidos]);
-        $stats['participantes_creados']++;
+        $person = rosterEnsureActive($pdo, (int) $actividad_id, $nombre, $apellidos, date('Y-m-d'));
+        if ($person['accion'] !== 'mantenido') $stats['participantes_creados']++;
     }
 
     $pdo->commit();

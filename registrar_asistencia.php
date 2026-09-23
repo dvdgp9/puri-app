@@ -32,18 +32,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Iniciamos una transacción para asegurar la integridad de los datos
         $pdo->beginTransaction();
 
-        // Primero eliminamos las asistencias existentes para esa fecha y actividad
-        $stmt_delete = $pdo->prepare("DELETE FROM asistencias WHERE actividad_id = ? AND fecha = ?");
-        $stmt_delete->execute([$actividad_id, $fecha]);
-
-        // Luego insertamos las nuevas asistencias
+        // Solo se actualizan las personas visibles en esta fecha. Las asistencias
+        // históricas de alguien dado de baja no se borran al guardar de nuevo.
+        $eligible = $pdo->prepare('SELECT 1 FROM inscritos i WHERE i.id = ? AND i.actividad_id = ? AND EXISTS (SELECT 1 FROM inscrito_vigencias v WHERE v.inscrito_id = i.id AND v.inicio <= ? AND (v.fin IS NULL OR v.fin > ?))');
+        $stmt_delete = $pdo->prepare('DELETE FROM asistencias WHERE actividad_id = ? AND usuario_id = ? AND fecha = ?');
         $stmt = $pdo->prepare("INSERT INTO asistencias (actividad_id, usuario_id, fecha, asistio) VALUES (?, ?, ?, ?)");
         
         // Contador de asistencias registradas
         $asistencias_registradas = 0;
         
         foreach ($asistencias as $usuario_id => $estado) {
-            $stmt->execute([$actividad_id, $usuario_id, $fecha, $estado]);
+            $eligible->execute([(int) $usuario_id, $actividad_id, $fecha, $fecha]);
+            if (!$eligible->fetchColumn()) throw new RuntimeException('Participante fuera de la actividad o de la fecha.');
+            $stmt_delete->execute([$actividad_id, (int) $usuario_id, $fecha]);
+            $stmt->execute([$actividad_id, (int) $usuario_id, $fecha, (int) ((int) $estado === 1)]);
             if ($estado == 1) {
                 $asistencias_registradas++;
             }

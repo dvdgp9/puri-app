@@ -53,7 +53,7 @@ try {
              FROM inscritos ins 
              INNER JOIN actividades act ON ins.actividad_id = act.id 
              INNER JOIN instalaciones inst ON act.instalacion_id = inst.id 
-             WHERE inst.centro_id = c.id) AS total_inscritos
+             WHERE inst.centro_id = c.id AND ins.activo = 1) AS total_inscritos
         FROM centros c
         $where_clause
         ORDER BY c.nombre ASC

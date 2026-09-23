@@ -39,6 +39,13 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
 $asistio = $asistio ? 1 : 0;
 
 try {
+    $eligible = $pdo->prepare('SELECT 1 FROM inscritos i JOIN actividades a ON a.id = i.actividad_id JOIN instalaciones ins ON ins.id = a.instalacion_id WHERE i.id = ? AND i.actividad_id = ? AND ins.centro_id = ? AND EXISTS (SELECT 1 FROM inscrito_vigencias v WHERE v.inscrito_id = i.id AND v.inicio <= ? AND (v.fin IS NULL OR v.fin > ?))');
+    $eligible->execute([$usuario_id, $actividad_id, (int) ($_SESSION['centro_id'] ?? 0), $fecha, $fecha]);
+    if (!$eligible->fetchColumn()) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Participante no disponible para esta fecha']);
+        exit;
+    }
     // Verificar si ya existe un registro para este usuario/actividad/fecha
     $stmt_check = $pdo->prepare("SELECT id FROM asistencias WHERE actividad_id = ? AND usuario_id = ? AND fecha = ?");
     $stmt_check->execute([$actividad_id, $usuario_id, $fecha]);

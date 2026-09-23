@@ -1,6 +1,21 @@
 # API de evaluaciones
 
-Estado: contrato e implementación del MVP completados en M2–M4. La aplicación de migraciones y la prueba funcional con datos siguen pendientes.
+Estado: el MVP y las series recurrentes están implementados en código. La aplicación de migraciones y la prueba funcional con datos del entorno siguen pendientes.
+
+## Series mensuales y trimestrales (2026-09-23)
+
+Aplicar `migrations/20260923_recurring_evaluations_and_rosters.up.sql` después de la migración inicial de evaluaciones. Las evaluaciones puntuales existentes permanecen intactas.
+
+Admin puede crear una serie de tipo `retos` (cada mes) o `trimestral` (cada tres meses) con entre 1 y 10 pruebas. El primer período define los días disponibles del primer ciclo; `hasta` es el último día permitido para el fin de un ciclo. El límite es 24 ciclos y 2000 evaluaciones por operación. Las fechas de meses cortos se ajustan al último día del mes. El período inicial no puede solaparse con el siguiente.
+
+El ámbito de asignación se elige al crear la serie: actividad actual, varias actividades, todas las actividades de la instalación o todas las del centro. Se resuelve sobre las actividades existentes en ese momento; las actividades creadas después no se añaden automáticamente. Solo se crean ciclos cuyo inicio cae dentro de las fechas de la actividad. Cada ciclo recibe copias de las pruebas, por lo que su definición histórica no cambia. Para cambiar las pruebas de próximos ciclos, archivar la serie y crear otra.
+
+- `GET /admin/api/evaluaciones/scope_options.php?actividad_id=...`: actividades elegibles del centro.
+- `POST /admin/api/evaluaciones/create_series.php`: `actividad_id`, `nombre`, `tipo`, `instrucciones`, `primer_inicio`, `primer_fin`, `hasta`, `ambito`, `actividad_ids` (solo con `varias`) y `campos` (`nombre`, `tipo_dato`, `unidad`).
+- `GET /admin/api/evaluaciones/progression.php?serie_id=...&actividad_id=...`: ciclos, pruebas y medidas por participante dentro de la actividad.
+- `POST /admin/api/evaluaciones/archive_series.php`: `{ "serie_id": 1 }`. Archiva los ciclos sin sesión; los resultados y sesiones en curso se conservan.
+
+`POST /api/evaluaciones/finalizar.php` admite `resultados`, una lista de cambios visibles con `campo_id`, `inscrito_id`, `estado` y valor. Valida y guarda esos cambios en la misma transacción que finaliza la sesión. Un error revierte todo el cierre. Los resultados aún `sin_evaluar` mantienen la confirmación existente.
 
 ## Objetivo y alcance
 
