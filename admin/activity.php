@@ -47,7 +47,7 @@ if (!$actividad) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars(html_entity_decode($actividad['nombre'], ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?> - Sistema Puri</title>
-    <link rel="stylesheet" href="assets/css/admin.css">
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?= filemtime(__DIR__ . '/assets/css/admin.css') ?>">
     <link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         const ActivityPage = {
@@ -381,6 +381,10 @@ if (!$actividad) {
                 <!-- Pestaña CSV -->
                 <div class="tab-content" id="csvTab">
                     <form id="uploadParticipantCsvForm" enctype="multipart/form-data">
+                        <div class="roster-intro">
+                            <h3>Actualizar participantes desde un CSV</h3>
+                            <p>Hazlo una vez al mes por actividad. El archivo se compara con el listado de la actividad que estás viendo.</p>
+                        </div>
                         <div class="form-row">
                             <div class="form-group col-md-4">
                                 <label>Centro Deportivo</label>
@@ -397,28 +401,30 @@ if (!$actividad) {
                         </div>
                         <input type="hidden" id="csvLockedActivityId" name="actividad_id" required>
 
-                        <div class="form-group">
-                            <label for="csvImportMode">Modo de importación</label>
-                            <select id="csvImportMode" name="mode" class="form-control">
-                                <option value="sync">Actualizar listado mensual (conservar historial)</option>
-                                <option value="append">Añadir nuevas personas sin desactivar</option>
-                            </select>
-                        </div>
+                        <fieldset class="roster-mode-options">
+                            <legend>¿Qué contiene el archivo?</legend>
+                            <label class="roster-mode-option"><input type="radio" name="mode" value="sync" checked>
+                                <span><strong>Listado completo de este mes <em>Recomendado</em></strong><small>Se mantienen quienes aparecen; quienes faltan se desactivan sin perder su historial.</small></span>
+                            </label>
+                            <label class="roster-mode-option"><input type="radio" name="mode" value="append">
+                                <span><strong>Solo altas o reincorporaciones</strong><small>Se añaden o reactivan estas personas. Nadie se desactiva.</small></span>
+                            </label>
+                        </fieldset>
 
                         <div class="csv-section">
                             <div class="csv-info">
-                                <h4>Instrucciones</h4>
-                                <p>1. Descarga la plantilla CSV</p>
-                                <p>2. Completa con los datos de los participantes</p>
-                                <p>3. Sube el archivo completado</p>
+                                <h4>Prepara el archivo</h4>
+                                <p>Una fila por persona, con columnas <strong>Nombre</strong> y <strong>Apellidos</strong>. Puedes usar la plantilla o un CSV con esas columnas.</p>
+                                <p>Antes de cambiar nada verás un resumen para revisar y confirmar.</p>
                             </div>
                             <div class="csv-actions">
                                 <a class="btn btn-secondary" href="../public/assets/plantilla-asistentes.csv" download>
                                     Descargar plantilla
                                 </a>
-                                <input type="file" id="participantsCsv" name="csv" accept=".csv">
+                                <input type="file" id="participantsCsv" name="csv" accept=".csv,text/csv" aria-label="Archivo CSV de participantes">
                             </div>
                         </div>
+                        <p class="roster-history-note">El historial de asistencia y evaluaciones se conserva. Si vuelve alguien con el mismo nombre y apellidos en esta actividad, se reactiva su registro.</p>
                     </form>
                 </div>
             </div>
@@ -433,7 +439,7 @@ if (!$actividad) {
                     </span>
                 </button>
                 <button type="submit" form="uploadParticipantCsvForm" class="btn btn-primary" id="uploadParticipantsCsvBtn" style="display: none;">
-                    <span class="btn-text">Subir CSV</span>
+                    <span class="btn-text">Revisar cambios</span>
                     <span class="btn-loading">
                         <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
@@ -625,7 +631,7 @@ if (!$actividad) {
             <div class="modal-body">
                 <form id="evaluationSeriesForm">
                     <div class="form-grid-2">
-                        <div class="form-group"><label for="seriesName">Nombre *</label><input id="seriesName" maxlength="150" required placeholder="Ej. Día de los retos"></div>
+                        <div class="form-group"><label for="seriesName">Nombre *</label><input id="seriesName" type="text" maxlength="150" required placeholder="Ej. Día de los retos"></div>
                         <div class="form-group"><label for="seriesType">Frecuencia *</label><select id="seriesType"><option value="retos">Día de los retos · mensual</option><option value="trimestral">Evaluación trimestral</option></select></div>
                     </div>
                     <div class="form-group"><label for="seriesInstructions">Indicaciones para el monitor</label><textarea id="seriesInstructions" rows="2"></textarea></div>
@@ -665,7 +671,8 @@ if (!$actividad) {
         </div>
     </div>
 
-    <script src="assets/js/activity.js"></script>
-    <script src="assets/js/evaluation-series.js"></script>
+    <script src="assets/js/roster-import.js?v=<?= filemtime(__DIR__ . '/assets/js/roster-import.js') ?>"></script>
+    <script src="assets/js/activity.js?v=<?= filemtime(__DIR__ . '/assets/js/activity.js') ?>"></script>
+    <script src="assets/js/evaluation-series.js?v=<?= filemtime(__DIR__ . '/assets/js/evaluation-series.js') ?>"></script>
 </body>
 </html>

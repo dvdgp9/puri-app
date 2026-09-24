@@ -600,7 +600,7 @@ async function handleUploadCsvSubmit(e) {
   try {
     const btn = document.getElementById('uploadParticipantsCsvBtn');
     setBtnLoading(btn, true);
-    const mode = document.getElementById('csvImportMode') ? document.getElementById('csvImportMode').value : 'sync';
+    const mode = selectedRosterImportMode(form);
     const fd = new FormData();
     fd.append('csv', file);
     fd.append('actividad_id', String(ActivityPage.id));
@@ -610,7 +610,7 @@ async function handleUploadCsvSubmit(e) {
     const preview = await previewResp.json();
     if (!previewResp.ok || !preview.success) throw new Error(preview.message || 'No se pudo revisar el CSV');
     const counts = preview.counts;
-    const accepted = window.confirm(`Actualizar listado: ${counts.mantenidos} se mantienen, ${counts.nuevos} nuevos, ${counts.desactivados} se desactivan y ${counts.reactivados} se reactivan. ¿Continuar?`);
+    const accepted = await confirmRosterImportPreview(counts, mode, document.getElementById('csvLockedActivityName')?.value, preview.deactivation_names);
     if (!accepted) return;
     fd.delete('preview');
     fd.append('expected_counts', JSON.stringify(counts));

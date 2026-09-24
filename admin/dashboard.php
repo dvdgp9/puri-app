@@ -16,7 +16,7 @@ $admin_info = getAdminInfo();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Admin Puri</title>
-    <link rel="stylesheet" href="assets/css/admin.css">
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?= filemtime(__DIR__ . '/assets/css/admin.css') ?>">
     <link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -569,6 +569,10 @@ $admin_info = getAdminInfo();
                 <!-- Pestaña CSV -->
                 <div class="tab-content" id="csvTab">
                     <form id="uploadParticipantCsvForm">
+                        <div class="roster-intro">
+                            <h3>Actualizar participantes desde un CSV</h3>
+                            <p>Hazlo una vez al mes por actividad. Elige la actividad y sube su listado de personas.</p>
+                        </div>
                         <!-- Selectores cascada para CSV -->
                         <div class="form-row">
                             <div class="form-group col-md-4">
@@ -620,23 +624,22 @@ $admin_info = getAdminInfo();
                             </div>
                         </div>
 
-                        <!-- Modo de importación -->
-                        <div class="form-group" style="margin-top:12px">
-                            <label for="dashCsvImportMode">Modo de importación</label>
-                            <select id="dashCsvImportMode" name="mode" class="form-control">
-                                <option value="sync">Actualizar listado mensual (conservar historial)</option>
-                                <option value="append">Añadir nuevas personas sin desactivar</option>
-                            </select>
-                        </div>
+                        <fieldset class="roster-mode-options">
+                            <legend>¿Qué contiene el archivo?</legend>
+                            <label class="roster-mode-option"><input type="radio" name="mode" value="sync" checked>
+                                <span><strong>Listado completo de este mes <em>Recomendado</em></strong><small>Se mantienen quienes aparecen; quienes faltan se desactivan sin perder su historial.</small></span>
+                            </label>
+                            <label class="roster-mode-option"><input type="radio" name="mode" value="append">
+                                <span><strong>Solo altas o reincorporaciones</strong><small>Se añaden o reactivan estas personas. Nadie se desactiva.</small></span>
+                            </label>
+                        </fieldset>
 
                         <!-- Descarga de plantilla y subida de archivo -->
                         <div class="csv-section">
                             <div class="csv-info">
-                                <h4><i class="fas fa-info-circle"></i> Instrucciones</h4>
-                                <p>1. Descarga la plantilla CSV</p>
-                                <p>2. Completa con los datos de los participantes (Nombre, Apellidos)</p>
-                                <p>3. En Excel (Mac): usa “Guardar como…” → “CSV UTF-8 (delimitado por comas)”</p>
-                                <p>4. Sube el archivo completado</p>
+                                <h4>Prepara el archivo</h4>
+                                <p>Una fila por persona, con columnas <strong>Nombre</strong> y <strong>Apellidos</strong>. Puedes usar la plantilla o un CSV con esas columnas.</p>
+                                <p>Antes de cambiar nada verás un resumen para revisar y confirmar.</p>
                             </div>
                             
                             <div class="csv-actions">
@@ -646,7 +649,7 @@ $admin_info = getAdminInfo();
                                 
                                 <label class="btn btn-primary file-upload-btn">
                                     <i class="fas fa-upload"></i> Seleccionar Archivo CSV
-                                    <input type="file" id="participantCsvFile" accept=".csv" style="display: none;">
+                                    <input type="file" id="participantCsvFile" accept=".csv,text/csv">
                                 </label>
                             </div>
                             
@@ -658,6 +661,7 @@ $admin_info = getAdminInfo();
                                 </button>
                             </div>
                         </div>
+                        <p class="roster-history-note">El historial de asistencia y evaluaciones se conserva. Si vuelve alguien con el mismo nombre y apellidos en esta actividad, se reactiva su registro.</p>
                     </form>
                 </div>
             </div>
@@ -674,7 +678,7 @@ $admin_info = getAdminInfo();
                     </span>
                 </button>
                 <button type="submit" form="uploadParticipantCsvForm" class="btn btn-primary" id="uploadCsvBtn" style="display: none;">
-                    <span class="btn-text">Subir CSV</span>
+                    <span class="btn-text">Revisar cambios</span>
                     <span class="btn-loading">
                         <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
@@ -823,6 +827,7 @@ $admin_info = getAdminInfo();
     <script>
         window.isSuperAdmin = <?= isSuperAdmin() ? 'true' : 'false' ?>;
     </script>
-    <script src="assets/js/dashboard.js"></script>
+    <script src="assets/js/roster-import.js?v=<?= filemtime(__DIR__ . '/assets/js/roster-import.js') ?>"></script>
+    <script src="assets/js/dashboard.js?v=<?= filemtime(__DIR__ . '/assets/js/dashboard.js') ?>"></script>
 </body>
 </html>

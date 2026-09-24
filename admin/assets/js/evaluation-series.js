@@ -13,9 +13,9 @@ function addSeriesField() {
   const row = document.createElement('div');
   row.className = 'series-field-row';
   row.innerHTML = `
-    <div class="form-group"><label>Prueba</label><input class="series-field-name" maxlength="150" required placeholder="Ej. Burpees en 1 minuto"></div>
+    <div class="form-group"><label>Prueba</label><input type="text" class="series-field-name" maxlength="150" required placeholder="Ej. Burpees en 1 minuto"></div>
     <div class="form-group"><label>Formato</label><select class="series-field-type"><option value="entero">Número entero</option><option value="decimal">Número decimal</option><option value="duracion">Duración</option><option value="texto_corto">Texto corto</option></select></div>
-    <div class="form-group"><label>Unidad</label><input class="series-field-unit" maxlength="50" placeholder="repeticiones"></div>
+    <div class="form-group"><label>Unidad</label><input type="text" class="series-field-unit" maxlength="50" placeholder="repeticiones"></div>
     <button class="btn btn-secondary" type="button" aria-label="Quitar prueba" onclick="if(document.querySelectorAll('.series-field-row').length > 1) this.parentElement.remove()">Quitar</button>`;
   container.appendChild(row);
 }

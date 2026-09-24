@@ -2251,9 +2251,9 @@ function setupParticipantTabs() {
  * Cambiar pestaña del modal de participantes
  */
 function switchParticipantTab(tabType) {
-    // Cambiar botones de pestaña
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    // La pestaña también se activa al abrir el modal por código, sin evento de clic.
+    const tabButtons = document.querySelectorAll('#createParticipantModal .tab-navigation .tab-btn');
+    tabButtons.forEach((btn, index) => btn.classList.toggle('active', index === (tabType === 'manual' ? 0 : 1)));
     
     // Cambiar contenido de pestañas
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -2935,15 +2935,14 @@ async function uploadParticipantCsv() {
         const formData = new FormData();
         formData.append('csv', fileInput.files[0]);
         formData.append('actividad_id', activityId);
-        const modeSel = document.getElementById('dashCsvImportMode');
-        const mode = modeSel ? String(modeSel.value || 'sync') : 'sync';
+        const mode = selectedRosterImportMode(document.getElementById('uploadParticipantCsvForm'));
         formData.append('mode', mode);
         formData.append('preview', '1');
         const previewResponse = await fetch('api/participantes/upload_csv.php', { method: 'POST', body: formData });
         const preview = await previewResponse.json();
         if (!previewResponse.ok || !preview.success) throw new Error(preview.message || 'No se pudo revisar el CSV');
         const counts = preview.counts;
-        if (!window.confirm(`Actualizar listado: ${counts.mantenidos} se mantienen, ${counts.nuevos} nuevos, ${counts.desactivados} se desactivan y ${counts.reactivados} se reactivan. ¿Continuar?`)) return;
+        if (!await confirmRosterImportPreview(counts, mode, document.getElementById('csvParticipantActivitySearch')?.value, preview.deactivation_names)) return;
         formData.delete('preview');
         formData.append('expected_counts', JSON.stringify(counts));
         formData.append('expected_roster_fingerprint', preview.roster_fingerprint);

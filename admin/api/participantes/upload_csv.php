@@ -112,6 +112,7 @@ try {
         'apellidos' => $person['apellidos'],
     ], $existing), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
     $counts = ['mantenidos' => 0, 'nuevos' => 0, 'desactivados' => 0, 'reactivados' => 0];
+    $deactivationNames = [];
     foreach ($incoming as $key => $person) {
         if (!isset($existing[$key])) $counts['nuevos']++;
         elseif ((int) $existing[$key]['activo'] === 0) $counts['reactivados']++;
@@ -119,11 +120,14 @@ try {
     }
     if ($mode === 'sync') {
         foreach ($existing as $key => $person) {
-            if ((int) $person['activo'] === 1 && !isset($incoming[$key])) $counts['desactivados']++;
+            if ((int) $person['activo'] === 1 && !isset($incoming[$key])) {
+                $counts['desactivados']++;
+                if (count($deactivationNames) < 8) $deactivationNames[] = trim($person['nombre'] . ' ' . $person['apellidos']);
+            }
         }
     }
     if ($preview) {
-        rosterResponse(200, ['success' => true, 'preview' => true, 'counts' => $counts, 'roster_fingerprint' => $rosterFingerprint]);
+        rosterResponse(200, ['success' => true, 'preview' => true, 'counts' => $counts, 'deactivation_names' => $deactivationNames, 'roster_fingerprint' => $rosterFingerprint]);
     }
     if (isset($_POST['expected_roster_fingerprint']) && !hash_equals($rosterFingerprint, (string) $_POST['expected_roster_fingerprint'])) {
         $pdo->rollBack();
