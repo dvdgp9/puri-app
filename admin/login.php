@@ -1,3 +1,10 @@
+<?php
+require_once 'auth_middleware.php';
+if (isLoggedIn() || restoreAdminSessionFromRememberCookie()) {
+    header('Location: dashboard.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,9 +20,8 @@
         <span class="subtitle">Acceso para administradores del sistema</span>
         
         <?php
-        session_start();
         if (isset($_SESSION['admin_error'])) {
-            echo '<div class="error-message">' . $_SESSION['admin_error'] . '</div>';
+            echo '<div class="error-message">' . htmlspecialchars($_SESSION['admin_error']) . '</div>';
             unset($_SESSION['admin_error']);
         }
         ?>

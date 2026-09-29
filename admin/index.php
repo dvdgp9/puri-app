@@ -1,9 +1,8 @@
 <?php
-// Redirect root /admin to login or dashboard based on session
-// Do NOT include auth_middleware here to avoid auto-redirect loops.
-session_start();
+// Redirect root /admin to login or dashboard based on session or remember token.
+require_once 'auth_middleware.php';
 
-if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
+if (isLoggedIn() || restoreAdminSessionFromRememberCookie()) {
     header('Location: dashboard.php');
     exit;
 }

@@ -39,22 +39,26 @@ try {
         
         // Gestionar "Recordarme" si está marcado
         if (isset($_POST['remember_me'])) {
-            $token = bin2hex(random_bytes(32));
-            $expires = date('Y-m-d H:i:s', strtotime('+60 days'));
-            $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? null;
-            $ip_address = $_SERVER['REMOTE_ADDR'] ?? null;
+            try {
+                $token = bin2hex(random_bytes(32));
+                $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+                $ip_address = $_SERVER['REMOTE_ADDR'] ?? null;
 
-            $stmt = $pdo->prepare("INSERT INTO admin_sessions (admin_id, token, expires_at, user_agent, ip_address) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$admin['id'], $token, $expires, $user_agent, $ip_address]);
+                $stmt = $pdo->prepare("INSERT INTO admin_sessions (admin_id, token, expires_at, user_agent, ip_address) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 60 DAY), ?, ?)");
+                $stmt->execute([$admin['id'], $token, $user_agent, $ip_address]);
 
-            // Establecer cookie segura por 60 días
-            setcookie('admin_remember_token', $token, [
-                'expires' => time() + (60 * 24 * 60 * 60),
-                'path' => '/',
-                'httponly' => true,
-                'samesite' => 'Lax',
-                'secure' => isset($_SERVER['HTTPS'])
-            ]);
+                // Establecer cookie solo después de guardar el token.
+                setcookie('admin_remember_token', $token, [
+                    'expires' => time() + (60 * 24 * 60 * 60),
+                    'path' => '/',
+                    'httponly' => true,
+                    'samesite' => 'Lax',
+                    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'
+                ]);
+            } catch (PDOException $e) {
+                // Un fallo de la persistencia del token no invalida la contraseña correcta.
+                error_log("Error al crear token de recordarme: " . $e->getMessage());
+            }
         }
         
         // Redirigir a la ruta de retorno si existe; si no, al dashboard
