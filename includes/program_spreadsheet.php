@@ -100,7 +100,11 @@ function programSpreadsheet(string $path, string $extension, ?string $selectedSh
                     $cell = $sheet->getCell([$column, $r]);
                     $value = $cell->getValue();
                     if ($cell->getDataType() === 'f') throw new DomainException('Fila ' . $r . ': sustituye las fórmulas por sus valores antes de cargar el listado.');
-                    if (is_numeric($value) && in_array($field, ['fecha_inicio', 'fecha_fin', 'hora_inicio', 'hora_fin'], true)) {
+                    $isTime = in_array($field, ['hora_inicio', 'hora_fin'], true);
+                    // A text clock such as "18.30" is HH.MM, not an Excel serial number.
+                    if ($isTime && is_string($value) && preg_match('/^\s*\d{1,2}\.\d{2}\s*$/', $value)) {
+                        $value = str_replace('.', ':', trim($value));
+                    } elseif (is_numeric($value) && in_array($field, ['fecha_inicio', 'fecha_fin', 'hora_inicio', 'hora_fin'], true)) {
                         $date = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $value);
                         $value = $date->format(str_starts_with($field, 'fecha_') ? 'Y-m-d' : 'H:i:s');
                     }

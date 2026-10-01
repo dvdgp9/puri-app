@@ -23,7 +23,7 @@ function programTime($value): ?string
 {
     $value = trim((string) $value);
     if ($value === '') return null;
-    if (!preg_match('/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $value, $m)
+    if (!preg_match('/^(\d{1,2})[:.](\d{2})(?::(\d{2}))?$/', $value, $m)
         || (int) $m[1] > 23 || (int) $m[2] > 59 || (int) ($m[3] ?? 0) > 59) throw new DomainException('Hora inválida: ' . $value);
     return sprintf('%02d:%02d:%02d', $m[1], $m[2], $m[3] ?? 0);
 }

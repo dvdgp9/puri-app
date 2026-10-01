@@ -103,6 +103,8 @@ rejected(fn() => programNormalize([row(['hora_inicio' => '25:00'])], 'participan
 rejected(fn() => programNormalize([row(['hora_fin' => '08:00'])], 'participantes'), 'Una hora de fin anterior al inicio bloquea el listado.');
 verify(editionPeriod([row(['fecha_fin' => null]), row()])['fecha_fin'] === null, 'Con una actividad sin fin no se inventa un fin del programa.');
 verify(programDate('3/9/26') === '2026-09-03', 'Se reconocen fechas españolas y años abreviados.');
+verify(programTime('18.30') === '18:30:00', 'Las horas de texto con punto se normalizan igual que las horas con dos puntos.');
+rejected(fn() => programTime('25.30'), 'El formato con punto sigue rechazando horas fuera de rango.');
 verify(programClassKey(programNormalize([row()], 'participantes')[array_key_first(programNormalize([row()], 'participantes'))]) === programClassKey(array_values(programNormalize([row(['hora_inicio' => '09:15:00', 'dias_semana' => 'Miércoles,Lunes'])], 'participantes'))[0]), 'Horas equivalentes y días desordenados reconocen la misma clase.');
 $overlap = ['ediciones' => [['id' => 1, 'fecha_inicio' => '2026-01-01', 'fecha_fin' => '2026-12-31'], ['id' => 2, 'fecha_inicio' => '2026-03-01', 'fecha_fin' => '2027-02-01']], 'actividades' => [], 'instalaciones' => [], 'personas' => []];
 verify(programPlan($overlap, $classes, 'participantes', 'complete')['necesita_edicion'], 'Los períodos ambiguos piden una elección en la revisión.');

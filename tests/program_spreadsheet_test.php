@@ -22,6 +22,14 @@ try {
     sheetCheck($xlsx['hoja'] === 'Listado' && count($xlsx['rows']) === 1, 'Las hojas auxiliares se ignoran.');
     sheetCheck($xlsx['rows'][0]['fecha_inicio'] === '2026-09-03' && $xlsx['rows'][0]['hora_inicio'] === '09:15:00', 'Fechas y horas numéricas de Excel.');
     sheetCheck(!isset($xlsx['rows'][0]['centro']), 'Se usa el centro elegido y no el texto de la hoja.');
+    $sheet->setCellValue('I2', 17.5 / 24);
+    $sheet->setCellValueExplicit('J2', '18.30', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+    (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($book))->save($path);
+    $dottedTime = programSpreadsheet($path, 'xlsx');
+    sheetCheck($dottedTime['rows'][0]['hora_inicio'] === '17:30:00' && $dottedTime['rows'][0]['hora_fin'] === '18:30', '18.30 escrito como texto se lee como hora, sin convertirlo en 07:12.');
+    sheetCheck(count(programNormalize($dottedTime['rows'], 'participantes')) === 1, 'Se puede importar una clase que mezcla horas numéricas de Excel y texto con punto.');
+    $sheet->setCellValue('I2', 9.25 / 24);
+    $sheet->setCellValue('J2', 10.25 / 24);
     $other = $book->createSheet(); $other->setTitle('Otro listado'); $other->fromArray($sheet->toArray(null, false, false));
     (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($book))->save($path);
     $ambiguous = programSpreadsheet($path, 'xlsx');

@@ -48,6 +48,8 @@ La hoja requiere encabezados Instalación, Actividad, Fecha inicio y Días; tamb
 
 Se admiten los encabezados de la plantilla de Gijón, incluidas sus aclaraciones entre paréntesis. Esa plantilla repite «Hora Fin actividad» sobre una columna de fecha y otra de hora: el lector distingue la fecha fin por el formato de calendario de sus datos. Si no puede distinguirlas, solicita corregir los encabezados en vez de adivinar.
 
+Las horas escritas como texto admiten `18:30` y `18.30`, también al pegar datos manualmente. Un texto `18.30` se interpreta como 18:30 y no como un número de serie de Excel. Las horas numéricas nativas de Excel se convierten desde su fracción de día.
+
 Límites: 5 MB por archivo, 20.000 filas y 50 columnas por hoja. Las fórmulas deben sustituirse por sus valores antes de importar. El lector no ejecuta fórmulas ni interpreta texto del libro como instrucciones. El pegado manual conserva los formatos anteriores de la subida en lote y queda dentro de una sección plegada.
 
 Un listado vacío, una fecha/hora inválida, un fin anterior al inicio, un día desconocido o participantes duplicados en una clase impiden guardar todo el listado. No se aplica una importación parcial con las filas válidas. Las coincidencias ambiguas existentes en instalaciones/clases/personas también deben resolverse antes de guardar.
