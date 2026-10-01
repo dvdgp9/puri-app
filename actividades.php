@@ -1,6 +1,7 @@
 <?php
 require_once 'config/config.php';
 require_once 'includes/actividad_helpers.php';
+require_once 'includes/ediciones.php';
 
 // Verifica que se haya autenticado el centro
 if(!isset($_SESSION['centro_id'])){
@@ -45,17 +46,22 @@ function formatearHora($hora) {
 }
 
 // Consultamos los datos de la instalación y el centro
-$stmt_instalacion = $pdo->prepare("SELECT i.nombre as instalacion_nombre, c.nombre as centro_nombre 
+$stmt_instalacion = $pdo->prepare("SELECT i.nombre as instalacion_nombre, i.centro_id, c.nombre as centro_nombre
                                   FROM instalaciones i 
                                   JOIN centros c ON i.centro_id = c.id 
-                                  WHERE i.id = ?");
-$stmt_instalacion->execute([$instalacion_id]);
+                                  WHERE i.id = ? AND i.centro_id = ?");
+$stmt_instalacion->execute([$instalacion_id, $_SESSION['centro_id']]);
 $info = $stmt_instalacion->fetch(PDO::FETCH_ASSOC);
 
+if (!$info) { http_response_code(404); exit('Instalación no encontrada'); }
+$editions = editionList($pdo, (int) $info['centro_id']);
+try { $editionId = editionResolve($pdo, (int) $info['centro_id'], $_GET['edicion_id'] ?? null); }
+catch (DomainException $e) { http_response_code(404); exit('Edición no encontrada'); }
+$activityScope = editionActivitySql($editionId, 'actividades');
 // Consultamos las actividades de la instalación
 $stmt = $pdo->prepare("
     SELECT * FROM actividades 
-    WHERE instalacion_id = ? 
+    WHERE instalacion_id = ? AND $activityScope
     ORDER BY 
         CASE 
             WHEN fecha_fin IS NULL OR fecha_fin >= CURRENT_DATE THEN 0 
@@ -92,9 +98,6 @@ require_once 'includes/header.php';
 ?>
 
 <script>
-// Variables globales para la búsqueda
-var instalacionId = <?php echo json_encode($instalacion_id); ?>;
-<script>
   // Variables globales para la búsqueda
   var instalacionId = <?php echo json_encode($instalacion_id); ?>;
   </script>
@@ -108,7 +111,7 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
       <h3>Navegación</h3>
       <ul class="nav-list">
         <li class="nav-item" onclick="window.location='index.php'">Inicio</li>
-        <li class="nav-item" onclick="window.location='instalaciones.php'">Instalaciones</li>
+        <li class="nav-item" onclick="window.location='instalaciones.php?edicion_id=<?= (int) $editionId ?>'">Instalaciones</li>
       </ul>
     </div>
   </div>
@@ -143,6 +146,7 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
   <div class="content-wrapper">
     <div class="content-container">
       <h1>¡Vamos a ver qué se hace por aquí!</h1>
+      <?= editionSelector($editions, $editionId) ?>
       <div class="breadcrumbs">
         <a href="instalaciones.php"><?php echo htmlspecialchars(html_entity_decode($info['centro_nombre'])); ?></a>
         <span>/</span>
@@ -350,4 +354,5 @@ var instalacionId = <?php echo json_encode($instalacion_id); ?>;
     
   </div>
 
-  <?php require_once 'includes/footer.php'; ?>
+  <?= editionContextHtml((int) $info['centro_id'], $editionId) ?>
+<?php require_once 'includes/footer.php'; ?>

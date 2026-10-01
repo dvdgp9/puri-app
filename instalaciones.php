@@ -1,5 +1,6 @@
 <?php
 require_once 'config/config.php';
+require_once 'includes/ediciones.php';
 
 // Verifica que se haya autenticado el centro
 if(!isset($_SESSION['centro_id'])){
@@ -14,7 +15,11 @@ $stmt_centro = $pdo->prepare("SELECT nombre FROM centros WHERE id = ?");
 $stmt_centro->execute([$centro_id]);
 $centro = $stmt_centro->fetch(PDO::FETCH_ASSOC);
 
-$stmt = $pdo->prepare("SELECT * FROM instalaciones WHERE centro_id = ?");
+$editions = editionList($pdo, (int) $centro_id);
+try { $editionId = editionResolve($pdo, (int) $centro_id, $_GET['edicion_id'] ?? null); }
+catch (DomainException $e) { http_response_code(404); exit('Edición no encontrada'); }
+$activityScope = editionActivitySql($editionId);
+$stmt = $pdo->prepare("SELECT * FROM instalaciones i WHERE i.centro_id = ? AND COALESCE(i.activo, 1) = 1 AND (EXISTS (SELECT 1 FROM actividades a WHERE a.instalacion_id = i.id AND $activityScope) OR NOT EXISTS (SELECT 1 FROM actividades a WHERE a.instalacion_id = i.id))");
 $stmt->execute([$centro_id]);
 $instalaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -40,6 +45,7 @@ require_once 'includes/header.php';
       <h1>Mira, mira, ¡qué instalaciones tan apañadas!</h1>
       <span class="item-title center-name"><?php echo html_entity_decode(htmlspecialchars($centro['nombre'])); ?></span>
       
+      <?= editionSelector($editions, $editionId) ?>
       <!-- Barra de búsqueda y ordenación -->
       <div class="search-sort-container">
         <div class="search-box">
@@ -100,4 +106,5 @@ require_once 'includes/header.php';
       }
     });
   </script>
+<?= editionContextHtml((int) $centro_id, $editionId) ?>
 <?php require_once 'includes/footer.php'; ?>

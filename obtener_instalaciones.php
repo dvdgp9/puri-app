@@ -1,5 +1,6 @@
 <?php
 require_once 'config/config.php';
+require_once 'includes/ediciones.php';
 
 header('Content-Type: application/json');
 
@@ -13,7 +14,9 @@ if (!$centro_id) {
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT id, nombre FROM instalaciones WHERE centro_id = ? ORDER BY nombre");
+    $editionId = editionResolve($pdo, (int) $centro_id, $_GET['edicion_id'] ?? null);
+    $activityScope = editionActivitySql($editionId);
+    $stmt = $pdo->prepare("SELECT i.id, i.nombre FROM instalaciones i WHERE i.centro_id = ? AND (EXISTS (SELECT 1 FROM actividades a WHERE a.instalacion_id = i.id AND $activityScope) OR NOT EXISTS (SELECT 1 FROM actividades a WHERE a.instalacion_id = i.id)) ORDER BY nombre");
     $stmt->execute([$centro_id]);
     $instalaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
     

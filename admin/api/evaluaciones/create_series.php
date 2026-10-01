@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/_bootstrap.php';
+require_once __DIR__ . '/../../../includes/ediciones.php';
 require_once __DIR__ . '/../../../includes/evaluacion_series.php';
 
 try {
@@ -41,9 +42,10 @@ try {
         evaluacionesAdminFail(422, 'SERIE_DEMASIADO_LARGA', 'Planifica como máximo 24 ciclos por serie.');
     }
 
+    $activityScope = editionActivitySql($activity['edicion_id'] ? (int) $activity['edicion_id'] : null);
     $stmt = $pdo->prepare("SELECT a.id, a.fecha_inicio, a.fecha_fin, i.id AS instalacion_id
                            FROM actividades a JOIN instalaciones i ON i.id = a.instalacion_id
-                           WHERE i.centro_id = ? AND (a.tipo_control IS NULL OR a.tipo_control <> 'aforo')");
+                           WHERE i.centro_id = ? AND $activityScope AND (a.tipo_control IS NULL OR a.tipo_control <> 'aforo')");
     $stmt->execute([(int) $activity['centro_id']]);
     $available = [];
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) $available[(int) $row['id']] = $row;

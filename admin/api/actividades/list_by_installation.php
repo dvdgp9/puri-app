@@ -7,6 +7,7 @@ try {
     // Cargar configuración y autenticación
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    require_once '../../../includes/ediciones.php';
     
     // Verificar autenticación de admin
     $admin_info = getAdminInfo();
@@ -21,10 +22,11 @@ try {
     }
     
     // Verificar que la instalación existe
-    $stmt = $pdo->prepare("SELECT id FROM instalaciones WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, centro_id FROM instalaciones WHERE id = ?");
     $stmt->execute([$instalacion_id]);
     
-    if (!$stmt->fetch()) {
+    $installation = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$installation) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Instalación no encontrada']);
         exit;
@@ -46,6 +48,8 @@ try {
         }
     }
     
+    $editionId = editionResolve($pdo, (int) $installation['centro_id'], $_GET['edicion_id'] ?? null);
+    $activityScope = editionActivitySql($editionId);
     // Obtener actividades de la instalación, incluyendo conteo de participantes
     // y número de días con paso de lista en los últimos 28 días
     $stmt = $pdo->prepare("
@@ -65,7 +69,7 @@ try {
              WHERE actividad_id = a.id 
                AND fecha >= DATE_SUB(CURDATE(), INTERVAL 28 DAY)) AS dias_con_lista_28d
         FROM actividades a
-        WHERE a.instalacion_id = ? 
+        WHERE a.instalacion_id = ? AND $activityScope
         ORDER BY a.nombre
     ");
     $stmt->execute([$instalacion_id]);

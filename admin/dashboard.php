@@ -18,6 +18,7 @@ $admin_info = getAdminInfo();
     <title>Dashboard - Admin Puri</title>
     <link rel="stylesheet" href="assets/css/admin.css?v=<?= filemtime(__DIR__ . '/assets/css/admin.css') ?>">
     <link href="https://fonts.googleapis.com/css2?family=GeistSans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../public/assets/css/ediciones.css?v=<?= filemtime(__DIR__ . '/../public/assets/css/ediciones.css') ?>">
 </head>
 <body>
     <!-- Header -->
@@ -691,9 +692,9 @@ $admin_info = getAdminInfo();
 
     <!-- Modal Subida en Lote -->
     <div class="modal-overlay" id="bulkImportModal">
-        <div class="modal modal-large">
+        <div class="modal modal-large program-import-modal">
             <div class="modal-header">
-                <h2 class="modal-title">Subida en Lote</h2>
+                <h2 class="modal-title">Cargar programa</h2>
                 <button class="modal-close" onclick="closeBulkImportModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -703,12 +704,39 @@ $admin_info = getAdminInfo();
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <div>
-                            <strong>Importa desde Excel</strong>
+                            <strong>Listado del curso</strong>
                             <p id="bulkImportSummary">Copia las columnas desde tu hoja de cálculo y pégalas aquí. El sistema creará automáticamente las instalaciones, actividades y participantes.</p>
                         </div>
                     </div>
                 </div>
 
+                <!-- Selector de Centro -->
+                <div class="form-group">
+                    <label for="bulkImportCenter">Centro Deportivo *</label>
+                    <div class="custom-select-wrapper">
+                        <input type="text" id="bulkImportCenterSearch" class="custom-select-input"
+                               placeholder="Buscar centro..." autocomplete="off">
+                        <input type="hidden" id="bulkImportCenter" name="centro_id" required>
+                        <div class="custom-select-dropdown" id="bulkImportCenterDropdown">
+                            <div class="custom-select-loading">Cargando centros...</div>
+                        </div>
+                        <svg class="custom-select-arrow" width="12" height="12" viewBox="0 0 12 12">
+                            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                        </svg>
+                    </div>
+                    <span class="field-error" id="bulkImportCenter-error"></span>
+                </div>
+
+                <div class="program-import-actions">
+                    <label class="btn btn-outline file-upload-btn">Seleccionar Excel o CSV
+                        <input type="file" id="programImportFile" accept=".xlsx,.csv" hidden>
+                    </label>
+                    <span id="programImportFileStatus" role="status"></span>
+                    <select id="programImportSheet" class="form-input" aria-label="Hoja del listado" hidden></select>
+                </div>
+                <p class="program-import-description">Carga el listado completo y actualizado del curso. Las fechas de la edición se calculan con las actividades y el historial se conserva.</p>
+                <details class="program-import-options">
+                    <summary>Opciones de importación</summary>
                 <fieldset class="bulk-import-mode" aria-describedby="bulkImportModeHelp">
                     <legend>¿Qué vas a importar?</legend>
                     <div class="bulk-import-mode-options">
@@ -730,27 +758,18 @@ $admin_info = getAdminInfo();
                     <p class="bulk-import-mode-help" id="bulkImportModeHelp">Usa esta opción para el formato habitual con Nombre y Apellidos.</p>
                 </fieldset>
 
-                <!-- Selector de Centro -->
-                <div class="form-group">
-                    <label for="bulkImportCenter">Centro Deportivo *</label>
-                    <div class="custom-select-wrapper">
-                        <input type="text" id="bulkImportCenterSearch" class="custom-select-input" 
-                               placeholder="Buscar centro..." autocomplete="off">
-                        <input type="hidden" id="bulkImportCenter" name="centro_id" required>
-                        <div class="custom-select-dropdown" id="bulkImportCenterDropdown">
-                            <div class="custom-select-loading">Cargando centros...</div>
-                        </div>
-                        <svg class="custom-select-arrow" width="12" height="12" viewBox="0 0 12 12">
-                            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                        </svg>
-                    </div>
-                    <span class="field-error" id="bulkImportCenter-error"></span>
-                </div>
-
+                <label class="program-import-scope">
+                    <input type="checkbox" id="programImportComplete" checked>
+                    <span>Este es el listado completo del curso. Quienes no aparezcan se darán de baja en esta edición, conservando su historial.</span>
+                </label>
+                <p class="bulk-import-mode-help">El período se calcula con el primer inicio y el último fin de las actividades. Antes de guardar podrás revisar los cambios.</p>
+                </details>
                 <!-- Área de pegado -->
+                <details class="program-import-manual">
+                    <summary>Pegar o corregir datos manualmente</summary>
                 <div class="form-group">
                     <label>Pegar datos desde Excel</label>
-                    <div class="bulk-paste-instructions bulk-instructions-participantes">
+                    <details class="bulk-paste-instructions bulk-instructions-participantes"><summary>Ver el orden de las columnas al pegar</summary>
                         <strong>Columnas esperadas (en este orden):</strong>
                         <ol>
                             <li><strong>Nombre</strong> - Nombre del participante</li>
@@ -766,7 +785,7 @@ $admin_info = getAdminInfo();
                             <li><strong>Días</strong> - Días de la semana (ej: "Lunes, Miércoles" o en columnas separadas)</li>
                             <li><strong>Tipo</strong> - (Opcional) Vacío=asistencia, A=aforo</li>
                         </ol>
-                    </div>
+                    </details>
                     <div class="bulk-paste-instructions bulk-instructions-aforo" hidden>
                         <strong>Puedes pegar la hoja tal como está:</strong>
                         <p>Nombre y Apellidos pueden quedar vacíos. Se usarán Instalación, Actividad, Grupo, fechas, horas y Días; Centro seguirá ignorándose porque se usa el seleccionado arriba.</p>
@@ -799,9 +818,11 @@ $admin_info = getAdminInfo();
                         <button type="button" class="btn btn-outline btn-sm" onclick="clearBulkImportTable()">Limpiar tabla</button>
                         <span id="bulkImportRowCount" style="margin-left: auto; font-size: 12px; color: #6b7280;">0 filas</span>
                     </div>
-                    <div class="form-error" id="bulkImportError"></div>
                 </div>
+                </details>
+                <div class="form-error" id="bulkImportError" role="alert"></div>
 
+                <div id="programImportReview" class="program-review" aria-live="polite" hidden></div>
                 <!-- Preview de resultados -->
                 <div id="bulkImportPreview" class="bulk-import-preview" style="display: none;">
                     <h4>Vista previa</h4>
@@ -812,8 +833,9 @@ $admin_info = getAdminInfo();
                 <button type="button" class="btn btn-secondary" onclick="closeBulkImportModal()">
                     Cancelar
                 </button>
-                <button type="button" class="btn btn-primary" id="bulkImportBtn" onclick="executeBulkImport()">
-                    <span class="btn-text">Importar Datos</span>
+                <button type="button" class="btn btn-primary" id="programImportSave" onclick="saveProgramImport()" hidden>Guardar edición</button>
+                <button type="button" class="btn btn-primary" id="bulkImportBtn" onclick="reviewProgramImport()">
+                    <span class="btn-text">Revisar listado</span>
                     <span class="btn-loading">
                         <svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60" stroke-dashoffset="60"/>
@@ -829,5 +851,6 @@ $admin_info = getAdminInfo();
     </script>
     <script src="assets/js/roster-import.js?v=<?= filemtime(__DIR__ . '/assets/js/roster-import.js') ?>"></script>
     <script src="assets/js/dashboard.js?v=<?= filemtime(__DIR__ . '/assets/js/dashboard.js') ?>"></script>
+    <script src="assets/js/program-import.js?v=<?= filemtime(__DIR__ . '/assets/js/program-import.js') ?>"></script>
 </body>
 </html>

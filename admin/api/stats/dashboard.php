@@ -3,7 +3,7 @@
  * Estadísticas para el dashboard principal
  */
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
 
 // Configuración de la base de datos (copia para evitar problemas)
@@ -48,6 +48,9 @@ try {
         $params[] = $admin_info['id'];
     }
     
+    require_once '../../../includes/ediciones.php';
+    $activityScope = editionCurrentSql('a', 'i.centro_id');
+    $installationScope = editionCurrentSql('ia', 'i.centro_id');
     // Estadísticas básicas
     $stats = [];
     
@@ -62,7 +65,7 @@ try {
         SELECT COUNT(*) as total 
         FROM instalaciones i 
         INNER JOIN centros c ON i.centro_id = c.id 
-        WHERE 1=1 $centro_filter
+        WHERE (EXISTS (SELECT 1 FROM actividades ia WHERE ia.instalacion_id = i.id AND $installationScope) OR NOT EXISTS (SELECT 1 FROM actividades ia WHERE ia.instalacion_id = i.id)) $centro_filter
     ";
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);
@@ -74,7 +77,7 @@ try {
         FROM actividades a 
         INNER JOIN instalaciones i ON a.instalacion_id = i.id 
         INNER JOIN centros c ON i.centro_id = c.id 
-        WHERE (a.fecha_inicio <= CURDATE() AND (a.fecha_fin IS NULL OR a.fecha_fin >= CURDATE()))
+        WHERE $activityScope AND (a.fecha_inicio <= CURDATE() AND (a.fecha_fin IS NULL OR a.fecha_fin >= CURDATE()))
         $centro_filter
     ";
     $stmt = $pdo->prepare($query);
@@ -87,7 +90,7 @@ try {
         FROM actividades a 
         INNER JOIN instalaciones i ON a.instalacion_id = i.id 
         INNER JOIN centros c ON i.centro_id = c.id 
-        WHERE a.fecha_inicio > CURDATE()
+        WHERE $activityScope AND a.fecha_inicio > CURDATE()
         $centro_filter
     ";
     $stmt = $pdo->prepare($query);
@@ -106,7 +109,7 @@ try {
         FROM actividades a 
         INNER JOIN instalaciones i ON a.instalacion_id = i.id 
         INNER JOIN centros c ON i.centro_id = c.id 
-        WHERE 1=1 $centro_filter
+        WHERE $activityScope $centro_filter
         GROUP BY estado
     ";
     $stmt = $pdo->prepare($query);
@@ -130,7 +133,7 @@ try {
             COUNT(a.id) as total_actividades
         FROM centros c
         LEFT JOIN instalaciones i ON c.id = i.centro_id
-        LEFT JOIN actividades a ON i.id = a.instalacion_id
+        LEFT JOIN actividades a ON i.id = a.instalacion_id AND $activityScope
         WHERE 1=1 $centro_filter
         GROUP BY c.id, c.nombre
         ORDER BY total_actividades DESC
@@ -156,7 +159,7 @@ try {
         FROM actividades a
         INNER JOIN instalaciones i ON a.instalacion_id = i.id
         INNER JOIN centros c ON i.centro_id = c.id
-        WHERE 1=1 $centro_filter
+        WHERE $activityScope $centro_filter
         ORDER BY a.id DESC
         LIMIT 10
     ";
@@ -173,7 +176,7 @@ try {
         INNER JOIN actividades a ON asist.actividad_id = a.id
         INNER JOIN instalaciones i ON a.instalacion_id = i.id
         INNER JOIN centros c ON i.centro_id = c.id
-        WHERE (a.fecha_inicio <= CURDATE() AND (a.fecha_fin IS NULL OR a.fecha_fin >= CURDATE()))
+        WHERE $activityScope AND (a.fecha_inicio <= CURDATE() AND (a.fecha_fin IS NULL OR a.fecha_fin >= CURDATE()))
         $centro_filter
     ";
     $stmt = $pdo->prepare($query);

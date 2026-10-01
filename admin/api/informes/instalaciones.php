@@ -5,6 +5,7 @@
 
 require_once '../../../config/config.php';
 require_once '../../auth_middleware.php';
+require_once '../../../includes/ediciones.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -26,11 +27,14 @@ try {
         }
     }
     
+    $editions = editionList($pdo, $centroId);
+    $editionId = editionResolve($pdo, $centroId, $_GET['edicion_id'] ?? null);
+    $activityScope = editionActivitySql($editionId, 'a', true);
     // Obtener instalaciones del centro
     $stmt = $pdo->prepare("
-        SELECT id, nombre
-        FROM instalaciones
-        WHERE centro_id = ?
+        SELECT i.id, i.nombre
+        FROM instalaciones i
+        WHERE i.centro_id = ? AND EXISTS (SELECT 1 FROM actividades a WHERE a.instalacion_id = i.id AND $activityScope)
         ORDER BY nombre
     ");
     $stmt->execute([$centroId]);
@@ -43,7 +47,9 @@ try {
     
     echo json_encode([
         'success' => true,
-        'data' => $instalaciones
+        'data' => $instalaciones,
+        'ediciones' => $editions,
+        'edicion_id' => $editionId
     ]);
 
 } catch (Exception $e) {

@@ -94,7 +94,7 @@ async function handleEditInstallation(e) {
  */
 async function loadCenterStats() {
     try {
-        const response = await fetch(`api/stats/center.php?id=${Center.id}`);
+        const response = await fetch(`api/stats/center.php?id=${Center.id}${ProgramEdition.query()}`);
         const data = await response.json();
         
         if (data.success) {
@@ -115,7 +115,7 @@ async function loadCenterStats() {
  */
 async function loadInstallations() {
     try {
-        const response = await fetch(`api/instalaciones/list_by_center.php?centro_id=${Center.id}`);
+        const response = await fetch(`api/instalaciones/list_by_center.php?centro_id=${Center.id}${ProgramEdition.query()}`);
         const data = await response.json();
         
         if (data.success) {
@@ -393,7 +393,7 @@ function goBack() {
 }
 
 function goToInstallation(installationId) {
-    window.location.href = `installation.php?id=${installationId}`;
+    window.location.href = `installation.php?id=${installationId}${ProgramEdition.query()}`;
 }
 
 function showCreateInstallationModal() {
@@ -478,7 +478,7 @@ function toggleInstallationDropdown(event, installationId) {
 }
 
 function viewActivities(installationId) {
-    window.location.href = `installation.php?id=${installationId}`;
+    window.location.href = `installation.php?id=${installationId}${ProgramEdition.query()}`;
 }
 
 function editInstallation(installationId) {

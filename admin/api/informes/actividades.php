@@ -6,6 +6,7 @@
 
 require_once '../../../config/config.php';
 require_once '../../auth_middleware.php';
+require_once '../../../includes/ediciones.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -19,7 +20,7 @@ try {
     }
     
     // Determinar centro_id si solo se pasó instalacion_id
-    if ($instalacionId > 0 && $centroId <= 0) {
+    if ($instalacionId > 0) {
         $stmt = $pdo->prepare("SELECT centro_id FROM instalaciones WHERE id = ? LIMIT 1");
         $stmt->execute([$instalacionId]);
         $centroId = (int)$stmt->fetchColumn();
@@ -35,6 +36,8 @@ try {
         }
     }
     
+    $editionId = editionResolve($pdo, $centroId, $_GET['edicion_id'] ?? null);
+    $activityScope = editionActivitySql($editionId, 'a', true);
     // Obtener actividades con información completa
     // Filtrar por instalación si se especifica, sino por centro
     if ($instalacionId > 0) {
@@ -57,7 +60,7 @@ try {
                 END AS finalizada
             FROM actividades a
             INNER JOIN instalaciones i ON a.instalacion_id = i.id
-            WHERE a.instalacion_id = ?
+            WHERE a.instalacion_id = ? AND $activityScope
             ORDER BY 
                 finalizada ASC,
                 a.nombre ASC,
@@ -86,7 +89,7 @@ try {
                 END AS finalizada
             FROM actividades a
             INNER JOIN instalaciones i ON a.instalacion_id = i.id
-            WHERE i.centro_id = ?
+            WHERE i.centro_id = ? AND $activityScope
             ORDER BY 
                 finalizada ASC,
                 a.nombre ASC,

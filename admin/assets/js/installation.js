@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Stats
 async function loadInstallationStats() {
   try {
-    const resp = await fetch(`api/stats/installation.php?id=${Installation.id}`);
+    const resp = await fetch(`api/stats/installation.php?id=${Installation.id}${ProgramEdition.query()}`);
     const data = await resp.json();
     if (data.success) {
       Installation.stats = data.data;
@@ -113,7 +113,7 @@ function showStatsError() {
 // Activities
 async function loadActivities() {
   try {
-    const resp = await fetch(`api/actividades/list_by_installation.php?instalacion_id=${Installation.id}`);
+    const resp = await fetch(`api/actividades/list_by_installation.php?instalacion_id=${Installation.id}${ProgramEdition.query()}`);
     const data = await resp.json();
     if (data.success) {
       Installation.activities = data.actividades || [];
@@ -289,7 +289,7 @@ async function handleCreateActivity(e) {
     const resp = await fetch('api/actividades/create.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, grupo, tipo_control, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin, instalacion_id: Installation.id })
+      body: JSON.stringify({ nombre, grupo, tipo_control, dias_semana, hora_inicio, hora_fin, fecha_inicio, fecha_fin, edicion_id: ProgramEdition.id, instalacion_id: Installation.id })
     });
     const result = await resp.json();
     if (result.success) {
@@ -391,10 +391,10 @@ async function handleEditActivity(e) {
 
 // Navigation & UI helpers
 function goBackToCenter(centerId) {
-  window.location.href = `center.php?id=${centerId}`;
+  window.location.href = `center.php?id=${centerId}${ProgramEdition.query()}`;
 }
 function goToActivity(activityId) {
-  window.location.href = `activity.php?id=${activityId}`;
+  window.location.href = `activity.php?id=${activityId}${ProgramEdition.query()}`;
 }
 function showCreateActivityModal() { openModal('createActivityModal'); }
 function toggleActivityDropdown(event, id) {

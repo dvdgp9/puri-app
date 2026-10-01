@@ -7,6 +7,7 @@ try {
     // Cargar configuración y autenticación
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    require_once '../../../includes/ediciones.php';
     
     // Verificar autenticación de admin
     $admin_info = getAdminInfo();
@@ -41,6 +42,9 @@ try {
         }
     }
     
+    $editionId = editionResolve($pdo, $centro_id, $_GET['edicion_id'] ?? null);
+    $activityScope = editionActivitySql($editionId);
+    $subScope = editionActivitySql($editionId, 'act');
     // Obtener instalaciones del centro con conteos de actividades por estado
     // activas: fecha_inicio <= hoy y (fecha_fin IS NULL o fecha_fin >= hoy)
     // programadas: fecha_inicio > hoy
@@ -64,13 +68,13 @@ try {
                  AND a.fecha_fin < CURDATE() THEN 1 ELSE 0 END), 0) AS actividades_finalizadas,
             (SELECT COUNT(*) FROM inscritos ins 
              INNER JOIN actividades act ON ins.actividad_id = act.id 
-             WHERE act.instalacion_id = i.id AND ins.activo = 1) AS total_inscritos,
+             WHERE act.instalacion_id = i.id AND $subScope AND ins.activo = 1) AS total_inscritos,
             (SELECT COUNT(*) FROM asistencias asist 
              INNER JOIN actividades act ON asist.actividad_id = act.id 
-             WHERE act.instalacion_id = i.id) AS total_asistencias
+             WHERE act.instalacion_id = i.id AND $subScope) AS total_asistencias
         FROM instalaciones i
-        LEFT JOIN actividades a ON a.instalacion_id = i.id
-        WHERE i.centro_id = ?
+        LEFT JOIN actividades a ON a.instalacion_id = i.id AND $activityScope
+        WHERE i.centro_id = ? AND (a.id IS NOT NULL OR NOT EXISTS (SELECT 1 FROM actividades all_a WHERE all_a.instalacion_id = i.id))
         GROUP BY i.id, i.nombre, i.activo
         ORDER BY i.nombre
     ";

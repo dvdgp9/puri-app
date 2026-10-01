@@ -3171,13 +3171,13 @@ function updateBulkImportModeUI() {
 
     if (summary) {
         summary.textContent = esAforo
-            ? 'Copia las clases desde tu hoja de cálculo. Se crearán con control de aforo y sin participantes.'
-            : 'Copia las columnas desde tu hoja de cálculo y pégalas aquí. El sistema creará automáticamente las instalaciones, actividades y participantes.';
+            ? 'Carga o pega las clases de aforo. Revisarás los cambios antes de guardar.'
+            : 'Carga el listado actualizado del curso o pega los datos desde Excel. Revisarás los cambios antes de guardar.';
     }
     if (help) {
         help.textContent = esAforo
             ? 'Nombre, Apellidos y Tipo se omiten. Cada horario distinto se conserva como una clase independiente.'
-            : 'Usa esta opción para el formato habitual con Nombre y Apellidos.';
+            : 'Incluye también las clases de aforo si aparecen en el listado, marcándolas con Tipo A.';
     }
     if (participantInstructions) participantInstructions.hidden = esAforo;
     if (capacityInstructions) capacityInstructions.hidden = !esAforo;
@@ -3189,6 +3189,11 @@ function updateBulkImportModeUI() {
  * Cerrar modal de Bulk Import
  */
 function closeBulkImportModal() {
+    invalidateProgramPreview();
+    ProgramImport.request++;
+    document.getElementById('programImportFile').value = '';
+    document.getElementById('programImportFileStatus').textContent = '';
+    document.getElementById('programImportSheet').hidden = true;
     const modal = document.getElementById('bulkImportModal');
     if (modal) {
         modal.classList.remove('show');
@@ -3299,6 +3304,7 @@ function renderBulkImportCenterOptions(centros) {
             wrapper.classList.remove('open');
             
             clearFieldError('bulkImportCenter');
+            invalidateProgramPreview();
         });
     });
 }
@@ -3373,6 +3379,7 @@ function clearBulkImportTable() {
  * Actualizar contador de filas
  */
 function updateBulkImportRowCount() {
+    invalidateProgramPreview();
     const tbody = document.getElementById('bulkImportBody');
     const rows = tbody.querySelectorAll('tr');
     const modoImportacion = getBulkImportMode();
@@ -3383,9 +3390,7 @@ function updateBulkImportRowCount() {
         const apellidos = row.querySelector('.bulk-apellidos')?.value?.trim() || '';
         const instalacion = row.querySelector('.bulk-instalacion')?.value?.trim() || '';
         const actividad = row.querySelector('.bulk-actividad')?.value?.trim() || '';
-        const tieneDatos = modoImportacion === 'aforo'
-            ? Boolean(instalacion || actividad)
-            : Boolean(nombre || apellidos);
+        const tieneDatos = Boolean(nombre || apellidos || instalacion || actividad);
         if (tieneDatos) filledRows++;
     });
     
@@ -3480,100 +3485,6 @@ function handleBulkImportPaste(event) {
         
         updateBulkImportRowCount();
         showNotification(`${lines.length - (lines[0]?.split('\t')[0]?.toLowerCase() === 'nombre' ? 1 : 0)} filas importadas desde el portapapeles`, 'success');
-    }
-}
-
-/**
- * Ejecutar la importación en lote
- */
-async function executeBulkImport() {
-    const centroId = document.getElementById('bulkImportCenter').value;
-    const errorEl = document.getElementById('bulkImportError');
-    const btn = document.getElementById('bulkImportBtn');
-    const modoImportacion = getBulkImportMode();
-    
-    // Validar centro
-    if (!centroId) {
-        showFieldError('bulkImportCenter', 'Debe seleccionar un centro');
-        return;
-    }
-    
-    // Recopilar filas
-    const tbody = document.getElementById('bulkImportBody');
-    const rows = [];
-    
-    tbody.querySelectorAll('tr').forEach(row => {
-        const rowData = {
-            nombre: row.querySelector('.bulk-nombre').value.trim(),
-            apellidos: row.querySelector('.bulk-apellidos').value.trim(),
-            instalacion: row.querySelector('.bulk-instalacion').value.trim(),
-            actividad: row.querySelector('.bulk-actividad').value.trim(),
-            grupo: row.querySelector('.bulk-grupo').value.trim(),
-            fecha_inicio: row.querySelector('.bulk-fecha-inicio').value.trim(),
-            fecha_fin: row.querySelector('.bulk-fecha-fin').value.trim(),
-            hora_inicio: row.querySelector('.bulk-hora-inicio').value.trim(),
-            hora_fin: row.querySelector('.bulk-hora-fin').value.trim(),
-            dias_semana: row.querySelector('.bulk-dias').value.trim(),
-            tipo_control: row.querySelector('.bulk-tipo')?.value.trim() || ''
-        };
-        
-        const tieneDatos = modoImportacion === 'aforo'
-            ? Boolean(rowData.instalacion || rowData.actividad)
-            : Boolean(rowData.nombre || rowData.apellidos);
-
-        if (tieneDatos) {
-            rows.push(rowData);
-        }
-    });
-    
-    if (rows.length === 0) {
-        errorEl.textContent = 'No hay datos para importar. Pega datos desde Excel o añádelos manualmente.';
-        return;
-    }
-    
-    // Mostrar loading
-    btn.classList.add('loading');
-    errorEl.textContent = '';
-    
-    try {
-        const response = await fetch('api/bulk_import.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                centro_id: parseInt(centroId),
-                modo_importacion: modoImportacion,
-                rows: rows
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showNotification(result.message, 'success');
-            
-            // Mostrar preview con estadísticas
-            showBulkImportResults(result.stats);
-            
-            // Recargar datos del dashboard
-            await loadCenters();
-            await loadStats();
-            
-            // Cerrar modal después de 2 segundos si no hay errores
-            if (!result.stats.errores || result.stats.errores.length === 0) {
-                setTimeout(() => {
-                    closeBulkImportModal();
-                }, 2000);
-            }
-        } else {
-            errorEl.textContent = result.message || 'Error al importar datos';
-            showNotification('Error: ' + (result.message || 'Error desconocido'), 'error');
-        }
-    } catch (error) {
-        console.error('Error en bulk import:', error);
-        errorEl.textContent = 'Error de conexión al servidor';
-        showNotification('Error de conexión', 'error');
-    } finally {
-        btn.classList.remove('loading');
     }
 }
 

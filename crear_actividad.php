@@ -1,5 +1,6 @@
 <?php
 require_once 'config/config.php';
+require_once 'includes/ediciones.php';
 
 // Verifica que se haya autenticado el centro
 if(!isset($_SESSION['centro_id'])){
@@ -23,6 +24,7 @@ if (!$instalacion) {
     exit;
 }
 
+$editionId = editionResolve($pdo, (int) $centro_id, $_GET['edicion_id'] ?? null);
 // Procesar el formulario si se ha enviado
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = filter_input(INPUT_POST, 'nombre', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -43,11 +45,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($nombre) || empty($dias_semana) || empty($fecha_inicio)) {
         $error = "El nombre, los días de la semana y la fecha de inicio son obligatorios.";
     } else {
-        $stmt = $pdo->prepare("INSERT INTO actividades (nombre, grupo, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $result = $stmt->execute([$nombre, $grupo, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null]);
+        $pdo->beginTransaction();
+        $pdo->prepare('SELECT id FROM centros WHERE id = ? FOR UPDATE')->execute([$centro_id]);
+        if ($editionId === null) $editionId = editionCreate($pdo, (int) $centro_id, ['fecha_inicio' => $fecha_inicio, 'fecha_fin' => $fecha_fin ?: null, $editionId]);
+        $stmt = $pdo->prepare("INSERT INTO actividades (nombre, grupo, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin, edicion_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $result = $stmt->execute([$nombre, $grupo, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null, $editionId]);
 
         if ($result) {
-            header("Location: actividades.php?instalacion_id=" . $instalacion_id);
+            editionRecalculate($pdo, $editionId);
+            $pdo->commit();
+            header("Location: actividades.php?instalacion_id=" . $instalacion_id . "&edicion_id=" . $editionId);
             exit;
         } else {
             $error = "Error al crear la actividad.";

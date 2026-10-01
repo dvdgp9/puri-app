@@ -40,20 +40,23 @@ try {
         }
     }
 
+    require_once '../../../includes/ediciones.php';
+    $editionId = editionResolve($pdo, (int) $instalacion['centro_id'], $_GET['edicion_id'] ?? null);
+    $activityScope = editionActivitySql($editionId);
     $stats = [];
 
     // Actividades activas
-    $stmt = $pdo->prepare("SELECT COUNT(*) AS total FROM actividades a WHERE a.instalacion_id = ? AND (a.fecha_inicio <= CURDATE() AND (a.fecha_fin IS NULL OR a.fecha_fin >= CURDATE()))");
+    $stmt = $pdo->prepare("SELECT COUNT(*) AS total FROM actividades a WHERE a.instalacion_id = ? AND $activityScope AND (a.fecha_inicio <= CURDATE() AND (a.fecha_fin IS NULL OR a.fecha_fin >= CURDATE()))");
     $stmt->execute([$instalacion_id]);
     $stats['actividades_activas'] = (int)($stmt->fetch()['total'] ?? 0);
 
     // Actividades programadas
-    $stmt = $pdo->prepare("SELECT COUNT(*) AS total FROM actividades a WHERE a.instalacion_id = ? AND a.fecha_inicio > CURDATE()");
+    $stmt = $pdo->prepare("SELECT COUNT(*) AS total FROM actividades a WHERE a.instalacion_id = ? AND $activityScope AND a.fecha_inicio > CURDATE()");
     $stmt->execute([$instalacion_id]);
     $stats['actividades_programadas'] = (int)($stmt->fetch()['total'] ?? 0);
 
     // Total de participantes inscritos en actividades de esta instalación
-    $stmt = $pdo->prepare("SELECT COUNT(*) AS total FROM inscritos ins INNER JOIN actividades a ON a.id = ins.actividad_id WHERE a.instalacion_id = ? AND ins.activo = 1");
+    $stmt = $pdo->prepare("SELECT COUNT(*) AS total FROM inscritos ins INNER JOIN actividades a ON a.id = ins.actividad_id WHERE a.instalacion_id = ? AND $activityScope AND ins.activo = 1");
     $stmt->execute([$instalacion_id]);
     $stats['total_participantes'] = (int)($stmt->fetch()['total'] ?? 0);
 

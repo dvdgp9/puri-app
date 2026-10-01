@@ -4,6 +4,7 @@
  */
 require_once 'auth_middleware.php';
 require_once '../config/config.php';
+require_once '../includes/ediciones.php';
 
 // Obtener ID de la instalación
 $instalacion_id = intval($_GET['id'] ?? 0);
@@ -39,6 +40,8 @@ try {
         exit;
     }
 
+    $editions = editionList($pdo, (int) $instalacion['centro_id']);
+    $editionId = editionResolve($pdo, (int) $instalacion['centro_id'], $_GET['edicion_id'] ?? null);
 } catch (Exception $e) {
     error_log("Error en installation.php: " . $e->getMessage());
     header("Location: dashboard.php?error=error_sistema");
@@ -134,6 +137,7 @@ try {
             </div>
         </div>
 
+        <?= editionSelector($editions, $editionId) ?>
         <!-- Stats Grid -->
         <div class="stats-grid" id="stats-grid">
             <div class="loading-card">Cargando estadísticas...</div>
@@ -366,6 +370,7 @@ try {
         window.AdminRole = '<?= $admin_info['role'] ?>';
         window.isSuperAdmin = <?= $admin_info['role'] === 'superadmin' ? 'true' : 'false' ?>;
     </script>
-    <script src="assets/js/installation.js"></script>
+    <?= editionContextHtml((int) $instalacion['centro_id'], $editionId, '../') ?>
+    <script src="assets/js/installation.js?v=<?= filemtime(__DIR__ . '/assets/js/installation.js') ?>"></script>
 </body>
 </html>

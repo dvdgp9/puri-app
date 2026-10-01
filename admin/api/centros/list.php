@@ -10,6 +10,7 @@ ini_set('display_errors', 0);
 try {
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    require_once '../../../includes/ediciones.php';
     
     $admin_info = getAdminInfo();
     
@@ -43,6 +44,7 @@ try {
     $stmt->execute($params);
     $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
+    $activityScope = editionCurrentSql('act', 'inst.centro_id');
     // Obtener registros con paginación - incluyendo conteo de inscritos
     $query = "
         SELECT 
@@ -53,18 +55,18 @@ try {
              FROM inscritos ins 
              INNER JOIN actividades act ON ins.actividad_id = act.id 
              INNER JOIN instalaciones inst ON act.instalacion_id = inst.id 
-             WHERE inst.centro_id = c.id AND ins.activo = 1) AS total_inscritos
+             WHERE inst.centro_id = c.id AND ins.activo = 1 AND $activityScope) AS total_inscritos
         FROM centros c
         $where_clause
         ORDER BY c.nombre ASC
         LIMIT ? OFFSET ?
     ";
     
-    $params[] = $limit;
-    $params[] = $offset;
-    
     $stmt = $pdo->prepare($query);
-    $stmt->execute($params);
+    foreach ($params as $index => $value) $stmt->bindValue($index + 1, $value);
+    $stmt->bindValue(count($params) + 1, $limit, PDO::PARAM_INT);
+    $stmt->bindValue(count($params) + 2, $offset, PDO::PARAM_INT);
+    $stmt->execute();
     $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     echo json_encode([

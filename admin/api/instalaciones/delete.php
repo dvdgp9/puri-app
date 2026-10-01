@@ -11,6 +11,7 @@ ini_set('display_errors', 0);
 try {
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    require_once '../../../includes/ediciones.php';
 
     $admin_info = getAdminInfo();
 
@@ -52,6 +53,9 @@ try {
         exit;
     }
 
+    $editionStmt = $pdo->prepare('SELECT DISTINCT edicion_id FROM actividades WHERE instalacion_id = ? AND edicion_id IS NOT NULL');
+    $editionStmt->execute([$id]);
+    $editionIds = $editionStmt->fetchAll(PDO::FETCH_COLUMN);
     // Obtener IDs de actividades de esta instalación
     $stmt = $pdo->prepare('SELECT id FROM actividades WHERE instalacion_id = ?');
     $stmt->execute([$id]);
@@ -93,6 +97,7 @@ try {
         $stmt = $pdo->prepare('DELETE FROM instalaciones WHERE id = ?');
         $stmt->execute([$id]);
 
+        foreach ($editionIds as $editionId) editionRecalculate($pdo, (int) $editionId);
         $pdo->commit();
 
         echo json_encode([

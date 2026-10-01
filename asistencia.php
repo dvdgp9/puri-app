@@ -1,6 +1,7 @@
 <?php
 require_once 'config/config.php';
 require_once 'includes/actividad_helpers.php';
+require_once 'includes/ediciones.php';
 
 // Primero, validar parámetro de actividad
 if(!isset($_GET['actividad_id'])){
@@ -31,7 +32,7 @@ if(!isset($_SESSION['centro_id'])){
 
 // Consultar datos de la actividad, instalación y centro
 $stmtActividad = $pdo->prepare("
-    SELECT a.*, i.nombre as instalacion_nombre, c.nombre as centro_nombre 
+    SELECT a.*, i.centro_id, i.nombre as instalacion_nombre, c.nombre as centro_nombre
     FROM actividades a 
     JOIN instalaciones i ON a.instalacion_id = i.id 
     JOIN centros c ON i.centro_id = c.id 
@@ -613,8 +614,8 @@ require_once 'includes/header.php';
       <h3>Navegación</h3>
       <ul class="nav-list">
         <li class="nav-item" onclick="window.location='index.php'">Inicio</li>
-        <li class="nav-item" onclick="window.location='instalaciones.php'">Instalaciones</li>
-        <li class="nav-item" onclick="window.location='actividades.php?instalacion_id=<?php echo $actividad['instalacion_id']; ?>'">Actividades</li>
+        <li class="nav-item" onclick="window.location='instalaciones.php?edicion_id=<?= (int) $actividad['edicion_id'] ?>'">Instalaciones</li>
+        <li class="nav-item" onclick="window.location='actividades.php?instalacion_id=<?php echo $actividad['instalacion_id']; ?>&edicion_id=<?= (int) $actividad['edicion_id'] ?>'">Actividades</li>
       </ul>
     </div>
   </div>
@@ -922,4 +923,5 @@ require_once 'includes/header.php';
   </script>
   <script src="public/assets/js/evaluaciones-monitor.js"></script>
 
-  <?php require_once 'includes/footer.php'; ?>
+  <?= editionContextHtml((int) $actividad['centro_id'], $actividad['edicion_id'] ? (int) $actividad['edicion_id'] : null) ?>
+<?php require_once 'includes/footer.php'; ?>

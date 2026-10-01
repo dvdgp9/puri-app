@@ -1,6 +1,7 @@
 <?php
 require_once 'config/config.php';
 require_once 'includes/actividad_helpers.php';
+require_once 'includes/ediciones.php';
 
 if (!isset($_SESSION['centro_id'])) {
     header('Location: index.php');
@@ -16,7 +17,7 @@ if (!$sesion_id) {
 $stmt = $pdo->prepare(
     'SELECT es.id, es.estado, es.fecha_realizacion,
             e.nombre AS evaluacion_nombre, e.actividad_id,
-            a.nombre AS actividad_nombre, a.grupo AS actividad_grupo,
+            a.edicion_id, a.nombre AS actividad_nombre, a.grupo AS actividad_grupo,
             i.centro_id
      FROM evaluacion_sesiones es
      INNER JOIN evaluaciones e ON e.id = es.evaluacion_id
@@ -86,5 +87,6 @@ require_once 'includes/header.php';
   };
 </script>
 <script src="public/assets/js/evaluaciones-monitor.js"></script>
+<?= editionContextHtml((int) $session['centro_id'], $session['edicion_id'] ? (int) $session['edicion_id'] : null) ?>
 <?php require_once 'includes/footer.php'; ?>
 

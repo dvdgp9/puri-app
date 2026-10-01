@@ -4,6 +4,7 @@
  */
 require_once 'auth_middleware.php';
 require_once '../config/config.php';
+require_once '../includes/ediciones.php';
 require_once '../includes/actividad_helpers.php';
 
 $actividad_id = intval($_GET['id'] ?? 0);
@@ -15,7 +16,7 @@ if ($actividad_id <= 0) {
 $admin_info = getAdminInfo();
 
 // Obtener actividad + instalación + centro
-$query = "SELECT a.id, a.nombre, a.grupo, a.instalacion_id, a.dias_semana, a.hora_inicio, a.hora_fin, a.fecha_inicio, a.fecha_fin,
+$query = "SELECT a.id, a.edicion_id, a.nombre, a.grupo, a.instalacion_id, a.dias_semana, a.hora_inicio, a.hora_fin, a.fecha_inicio, a.fecha_fin,
                  i.nombre AS instalacion_nombre, i.centro_id,
                  c.nombre AS centro_nombre, c.direccion AS centro_direccion
           FROM actividades a
@@ -671,6 +672,7 @@ if (!$actividad) {
         </div>
     </div>
 
+    <?= editionContextHtml((int) $actividad['centro_id'], $actividad['edicion_id'] ? (int) $actividad['edicion_id'] : null, '../') ?>
     <script src="assets/js/roster-import.js?v=<?= filemtime(__DIR__ . '/assets/js/roster-import.js') ?>"></script>
     <script src="assets/js/activity.js?v=<?= filemtime(__DIR__ . '/assets/js/activity.js') ?>"></script>
     <script src="assets/js/evaluation-series.js?v=<?= filemtime(__DIR__ . '/assets/js/evaluation-series.js') ?>"></script>

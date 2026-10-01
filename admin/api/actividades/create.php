@@ -7,6 +7,7 @@ try {
     // Cargar configuración y autenticación
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    require_once '../../../includes/program_import.php';
     
     // Verificar autenticación de admin
     $admin_info = getAdminInfo();
@@ -74,24 +75,41 @@ try {
         exit;
     }
 
+    $fecha_inicio = programDate($fecha_inicio);
+    $fecha_fin = programDate($fecha_fin);
+    if ($fecha_fin && $fecha_fin < $fecha_inicio) throw new DomainException('La fecha de fin es anterior al inicio.');
     // Verificar que la instalación existe
-    $stmt = $pdo->prepare("SELECT id FROM instalaciones WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, centro_id FROM instalaciones WHERE id = ?");
     $stmt->execute([$instalacion_id]);
     
-    if (!$stmt->fetch()) {
+    $installation = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$installation) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Instalación no encontrada']);
         exit;
     }
     
+    if ($admin_info['role'] !== 'superadmin') {
+        $access = $pdo->prepare('SELECT 1 FROM admin_asignaciones WHERE admin_id = ? AND centro_id = ?');
+        $access->execute([$admin_info['id'], $installation['centro_id']]);
+        if (!$access->fetchColumn()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'No autorizado para esta instalación']);
+            exit;
+        }
+    }
+    $pdo->beginTransaction();
+    $pdo->prepare('SELECT id FROM centros WHERE id = ? FOR UPDATE')->execute([$installation['centro_id']]);
+    $editionId = editionResolve($pdo, (int) $installation['centro_id'], $input['edicion_id'] ?? null);
+    if ($editionId === null) $editionId = editionCreate($pdo, (int) $installation['centro_id'], ['fecha_inicio' => $fecha_inicio, 'fecha_fin' => $fecha_fin]);
     // Preparar datos para inserción
     $dias_semana_string = implode(',', $dias_semana);
     $horario = implode(' y ', $dias_semana) . ' ' . $hora_inicio . '-' . $hora_fin; // Campo legacy
     
     // Crear la actividad
     $stmt = $pdo->prepare("
-        INSERT INTO actividades (nombre, grupo, tipo_control, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO actividades (nombre, grupo, tipo_control, horario, dias_semana, hora_inicio, hora_fin, instalacion_id, fecha_inicio, fecha_fin, edicion_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
     
     $result = $stmt->execute([
@@ -104,11 +122,14 @@ try {
         $hora_fin, 
         $instalacion_id, 
         $fecha_inicio, 
-        $fecha_fin
+        $fecha_fin,
+        $editionId
     ]);
     
     if ($result) {
         $actividad_id = $pdo->lastInsertId();
+        editionRecalculate($pdo, $editionId);
+        $pdo->commit();
         
         echo json_encode([
             'success' => true, 
@@ -120,7 +141,12 @@ try {
         echo json_encode(['success' => false, 'message' => 'Error al crear la actividad']);
     }
     
+} catch (DomainException $e) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     error_log("Error creating actividad: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);

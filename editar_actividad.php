@@ -1,5 +1,6 @@
 <?php
 require_once 'config/config.php';
+require_once 'includes/ediciones.php';
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id) {
@@ -41,8 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = $stmt->execute([$nombre, $grupo, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null, $id]);
 
         if ($result) {
+            if ($actividad['edicion_id']) editionRecalculate($pdo, (int) $actividad['edicion_id']);
              // Redirigir a la lista de actividades, *incluyendo el instalacion_id*
-            header("Location: actividades.php?instalacion_id=" . $actividad['instalacion_id']);
+            header("Location: actividades.php?instalacion_id=" . $actividad['instalacion_id'] . "&edicion_id=" . ($actividad['edicion_id'] ?? ''));
             exit;
         } else {
             $error = "Error al actualizar la actividad.";

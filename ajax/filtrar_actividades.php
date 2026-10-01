@@ -1,5 +1,6 @@
 <?php
 require_once '../config/config.php';
+require_once '../includes/ediciones.php';
 
 header('Content-Type: application/json');
 
@@ -19,8 +20,13 @@ try {
         exit;
     }
     
+    $owner = $pdo->prepare('SELECT centro_id FROM instalaciones WHERE id = ? AND centro_id = ?');
+    $owner->execute([$instalacion_id, $_SESSION['centro_id']]);
+    if (!$owner->fetchColumn()) { http_response_code(404); echo json_encode(['error' => 'Instalación no encontrada']); exit; }
+    $editionId = editionResolve($pdo, (int) $_SESSION['centro_id'], $_GET['edicion_id'] ?? null);
+    $activityScope = editionActivitySql($editionId, 'actividades');
     // Consultamos las actividades de la instalación
-    $sql = "SELECT * FROM actividades WHERE instalacion_id = ?";
+    $sql = "SELECT * FROM actividades WHERE instalacion_id = ? AND $activityScope";
     $params = [$instalacion_id];
     
     if (!empty($searchTerm)) {

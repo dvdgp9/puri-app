@@ -100,7 +100,7 @@ function evaluacionesAdminCanAccessCenter(PDO $pdo, array $adminInfo, $centerId)
 function evaluacionesAdminRequireActivity(PDO $pdo, $activityId, array $adminInfo)
 {
     $stmt = $pdo->prepare(
-        'SELECT a.id, a.nombre, a.grupo, a.dias_semana, a.hora_inicio, a.hora_fin,
+        'SELECT a.id, a.edicion_id, a.nombre, a.grupo, a.dias_semana, a.hora_inicio, a.hora_fin,
                 a.fecha_inicio AS actividad_fecha_inicio, a.fecha_fin AS actividad_fecha_fin,
                 i.id AS instalacion_id, i.nombre AS instalacion_nombre,
                 c.id AS centro_id, c.nombre AS centro_nombre

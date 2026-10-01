@@ -6,6 +6,7 @@ ini_set('display_errors', 0);
 try {
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    require_once '../../../includes/program_import.php';
 
     $admin_info = getAdminInfo();
 
@@ -30,7 +31,7 @@ try {
     }
 
     // Cargar actividad y su instalación/centro
-    $stmt = $pdo->prepare("SELECT a.id, a.instalacion_id, i.centro_id FROM actividades a INNER JOIN instalaciones i ON i.id = a.instalacion_id WHERE a.id = ?");
+    $stmt = $pdo->prepare("SELECT a.id, a.instalacion_id, a.edicion_id, a.fecha_inicio, a.fecha_fin, i.centro_id FROM actividades a INNER JOIN instalaciones i ON i.id = a.instalacion_id WHERE a.id = ?");
     $stmt->execute([$id]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$row) {
@@ -70,6 +71,14 @@ try {
         exit;
     }
 
+    if (array_key_exists('fecha_inicio', $input)) {
+        $fecha_inicio = programDate($fecha_inicio);
+        if (!$fecha_inicio) throw new DomainException('La fecha de inicio es obligatoria.');
+    }
+    if (array_key_exists('fecha_fin', $input)) $fecha_fin = programDate($fecha_fin);
+    $effectiveStart = $fecha_inicio ?? $row['fecha_inicio'];
+    $effectiveEnd = array_key_exists('fecha_fin', $input) ? $fecha_fin : $row['fecha_fin'];
+    if ($effectiveEnd && $effectiveEnd < $effectiveStart) throw new DomainException('La fecha de fin es anterior al inicio.');
     // Normalizar dias_semana
     if ($dias_semana !== null) {
         if (is_array($dias_semana)) {
@@ -107,18 +116,27 @@ try {
         }
     }
 
+    $pdo->beginTransaction();
+    $pdo->prepare('SELECT id FROM centros WHERE id = ? FOR UPDATE')->execute([$row['centro_id']]);
     $params[] = $id;
     $sql = 'UPDATE actividades SET ' . implode(', ', $fields) . ' WHERE id = ?';
     $stmt = $pdo->prepare($sql);
     $ok = $stmt->execute($params);
 
     if ($ok) {
+        if ($row['edicion_id']) editionRecalculate($pdo, (int) $row['edicion_id']);
+        $pdo->commit();
         echo json_encode(['success' => true, 'message' => 'Actividad actualizada']);
     } else {
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Error al actualizar la actividad']);
     }
+} catch (DomainException $e) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     error_log('Error in actividades/update.php: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);

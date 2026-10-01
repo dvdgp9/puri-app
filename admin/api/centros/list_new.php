@@ -11,10 +11,13 @@ try {
     // Cargar configuración
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    require_once '../../../includes/ediciones.php';
     
     // Verificar autenticación
     $admin_info = getAdminInfo();
     
+    $activityScope = editionCurrentSql('a', 'i.centro_id');
+    $installationScope = editionCurrentSql('ia', 'i.centro_id');
     // Consulta con conteos reales: centros → instalaciones → actividades → inscritos
     $query = "
         SELECT 
@@ -26,8 +29,8 @@ try {
             COUNT(DISTINCT a.id) as total_actividades,
             COUNT(DISTINCT ins.id) as total_inscritos
         FROM centros c
-        LEFT JOIN instalaciones i ON c.id = i.centro_id
-        LEFT JOIN actividades a ON i.id = a.instalacion_id
+        LEFT JOIN instalaciones i ON c.id = i.centro_id AND (EXISTS (SELECT 1 FROM actividades ia WHERE ia.instalacion_id = i.id AND $installationScope) OR NOT EXISTS (SELECT 1 FROM actividades ia WHERE ia.instalacion_id = i.id))
+        LEFT JOIN actividades a ON i.id = a.instalacion_id AND $activityScope
         LEFT JOIN inscritos ins ON a.id = ins.actividad_id AND ins.activo = 1
     ";
     

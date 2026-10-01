@@ -4,6 +4,7 @@
  */
 require_once 'auth_middleware.php';
 require_once '../config/config.php';
+require_once '../includes/ediciones.php';
 
 // Obtener ID del centro
 $centro_id = intval($_GET['id'] ?? 0);
@@ -35,6 +36,8 @@ try {
         header("Location: dashboard.php?error=centro_no_encontrado");
         exit;
     }
+    $editions = editionList($pdo, $centro_id);
+    $editionId = editionResolve($pdo, $centro_id, $_GET['edicion_id'] ?? null);
     
 } catch (Exception $e) {
     error_log("Error en center.php: " . $e->getMessage());
@@ -126,6 +129,7 @@ try {
                 </p>
             </div>
             <div class="center-header-right">
+                <a class="btn btn-secondary" href="dashboard.php?importar_programa=1&amp;centro_id=<?= (int) $centro_id ?>">Cargar programa</a>
                 <button onclick="editCenter(<?= $centro['id'] ?>)" class="btn btn-primary">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 16 16">
                         <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708L10.5 8.207l-3-3L12.146.146zM11.207 9l-3-3L2.5 11.707V14.5h2.793L11.207 9z"/>
@@ -135,6 +139,7 @@ try {
             </div>
         </div>
 
+        <?= editionSelector($editions, $editionId) ?>
         <!-- Stats Grid - copiado exacto del dashboard -->
         <div class="stats-grid" id="stats-grid">
             <div class="loading-card">Cargando estadísticas...</div>
@@ -256,6 +261,7 @@ try {
         window.AdminRole = '<?= $admin_info['role'] ?>';
         window.isSuperAdmin = <?= $admin_info['role'] === 'superadmin' ? 'true' : 'false' ?>;
     </script>
-    <script src="assets/js/center.js"></script>
+    <?= editionContextHtml($centro_id, $editionId, '../') ?>
+    <script src="assets/js/center.js?v=<?= filemtime(__DIR__ . '/assets/js/center.js') ?>"></script>
 </body>
 </html>

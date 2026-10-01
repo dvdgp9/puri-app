@@ -11,6 +11,7 @@ ini_set('display_errors', 0);
 try {
     require_once '../../../config/config.php';
     require_once '../../auth_middleware.php';
+    require_once '../../../includes/ediciones.php';
 
     $admin_info = getAdminInfo();
 
@@ -42,7 +43,7 @@ try {
     }
 
     // Verificar que la actividad existe
-    $stmt = $pdo->prepare('SELECT id, nombre FROM actividades WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, nombre, edicion_id FROM actividades WHERE id = ?');
     $stmt->execute([$id]);
     $actividad = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -74,6 +75,7 @@ try {
         $stmt = $pdo->prepare('DELETE FROM actividades WHERE id = ?');
         $stmt->execute([$id]);
 
+        if ($actividad['edicion_id']) editionRecalculate($pdo, (int) $actividad['edicion_id']);
         $pdo->commit();
 
         echo json_encode([

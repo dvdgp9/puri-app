@@ -286,6 +286,7 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
             opacity: 0.5;
         }
     </style>
+    <link rel="stylesheet" href="../public/assets/css/ediciones.css?v=<?= filemtime(__DIR__ . '/../public/assets/css/ediciones.css') ?>">
 </head>
 <body>
     <!-- Header -->
@@ -334,6 +335,10 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
+            <div id="reportEditionControl" class="edition-control" hidden>
+                <label for="reportEditionSelect">Edición</label>
+                <select id="reportEditionSelect" class="form-input"></select>
+            </div>
             <!-- Paso 2: Seleccionar Instalación -->
             <div class="step-section step-disabled" id="step-instalacion">
                 <div class="step-header">
@@ -454,6 +459,7 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
     // Estado global
     const State = {
         centroId: null,
+        edicionId: null,
         instalacionId: null,
         instalaciones: [],
         actividades: [],
@@ -487,6 +493,8 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
         // Cambio de centro
         document.getElementById('centro-select').addEventListener('change', async function() {
             State.centroId = this.value;
+            State.edicionId = null;
+            document.getElementById('reportEditionControl').hidden = true;
             State.instalacionId = null;
             State.selectedActividades.clear();
             State.actividades = [];
@@ -515,6 +523,17 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
             actualizarUI();
         });
         
+        document.getElementById('reportEditionSelect').addEventListener('change', async function() {
+            State.edicionId = Number(this.value);
+            State.instalacionId = null;
+            State.actividades = [];
+            State.selectedActividades.clear();
+            document.getElementById('step-actividades').classList.add('step-disabled');
+            document.getElementById('step-fechas').classList.add('step-disabled');
+            document.getElementById('actividades-grid').replaceChildren();
+            await cargarInstalaciones();
+            actualizarUI();
+        });
         // Cambio de instalación
         document.getElementById('instalacion-select').addEventListener('change', async function() {
             State.instalacionId = this.value;
@@ -568,11 +587,23 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
         select.innerHTML = '<option value="">Cargando...</option>';
         
         try {
-            const resp = await fetch(`api/informes/instalaciones.php?centro_id=${State.centroId}`);
+            const resp = await fetch(`api/informes/instalaciones.php?centro_id=${State.centroId}&edicion_id=${State.edicionId ?? ''}`);
             const data = await resp.json();
             
             if (data.success) {
                 State.instalaciones = data.data || [];
+                State.edicionId = data.edicion_id;
+                const editionSelect = document.getElementById('reportEditionSelect');
+                const editions = data.ediciones || [];
+                editionSelect.replaceChildren(...editions.map(edition => {
+                    const dates = `${edition.fecha_inicio || 'sin inicio definido'} → ${edition.fecha_fin || 'sin fin definido'}`;
+                    const duplicateName = editions.filter(item => item.nombre === edition.nombre).length > 1;
+                    const option = new Option(edition.nombre + (duplicateName ? ` · ${dates}` : ''), String(edition.id));
+                    option.title = dates;
+                    return option;
+                }));
+                editionSelect.value = String(State.edicionId ?? '');
+                document.getElementById('reportEditionControl').hidden = (data.ediciones || []).length < 2;
                 select.innerHTML = '<option value="">-- Selecciona una instalación --</option>';
                 State.instalaciones.forEach(inst => {
                     select.innerHTML += `<option value="${inst.id}">${escapeHtml(inst.nombre)}</option>`;
@@ -592,7 +623,7 @@ $centros = $stmt->fetchAll(PDO::FETCH_ASSOC);
         grid.innerHTML = '<div class="empty-actividades"><p>Cargando actividades...</p></div>';
         
         try {
-            const resp = await fetch(`api/informes/actividades.php?instalacion_id=${State.instalacionId}`);
+            const resp = await fetch(`api/informes/actividades.php?instalacion_id=${State.instalacionId}&edicion_id=${State.edicionId ?? ''}`);
             const data = await resp.json();
             
             if (data.success) {
