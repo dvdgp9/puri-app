@@ -3171,8 +3171,8 @@ function updateBulkImportModeUI() {
 
     if (summary) {
         summary.textContent = esAforo
-            ? 'Carga o pega las clases de aforo. Revisarás los cambios antes de guardar.'
-            : 'Carga el listado actualizado del curso o pega los datos desde Excel. Revisarás los cambios antes de guardar.';
+            ? 'Carga o pega clases de aforo y elige si vas a añadir datos, actualizar el listado o crear una edición.'
+            : 'Puedes añadir datos, actualizar un listado completo o crear una nueva edición. Revisarás los cambios antes de guardar.';
     }
     if (help) {
         help.textContent = esAforo
@@ -3182,6 +3182,7 @@ function updateBulkImportModeUI() {
     if (participantInstructions) participantInstructions.hidden = esAforo;
     if (capacityInstructions) capacityInstructions.hidden = !esAforo;
 
+    updateProgramImportPurpose();
     updateBulkImportRowCount();
 }
 
@@ -3194,6 +3195,8 @@ function closeBulkImportModal() {
     document.getElementById('programImportFile').value = '';
     document.getElementById('programImportFileStatus').textContent = '';
     document.getElementById('programImportSheet').hidden = true;
+    document.getElementById('programImportPurpose').value = 'append';
+    updateProgramImportPurpose();
     const modal = document.getElementById('bulkImportModal');
     if (modal) {
         modal.classList.remove('show');

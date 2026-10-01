@@ -1,6 +1,26 @@
 /* Full course imports use a read-only preview, followed by a fingerprint-bound save. */
 const ProgramImport = { preview: null, payload: null, revision: 0, request: 0 };
 
+function getProgramImportPurpose() {
+  return document.getElementById('programImportPurpose').value;
+}
+
+function programImportSaveLabel() {
+  return ProgramImport.preview?.nueva_edicion ? 'Crear edición' : 'Guardar datos';
+}
+
+function updateProgramImportPurpose() {
+  const help = {
+    append: 'Añade actividades y participantes al curso actual. Quienes no aparezcan en el archivo se mantienen. Si es la primera carga del centro, se crea su primera edición.',
+    complete: 'Actualiza el curso actual con su listado completo. Las actividades y participantes que no aparezcan se darán de baja en esa edición, conservando su historial.',
+    new: 'Crea una edición independiente para el nuevo curso. Las ediciones anteriores se conservan y las fechas se calculan con las actividades del archivo.',
+  };
+  if (getBulkImportMode() === 'aforo') {
+    help.complete = 'Actualiza el listado completo de clases de aforo del curso actual. Las clases de aforo ausentes se retiran, conservando su historial. Las actividades con participantes se mantienen.';
+  }
+  document.getElementById('programImportPurposeHelp').textContent = help[getProgramImportPurpose()];
+}
+
 function invalidateProgramPreview() {
   ProgramImport.revision++;
   ProgramImport.preview = null;
@@ -79,7 +99,10 @@ function renderProgramReview(result) {
   panel.replaceChildren();
   panel.hidden = false;
   const heading = document.createElement('h4');
-  heading.textContent = result.necesita_edicion ? 'Elige la edición que vas a actualizar' : `${result.nueva_edicion ? 'Nueva edición' : 'Actualizar'} · ${result.nombre_edicion}`;
+  const action = result.nueva_edicion
+    ? (result.ediciones.length ? 'Crear nueva edición' : 'Crear primera edición')
+    : (ProgramImport.payload.scope === 'append' ? 'Añadir datos' : 'Actualizar listado completo');
+  heading.textContent = result.necesita_edicion ? 'Elige la edición que vas a actualizar' : `${action} · ${result.nombre_edicion}`;
   panel.append(heading);
   const period = document.createElement('p');
   period.textContent = `${programDateLabel(result.periodo.fecha_inicio)} → ${programDateLabel(result.periodo.fecha_fin)} · Período calculado a partir de las actividades.`;
@@ -103,7 +126,13 @@ function renderProgramReview(result) {
     });
     panel.append(counts);
     const note = document.createElement('p');
-    note.textContent = 'Las ediciones anteriores, asistencias y evaluaciones se conservan. Las bajas afectan únicamente a la edición que estás actualizando.';
+    note.textContent = result.nueva_edicion
+      ? 'Se crea una edición independiente. Las actividades, participantes, asistencias y evaluaciones de las ediciones anteriores se conservan.'
+      : (ProgramImport.payload.scope === 'append'
+        ? 'Esta carga añade datos a la edición indicada. Las actividades y participantes que no aparecen en el archivo se mantienen.'
+        : (getBulkImportMode() === 'aforo'
+          ? 'Este archivo sustituye el listado de clases de aforo de la edición indicada. Las clases de aforo ausentes se retiran, conservando su historial. Las otras ediciones se mantienen.'
+          : 'Este archivo sustituye el listado completo de la edición indicada. Se darán de baja las actividades y participantes ausentes, conservando su historial. Las otras ediciones se mantienen.'));
     panel.append(note);
     if (getBulkImportMode() === 'aforo') {
       const capacityNote = document.createElement('p');
@@ -129,23 +158,24 @@ function renderProgramReview(result) {
       panel.append(detail);
     }
   }
-  // An unobtrusive override for overlapping courses, corrections or a deliberate new edition.
-  if (result.ediciones?.length) {
+  // Offer another existing destination only when there is more than one edition.
+  if (result.ediciones?.length > 1 && getProgramImportPurpose() !== 'new') {
     const details = document.createElement(result.necesita_edicion ? 'div' : 'details');
     if (!result.necesita_edicion) {
-      const summary = document.createElement('summary'); summary.textContent = 'Cambiar la edición detectada'; details.append(summary);
+      const summary = document.createElement('summary'); summary.textContent = 'Elegir otra edición'; details.append(summary);
     }
     const label = document.createElement('label');
     label.htmlFor = 'programImportEdition'; label.textContent = 'Edición de destino'; details.append(label);
     const select = document.createElement('select');
     select.id = 'programImportEdition'; select.className = 'form-input';
-    select.append(new Option('Selecciona una edición', ''), new Option('Crear una nueva edición', '0'));
+    if (result.necesita_edicion) select.append(new Option('Selecciona una edición', ''));
     result.ediciones.forEach(edition => select.append(new Option(`${edition.nombre} · ${programDateLabel(edition.fecha_inicio, 'sin inicio definido')} → ${programDateLabel(edition.fecha_fin)}`, String(edition.id))));
     select.value = result.necesita_edicion ? '' : String(result.edicion_id ?? 0);
     select.addEventListener('change', () => { if (select.value !== '') reviewProgramImport(Number(select.value)); });
     details.append(select); panel.append(details);
   }
   document.getElementById('programImportSave').hidden = Boolean(result.necesita_edicion);
+  document.getElementById('programImportSave').textContent = programImportSaveLabel();
   document.getElementById('bulkImportBtn').hidden = !result.necesita_edicion;
 }
 
@@ -162,7 +192,8 @@ async function reviewProgramImport(edition = null) {
   button.disabled = true;
   button.classList.add('loading');
   error.textContent = '';
-  const payload = { centro_id: Number(center), modo_importacion: getBulkImportMode(), scope: document.getElementById('programImportComplete').checked ? 'complete' : 'append', rows };
+  const purpose = getProgramImportPurpose();
+  const payload = { centro_id: Number(center), modo_importacion: getBulkImportMode(), scope: purpose === 'append' ? 'append' : 'complete', destino_edicion: purpose === 'new' ? 'nueva' : 'actual', rows };
   if (edition !== null) payload.edicion_id = edition;
   try {
     const response = await fetch('api/bulk_import.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, preview: true }) });
@@ -203,7 +234,7 @@ async function saveProgramImport() {
     fields.forEach((field, index) => { field.disabled = disabledBefore[index]; });
     button.disabled = false;
     document.getElementById('bulkImportBtn').disabled = false;
-    button.textContent = 'Guardar edición';
+    button.textContent = programImportSaveLabel();
   }
 }
 
@@ -213,6 +244,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   modal.addEventListener('change', event => { if (!event.target.closest('#programImportReview') && !['programImportFile', 'programImportSheet'].includes(event.target.id)) invalidateProgramPreview(); });
   document.getElementById('programImportFile').addEventListener('change', () => loadProgramFile());
   document.getElementById('programImportSheet').addEventListener('change', event => { if (event.target.value) loadProgramFile(event.target.value); });
+  document.getElementById('programImportPurpose').addEventListener('change', updateProgramImportPurpose);
+  updateProgramImportPurpose();
   const params = new URLSearchParams(window.location.search);
   if (params.get('importar_programa') === '1') {
     showBulkImportModal();

@@ -694,7 +694,7 @@ $admin_info = getAdminInfo();
     <div class="modal-overlay" id="bulkImportModal">
         <div class="modal modal-large program-import-modal">
             <div class="modal-header">
-                <h2 class="modal-title">Cargar programa</h2>
+                <h2 class="modal-title">Cargar datos</h2>
                 <button class="modal-close" onclick="closeBulkImportModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -704,8 +704,8 @@ $admin_info = getAdminInfo();
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <div>
-                            <strong>Listado del curso</strong>
-                            <p id="bulkImportSummary">Copia las columnas desde tu hoja de cálculo y pégalas aquí. El sistema creará automáticamente las instalaciones, actividades y participantes.</p>
+                            <strong>Excel o carga en lote</strong>
+                            <p id="bulkImportSummary">Puedes añadir datos, actualizar un listado completo o crear una nueva edición. Revisarás los cambios antes de guardar.</p>
                         </div>
                     </div>
                 </div>
@@ -727,6 +727,15 @@ $admin_info = getAdminInfo();
                     <span class="field-error" id="bulkImportCenter-error"></span>
                 </div>
 
+                <div class="form-group">
+                    <label for="programImportPurpose">¿Qué quieres hacer?</label>
+                    <select id="programImportPurpose" class="form-input" aria-describedby="programImportPurposeHelp">
+                        <option value="append" selected>Añadir datos al curso actual</option>
+                        <option value="complete">Actualizar el listado completo del curso</option>
+                        <option value="new">Crear nueva edición / renovación</option>
+                    </select>
+                    <p id="programImportPurposeHelp" class="program-import-description">Añade actividades y participantes al curso actual. Quienes no aparezcan en el archivo se mantienen. Si es la primera carga del centro, se crea su primera edición.</p>
+                </div>
                 <div class="program-import-actions">
                     <label class="btn btn-outline file-upload-btn">Seleccionar Excel o CSV
                         <input type="file" id="programImportFile" accept=".xlsx,.csv" hidden>
@@ -734,7 +743,6 @@ $admin_info = getAdminInfo();
                     <span id="programImportFileStatus" role="status"></span>
                     <select id="programImportSheet" class="form-input" aria-label="Hoja del listado" hidden></select>
                 </div>
-                <p class="program-import-description">Carga el listado completo y actualizado del curso. Las fechas de la edición se calculan con las actividades y el historial se conserva.</p>
                 <details class="program-import-options">
                     <summary>Opciones de importación</summary>
                 <fieldset class="bulk-import-mode" aria-describedby="bulkImportModeHelp">
@@ -758,10 +766,6 @@ $admin_info = getAdminInfo();
                     <p class="bulk-import-mode-help" id="bulkImportModeHelp">Usa esta opción para el formato habitual con Nombre y Apellidos.</p>
                 </fieldset>
 
-                <label class="program-import-scope">
-                    <input type="checkbox" id="programImportComplete" checked>
-                    <span>Este es el listado completo del curso. Quienes no aparezcan se darán de baja en esta edición, conservando su historial.</span>
-                </label>
                 <p class="bulk-import-mode-help">El período se calcula con el primer inicio y el último fin de las actividades. Antes de guardar podrás revisar los cambios.</p>
                 </details>
                 <!-- Área de pegado -->
@@ -833,7 +837,7 @@ $admin_info = getAdminInfo();
                 <button type="button" class="btn btn-secondary" onclick="closeBulkImportModal()">
                     Cancelar
                 </button>
-                <button type="button" class="btn btn-primary" id="programImportSave" onclick="saveProgramImport()" hidden>Guardar edición</button>
+                <button type="button" class="btn btn-primary" id="programImportSave" onclick="saveProgramImport()" hidden>Guardar datos</button>
                 <button type="button" class="btn btn-primary" id="bulkImportBtn" onclick="reviewProgramImport()">
                     <span class="btn-text">Revisar listado</span>
                     <span class="btn-loading">

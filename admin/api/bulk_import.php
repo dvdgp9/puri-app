@@ -40,7 +40,9 @@ try {
         $pdo->prepare('SELECT a.id FROM actividades a JOIN instalaciones i ON i.id = a.instalacion_id WHERE i.centro_id = ? FOR UPDATE')->execute([$centerId]);
         $pdo->prepare('SELECT ins.id FROM inscritos ins JOIN actividades a ON a.id = ins.actividad_id JOIN instalaciones i ON i.id = a.instalacion_id WHERE i.centro_id = ? FOR UPDATE')->execute([$centerId]);
     }
-    $plan = programPlan(programSnapshot($pdo, $centerId), $classes, $mode, $scope, $input['edicion_id'] ?? null);
+    $destination = $input['destino_edicion'] ?? 'auto';
+    if (!is_string($destination)) throw new DomainException('Destino de la carga inválido.');
+    $plan = programPlan(programSnapshot($pdo, $centerId), $classes, $mode, $scope, $input['edicion_id'] ?? null, $destination);
     if ($preview) {
         echo json_encode(programPreviewResponse($plan), JSON_UNESCAPED_UNICODE);
         exit;

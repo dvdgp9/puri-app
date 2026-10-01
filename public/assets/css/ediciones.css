@@ -3,8 +3,6 @@
 .edition-control select { max-width: 100%; min-height: 38px; padding: 8px 30px 8px 12px; border: 1px solid #d8dde3; border-radius: 8px; background: #fff; color: #303b48; font: inherit; font-size: 13px; }
 .edition-control select:focus-visible { outline: 2px solid #527fa5; outline-offset: 2px; }
 .program-import-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-.program-import-scope { display: flex; gap: 8px; align-items: start; margin: 12px 0; font-size: 13px; }
-.program-import-scope input { margin-top: 3px; }
 .program-review { border-top: 1px solid #d8dde3; padding-top: 16px; margin-top: 16px; }
 .program-review h4 { margin: 0 0 8px; }
 .program-review p { margin: 8px 0; color: #626b76; font-size: 13px; line-height: 1.5; }

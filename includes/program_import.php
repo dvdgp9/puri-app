@@ -129,8 +129,14 @@ function programEditionCandidates(array $editions, array $period, array $classes
     }));
 }
 
-function programPlan(array $snapshot, array $classes, string $mode, string $scope, $requestedEdition = null): array
+function programPlan(array $snapshot, array $classes, string $mode, string $scope, $requestedEdition = null, string $destination = 'auto'): array
 {
+    if (!in_array($destination, ['auto', 'actual', 'nueva'], true)) throw new DomainException('Destino de la carga inválido.');
+    if ($destination === 'nueva') $requestedEdition = 0;
+    elseif ($destination === 'actual' && ($requestedEdition === null || $requestedEdition === '')) {
+        // Ordinary uploads stay in the current edition even when their dates do not overlap.
+        $requestedEdition = editionDefault($snapshot['ediciones']) ?? 0;
+    }
     $period = editionPeriod(array_values($classes));
     $candidates = programEditionCandidates($snapshot['ediciones'], $period, $classes, $snapshot['actividades']);
     $editionId = null;

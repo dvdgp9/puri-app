@@ -1,4 +1,4 @@
-# Renovación de programas por edición
+# Carga de datos y renovación de programas por edición
 
 ## Preparación
 
@@ -8,10 +8,11 @@ La migración inicial reúne las actividades existentes de cada centro en una ed
 
 ## Uso habitual
 
-1. Abrir el centro y pulsar **Cargar programa**. También se puede acceder desde la subida en lote del escritorio.
-2. Seleccionar el Excel `.xlsx` o CSV actualizado del curso. El centro ya está elegido cuando se accede desde su ficha.
-3. Pulsar **Revisar listado**. Se muestra la edición detectada, su período, las instalaciones reutilizadas/nuevas, las clases y las inscripciones que continúan, se añaden, se recuperan o se retiran.
-4. Pulsar **Guardar edición** para aplicar los cambios en una transacción.
+1. Abrir el centro y pulsar **Cargar datos**. También se puede acceder desde la subida en lote del escritorio.
+2. Elegir **Añadir datos al curso actual** (opción inicial), **Actualizar el listado completo del curso** o **Crear nueva edición / renovación**. El texto bajo el selector explica el efecto de cada opción.
+3. Seleccionar el Excel `.xlsx` o CSV, o pegar el listado manualmente. El centro ya está elegido cuando se accede desde su ficha.
+4. Pulsar **Revisar listado**. Se muestra la acción, la edición de destino, su período y los cambios. Si hay varias ediciones, **Elegir otra edición** permite actualizar una existente distinta de la actual.
+5. Pulsar **Guardar datos** o **Crear edición**, según la revisión, para aplicar los cambios en una transacción.
 
 El nombre y el período son automáticos: mínimo inicio y máximo fin de las actividades incluidas. Si alguna actividad no tiene fin, la edición tampoco tiene un fin definido. Los cambios manuales de fechas y las altas/borrados de actividades recalculan el período.
 
@@ -21,7 +22,9 @@ Las actividades se identifican por instalación, nombre, grupo, tipo de control,
 
 ## Listado completo y actualizaciones parciales
 
-Por defecto se considera que el archivo es el **listado completo del curso**, tal como indica la pantalla. Al actualizar una edición existente:
+Por defecto se **añaden datos al curso actual**: quienes no aparecen en el archivo se mantienen. Una carga de Excel o en lote no implica una renovación ni crea otra edición por tener fechas diferentes. Si el centro todavía no tiene ediciones, se crea su primera edición.
+
+Al elegir expresamente **Actualizar el listado completo del curso**:
 
 - Las personas que siguen conservan su inscripción y sus datos anteriores.
 - Las nuevas se inscriben; las dadas de baja se reincorporan con su mismo ID.
@@ -29,13 +32,13 @@ Por defecto se considera que el archivo es el **listado completo del curso**, ta
 - Las actividades ausentes se retiran de las vistas habituales de esa edición, sin borrarse.
 - Las otras ediciones no se modifican.
 
-La revisión detalla los totales y permite desplegar hasta ocho nombres de actividades y ocho personas que dejarán de aparecer. **Opciones de importación** permite desmarcar «listado completo» cuando el archivo solo contiene altas; en ese caso nadie ni ninguna clase se retira.
+La revisión detalla los totales y permite desplegar hasta ocho nombres de actividades y ocho personas que dejarán de aparecer. **Crear nueva edición / renovación** crea un curso independiente, aunque las fechas coincidan con otra edición; las ediciones anteriores se mantienen.
 
 El modo habitual admite un listado mixto: las clases de aforo se marcan con `Tipo = A` o `aforo`, y no necesitan nombre/apellidos. El modo global **Clases de aforo** actualiza exclusivamente las clases de aforo de la edición; mantiene las clases con participantes aunque no figuren en ese archivo.
 
 ## Detección y navegación
 
-Se busca primero una coincidencia de clases con las mismas fechas. Si no la hay, se comparan los períodos de las ediciones del centro. Un período que no coincide crea una nueva edición. Una edición antigua sin fin no absorbe indefinidamente las renovaciones posteriores. Si coinciden varias ediciones, la revisión exige elegir una. «Cambiar la edición detectada» permite corregir la propuesta o crear deliberadamente una nueva edición.
+En la plataforma el destino lo determina la acción elegida: añadir o actualizar usa la edición predeterminada del centro, o una edición existente elegida en la revisión; renovar crea una nueva. Las fechas calculan el período, no la intención de la carga. Para integraciones anteriores, la API conserva su detección por fechas cuando se omite `destino_edicion`; el cliente de la plataforma envía siempre `actual` o `nueva` de forma explícita.
 
 Las fichas de centro/instalación, la navegación de monitores y los informes solo muestran el selector **Edición** cuando el centro tiene más de una. Se consulta por defecto la edición vigente; si no hay una vigente, la próxima, y después la última. Preparar el próximo curso no oculta el actual mientras siga vigente. El escritorio calcula sus contadores con la edición predeterminada de cada centro. Los informes incluyen las clases retiradas de la edición elegida para permitir consultar sus datos anteriores.
 

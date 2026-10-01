@@ -129,7 +129,7 @@ try {
                 </p>
             </div>
             <div class="center-header-right">
-                <a class="btn btn-secondary" href="dashboard.php?importar_programa=1&amp;centro_id=<?= (int) $centro_id ?>">Cargar programa</a>
+                <a class="btn btn-secondary" href="dashboard.php?importar_programa=1&amp;centro_id=<?= (int) $centro_id ?>">Cargar datos</a>
                 <button onclick="editCenter(<?= $centro['id'] ?>)" class="btn btn-primary">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 16 16">
                         <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708L10.5 8.207l-3-3L12.146.146zM11.207 9l-3-3L2.5 11.707V14.5h2.793L11.207 9z"/>

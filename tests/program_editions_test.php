@@ -125,4 +125,28 @@ $removeFuture = programPlan(programSnapshot($pdo, 1), programNormalize([row(['ti
 $pdo->beginTransaction(); programApply($pdo, 1, $removeFuture, '2026-10-01'); $pdo->commit();
 verify((int) $pdo->query('SELECT COUNT(*) FROM inscrito_vigencias WHERE fin < inicio')->fetchColumn() === 0, 'Las bajas de participantes futuros no crean vigencias invertidas.');
 verify(editionDefault(editionList($pdo, 1), '2026-10-01') === $newId, 'Preparar la renovación futura no oculta el curso vigente.');
+
+// An ordinary upload is explicitly different from a renewal, including disjoint dates.
+$snapshot = programSnapshot($pdo, 1);
+$targetId = editionDefault($snapshot['ediciones']);
+$extraClasses = programNormalize([row(['actividad' => 'Taller adicional', 'fecha_inicio' => '2032-09-01', 'fecha_fin' => '2033-06-30'])], 'participantes');
+$ordinary = programPlan($snapshot, $extraClasses, 'participantes', 'append', null, 'actual');
+verify(!$ordinary['nueva_edicion'] && $ordinary['edicion_id'] === $targetId, 'Añadir datos conserva la edición actual aunque las fechas no coincidan.');
+verify($ordinary['stats']['actividades_retiradas'] === 0 && $ordinary['stats']['participantes_desactivados'] === 0, 'La carga ordinaria mantiene a todos los ausentes.');
+$editionCount = count($snapshot['ediciones']);
+$existingPeople = $pdo->query('SELECT id,activo FROM inscritos ORDER BY id')->fetchAll();
+$pdo->beginTransaction(); $ordinaryId = programApply($pdo, 1, $ordinary, '2026-10-01'); $pdo->commit();
+verify($ordinaryId === $targetId && count(editionList($pdo, 1)) === $editionCount, 'Guardar una carga ordinaria no crea otra edición.');
+$afterPeople = $pdo->query('SELECT id,activo FROM inscritos ORDER BY id')->fetchAll();
+verify(array_slice($afterPeople, 0, count($existingPeople)) === $existingPeople, 'Guardar datos parciales conserva el estado de todas las inscripciones anteriores.');
+$ordinaryRepeat = programPlan(programSnapshot($pdo, 1), $extraClasses, 'participantes', 'append', null, 'actual');
+verify($ordinaryRepeat['stats']['actividades_creadas'] === 0 && $ordinaryRepeat['stats']['participantes_creados'] === 0, 'Repetir la carga ordinaria tampoco duplica datos.');
+$explicitRenewal = programPlan(programSnapshot($pdo, 1), $classes, 'participantes', 'complete', $targetId, 'nueva');
+verify($explicitRenewal['nueva_edicion'], 'Crear nueva edición separa el curso incluso cuando coinciden las fechas.');
+verify($explicitRenewal['stats']['actividades_retiradas'] === 0 && $explicitRenewal['stats']['participantes_desactivados'] === 0, 'La renovación explícita no retira datos existentes.');
+$existingUpdate = programPlan(programSnapshot($pdo, 1), $classes, 'participantes', 'complete', $oldId, 'actual');
+verify($existingUpdate['edicion_id'] === $oldId && !$existingUpdate['nueva_edicion'], 'Se puede elegir otra edición existente para una actualización.');
+$firstUpload = programPlan(programSnapshot($pdo, 2), $classes, 'participantes', 'append', null, 'actual');
+verify($firstUpload['nueva_edicion'], 'Un centro sin ediciones recibe su primera edición en una carga ordinaria.');
+rejected(fn() => programPlan($snapshot, $classes, 'participantes', 'append', null, 'incorrecto'), 'Un destino desconocido se rechaza.');
 fwrite(STDOUT, "[OK] $checks comprobaciones de renovaciones, sincronización e historial.\n");
