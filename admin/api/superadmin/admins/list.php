@@ -7,10 +7,11 @@
 header('Content-Type: application/json');
 require_once '../../../auth_middleware.php';
 require_once '../../../../config/config.php';
+require_once '../../../../includes/sabadell_permissions.php';
 
 try {
     // Verificación explícita de superadmin para evitar redirecciones HTML del middleware
-    if (!isSuperAdmin()) {
+    if (!isSuperAdmin() || !sabadellIsSuperAdmin($pdo, (int) getAdminInfo()['id'])) {
         http_response_code(403);
         echo json_encode([
             'success' => false,
@@ -40,6 +41,7 @@ try {
             a.apellidos,
             a.email,
             a.role, 
+            a.puede_importar_sabadell,
             a.created_at,
             (SELECT COUNT(*) FROM admin_asignaciones WHERE admin_id = a.id) AS centers_count
         FROM admins a
@@ -54,6 +56,7 @@ try {
     foreach ($admins as &$admin) {
         $admin['id'] = (int)$admin['id'];
         $admin['centers_count'] = (int)$admin['centers_count'];
+        $admin['puede_importar_sabadell'] = (bool) $admin['puede_importar_sabadell'];
     }
 
     echo json_encode([

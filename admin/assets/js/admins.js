@@ -271,6 +271,7 @@ async function openEditAdmin(id) {
     document.getElementById('editAdminEmail').value = admin.email || '';
     document.getElementById('editAdminUsername').value = admin.username || '';
     document.getElementById('editAdminRole').value = admin.role || 'admin';
+    document.getElementById('editAdminSabadell').checked = Boolean(admin.puede_importar_sabadell);
     document.getElementById('editAdminNewPassword').value = '';
     
     clearFormErrors();
@@ -483,7 +484,8 @@ async function handleCreateAdmin(e) {
         email: formData.get('email')?.trim() || '',
         username: formData.get('username')?.trim() || '',
         password: formData.get('password') || '',
-        role: formData.get('role') || 'admin'
+        role: formData.get('role') || 'admin',
+        puede_importar_sabadell: formData.get('puede_importar_sabadell') === 'on'
     };
     
     // Validaciones
@@ -555,7 +557,8 @@ async function handleEditAdmin(e) {
         nombre: formData.get('nombre')?.trim() || '',
         apellidos: formData.get('apellidos')?.trim() || '',
         email: formData.get('email')?.trim() || '',
-        role: formData.get('role') || 'admin'
+        role: formData.get('role') || 'admin',
+        puede_importar_sabadell: formData.get('puede_importar_sabadell') === 'on'
     };
     
     if (newPassword) {

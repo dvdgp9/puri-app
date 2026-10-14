@@ -1,0 +1,40 @@
+.sabadell-main { max-width: 1120px; margin: 0 auto; }
+.sabadell-main h1 { font-size: 25px; margin-bottom: 10px; }
+.sabadell-description { color: #526071; margin-bottom: 24px; }
+.sabadell-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.sabadell-controls .form-group { margin: 0; }
+.sabadell-file { border-top: 1px solid #dce2e8; margin-top: 24px; padding: 20px 0; }
+.sabadell-file label { display: block; font-weight: 600; margin-bottom: 10px; }
+.sabadell-note { padding: 16px 0; line-height: 1.6; }
+.sabadell-group { border-top: 1px solid #dce2e8; padding: 16px 0; }
+.sabadell-group > summary { cursor: pointer; font-weight: 600; line-height: 1.7; }
+.sabadell-group .sabadell-controls { margin: 18px 0; }
+.sabadell-source { color: #526071; font-weight: 400; font-size: 13px; }
+.sabadell-warning { color: #8a460c; background: #fff6e9; padding: 10px 12px; margin: 10px 0; line-height: 1.6; }
+.sabadell-people { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.sabadell-people th { text-align: left; font-size: 13px; color: #526071; padding: 8px; }
+.sabadell-people td { padding: 8px; border-top: 1px solid #edf0f3; vertical-align: middle; }
+.sabadell-people input[type=text] { width: 100%; min-width: 0; }
+.sabadell-people tr.is-excluded { opacity: .55; }
+.sabadell-people tr.is-excluded .sabadell-original { text-decoration: line-through; }
+.sabadell-original { font-size: 12px; color: #526071; overflow-wrap: anywhere; }
+.sabadell-duplicate { display: block; color: #9c4700; font-size: 12px; }
+.sabadell-check { display: flex; gap: 8px; align-items: flex-start; padding: 10px 0; }
+.sabadell-footer { position: sticky; bottom: 0; background: #fff; padding: 16px 0; border-top: 1px solid #dce2e8; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; z-index: 2; }
+.sabadell-footer span { margin-right: auto; color: #526071; }
+.sabadell-review { background: #f5f8fa; padding: 20px; margin: 20px 0; border: 1px solid #dce2e8; border-radius: 8px; }
+.sabadell-review dl { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 16px 0; }
+.sabadell-review dd { font-weight: 600; margin: 0; }
+.sabadell-main [hidden] { display: none !important; }
+.sabadell-main input:focus-visible, .sabadell-main select:focus-visible, .sabadell-main button:focus-visible, .sabadell-main summary:focus-visible { outline: 2px solid #16794d; outline-offset: 3px; }
+@media (max-width: 720px) {
+    .sabadell-main h1 { font-size: 21px; }
+    .sabadell-controls { grid-template-columns: 1fr; }
+    .sabadell-people thead { display: none; }
+    .sabadell-people tr { display: grid; grid-template-columns: 1fr 1fr; padding: 12px 0; border-top: 1px solid #dce2e8; }
+    .sabadell-people td { border: 0; padding: 5px; }
+    .sabadell-people td:first-child { grid-column: 1 / -1; }
+    .sabadell-people td:nth-child(2)::before, .sabadell-people td:nth-child(3)::before { display: block; font-size: 12px; color: #526071; margin-bottom: 4px; }
+    .sabadell-people td:nth-child(2)::before { content: 'Nombre'; }
+    .sabadell-people td:nth-child(3)::before { content: 'Apellidos'; }
+}

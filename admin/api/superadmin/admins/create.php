@@ -8,9 +8,10 @@
 header('Content-Type: application/json');
 require_once '../../../auth_middleware.php';
 require_once '../../../../config/config.php';
+require_once '../../../../includes/sabadell_permissions.php';
 
 try {
-    if (!isSuperAdmin()) {
+    if (!isSuperAdmin() || !sabadellIsSuperAdmin($pdo, (int) getAdminInfo()['id'])) {
         http_response_code(403);
         echo json_encode(['success' => false, 'error' => 'Acceso denegado']);
         exit;
@@ -30,6 +31,7 @@ try {
     $nombre = trim($payload['nombre'] ?? '');
     $apellidos = trim($payload['apellidos'] ?? '');
     $email = strtolower(trim($payload['email'] ?? ''));
+    $sabadell = sabadellPermissionValue($payload, false);
 
     // Validaciones
     if ($username === '' || $password === '' || $role === '') {
@@ -68,17 +70,20 @@ try {
 
     // Crear
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare('INSERT INTO admins (username, password_hash, role, nombre, apellidos, email) VALUES (?, ?, ?, ?, ?, ?)');
-    $stmt->execute([$username, $password_hash, $role, $nombre ?: null, $apellidos ?: null, $email ?: null]);
+    $stmt = $pdo->prepare('INSERT INTO admins (username, password_hash, role, nombre, apellidos, email, puede_importar_sabadell) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    $stmt->execute([$username, $password_hash, $role, $nombre ?: null, $apellidos ?: null, $email ?: null, (int) $sabadell]);
     $newId = (int)$pdo->lastInsertId();
 
     // Recuperar registro creado
-    $stmt = $pdo->prepare('SELECT id, username, nombre, apellidos, email, role, created_at FROM admins WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, username, nombre, apellidos, email, role, created_at, puede_importar_sabadell FROM admins WHERE id = ?');
     $stmt->execute([$newId]);
     $created = $stmt->fetch(PDO::FETCH_ASSOC);
 
     echo json_encode(['success' => true, 'data' => $created]);
 
+} catch (DomainException $e) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 } catch (Exception $e) {
     error_log('Error en API superadmin/admins/create: ' . $e->getMessage());
     http_response_code(500);

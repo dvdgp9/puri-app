@@ -171,6 +171,10 @@ $admin_info = getAdminInfo();
                         <div class="form-error" id="adminPassword-error"></div>
                     </div>
                     <div class="form-group">
+                        <label class="checkbox-inline"><input type="checkbox" id="adminSabadell" name="puede_importar_sabadell"> Importar listados de Sabadell</label>
+                        <p class="form-hint">Habilita la carga del PDF municipal en sus centros asignados.</p>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label" for="adminRole">Rol <span class="required">*</span></label>
                         <select id="adminRole" name="role" class="form-input" required>
                             <option value="admin">Admin - Acceso limitado a centros asignados</option>
@@ -243,6 +247,10 @@ $admin_info = getAdminInfo();
                     <div class="form-group">
                         <label class="form-label">Usuario</label>
                         <input type="text" id="editAdminUsername" class="form-input" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-inline"><input type="checkbox" id="editAdminSabadell" name="puede_importar_sabadell"> Importar listados de Sabadell</label>
+                        <p class="form-hint">Puedes retirar este permiso sin cambiar su rol ni sus centros.</p>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="editAdminRole">Rol</label>

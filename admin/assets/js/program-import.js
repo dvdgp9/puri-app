@@ -239,6 +239,10 @@ async function saveProgramImport() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('sabadellImportLink')?.addEventListener('click', event => {
+    const center = document.getElementById('bulkImportCenter').value;
+    event.currentTarget.href = center ? `sabadell.php?centro_id=${encodeURIComponent(center)}` : 'sabadell.php';
+  });
   const modal = document.getElementById('bulkImportModal');
   modal.addEventListener('input', event => { if (!event.target.closest('#programImportReview') && !['programImportFile', 'programImportSheet'].includes(event.target.id)) invalidateProgramPreview(); });
   modal.addEventListener('change', event => { if (!event.target.closest('#programImportReview') && !['programImportFile', 'programImportSheet'].includes(event.target.id)) invalidateProgramPreview(); });

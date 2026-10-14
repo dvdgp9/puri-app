@@ -11,9 +11,10 @@
 header('Content-Type: application/json');
 require_once '../../../auth_middleware.php';
 require_once '../../../../config/config.php';
+require_once '../../../../includes/sabadell_permissions.php';
 
 try {
-    if (!isSuperAdmin()) {
+    if (!isSuperAdmin() || !sabadellIsSuperAdmin($pdo, (int) getAdminInfo()['id'])) {
         http_response_code(403);
         echo json_encode(['success' => false, 'error' => 'Acceso denegado']);
         exit;
@@ -32,6 +33,7 @@ try {
     $nombre = array_key_exists('nombre', $payload) ? trim($payload['nombre']) : null;
     $apellidos = array_key_exists('apellidos', $payload) ? trim($payload['apellidos']) : null;
     $email = array_key_exists('email', $payload) ? strtolower(trim($payload['email'])) : null;
+    $sabadell = sabadellPermissionValue($payload);
 
     if ($id <= 0) {
         http_response_code(400);
@@ -84,6 +86,10 @@ try {
     // Construir update dinámico
     $sets = [];
     $params = [];
+    if ($sabadell !== null) {
+        $sets[] = 'puede_importar_sabadell = ?';
+        $params[] = (int) $sabadell;
+    }
     if ($newRole !== null) {
         $sets[] = 'role = ?';
         $params[] = $newRole;
@@ -116,12 +122,15 @@ try {
     $stmt->execute($params);
 
     // Devolver el registro actualizado
-    $stmt = $pdo->prepare('SELECT id, username, nombre, apellidos, email, role, created_at FROM admins WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, username, nombre, apellidos, email, role, created_at, puede_importar_sabadell FROM admins WHERE id = ?');
     $stmt->execute([$id]);
     $updated = $stmt->fetch(PDO::FETCH_ASSOC);
 
     echo json_encode(['success' => true, 'data' => $updated]);
 
+} catch (DomainException $e) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 } catch (Exception $e) {
     error_log('Error en API superadmin/admins/update: ' . $e->getMessage());
     http_response_code(500);

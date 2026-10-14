@@ -9,6 +9,8 @@ require_once 'auth_middleware.php';
 
 // Verificar autenticación
 $admin_info = getAdminInfo();
+require_once '../includes/sabadell_permissions.php';
+$sabadell_available = sabadellCanImport($pdo, (int) $admin_info['id']);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -737,6 +739,9 @@ $admin_info = getAdminInfo();
                     <p id="programImportPurposeHelp" class="program-import-description">Añade actividades y participantes al curso actual. Quienes no aparezcan en el archivo se mantienen. Si es la primera carga del centro, se crea su primera edición.</p>
                 </div>
                 <div class="program-import-actions">
+                    <?php if ($sabadell_available): ?>
+                    <a class="btn btn-outline" id="sabadellImportLink" href="sabadell.php">Listado del Ayuntamiento de Sabadell</a>
+                    <?php endif; ?>
                     <label class="btn btn-outline file-upload-btn">Seleccionar Excel o CSV
                         <input type="file" id="programImportFile" accept=".xlsx,.csv" hidden>
                     </label>

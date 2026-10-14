@@ -131,6 +131,7 @@ function programEditionCandidates(array $editions, array $period, array $classes
 
 function programPlan(array $snapshot, array $classes, string $mode, string $scope, $requestedEdition = null, string $destination = 'auto'): array
 {
+    if (!in_array($scope, ['append', 'complete', 'groups'], true)) throw new DomainException('Alcance de carga inválido.');
     if (!in_array($destination, ['auto', 'actual', 'nueva'], true)) throw new DomainException('Destino de la carga inválido.');
     if ($destination === 'nueva') $requestedEdition = 0;
     elseif ($destination === 'actual' && ($requestedEdition === null || $requestedEdition === '')) {
@@ -161,11 +162,13 @@ function programPlan(array $snapshot, array $classes, string $mode, string $scop
     foreach ($snapshot['actividades'] as $activity) {
         if ($editionId === null || (int) $activity['edicion_id'] !== $editionId) continue;
         if ($mode === 'aforo' && $activity['tipo_control'] !== 'aforo') continue;
-        $inScope[(int) $activity['id']] = $activity;
         $class = $activity;
         $class['actividad'] = $activity['nombre'];
         try { $key = programClassKey($class); }
         catch (DomainException $e) { $key = 'legacy:' . $activity['id']; }
+        // A municipal upload only synchronizes the classes it actually includes.
+        if ($scope === 'groups' && !isset($classes[$key])) continue;
+        $inScope[(int) $activity['id']] = $activity;
         if (isset($activityMap[$key])) throw new DomainException('Hay clases duplicadas en la edición. Revísalas antes de importar.');
         $activityMap[$key] = $activity;
     }
@@ -206,7 +209,7 @@ function programPlan(array $snapshot, array $classes, string $mode, string $scop
             $counts[['nuevo' => 'participantes_creados', 'mantenido' => 'participantes_mantenidos', 'reactivado' => 'participantes_reactivados'][$person['accion']]]++;
         }
         unset($person);
-        if ($scope === 'complete' && $class['tipo_control'] === 'asistencia') {
+        if (in_array($scope, ['complete', 'groups'], true) && $class['tipo_control'] === 'asistencia') {
             foreach ($existingPeople as $personKey => $person) {
                 if ((int) $person['activo'] === 1 && !isset($class['personas'][$personKey])) {
                     $deactivate[(int) $person['id']] = true;
@@ -233,7 +236,7 @@ function programPlan(array $snapshot, array $classes, string $mode, string $scop
     }
     $counts['actividades_retiradas'] = count($retire);
     $counts['participantes_desactivados'] = count($deactivate);
-    if ($scope === 'append' || $mode === 'aforo') {
+    if (in_array($scope, ['append', 'groups'], true) || $mode === 'aforo') {
         $remaining = array_filter($snapshot['actividades'], static fn($a) => $editionId !== null && (int) $a['edicion_id'] === $editionId && !$a['retirada_at'] && !in_array((int) $a['id'], $retire, true));
         $period = editionPeriod(array_merge(array_values($classes), array_values($remaining)));
     }
