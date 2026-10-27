@@ -3,6 +3,9 @@
 .sabadell-description { color: #526071; margin-bottom: 24px; }
 .sabadell-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .sabadell-controls .form-group { margin: 0; }
+.sabadell-options { margin-top: 16px; }
+.sabadell-options summary { cursor: pointer; font-weight: 600; }
+.sabadell-options .sabadell-controls { margin-top: 12px; }
 .sabadell-file { border-top: 1px solid #dce2e8; margin-top: 24px; padding: 20px 0; }
 .sabadell-file label { display: block; font-weight: 600; margin-bottom: 10px; }
 .sabadell-note { padding: 16px 0; line-height: 1.6; }

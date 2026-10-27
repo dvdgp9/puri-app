@@ -34,7 +34,6 @@ $escape = static fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
     <main class="admin-content sabadell-main" id="sabadellApp" data-csrf="<?= $escape($_SESSION['sabadell_csrf']) ?>">
         <h1>Importar listado del Ayuntamiento de Sabadell</h1>
         <p class="sabadell-description">Sube el PDF municipal, comprueba los grupos y revisa los cambios antes de guardar.</p>
-        <p class="form-hint">Elige el curso antes de revisar. Cambiar de curso reinicia las correcciones y las confirmaciones del PDF.</p>
         <form id="sabadellForm">
             <div class="sabadell-controls">
                 <div class="form-group"><label for="sabadellCenter">Centro</label>
@@ -42,12 +41,19 @@ $escape = static fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
                         <?php foreach ($centers as $center): ?><option value="<?= (int) $center['id'] ?>" <?= (int) $center['id'] === $selected ? 'selected' : '' ?>><?= $escape($center['nombre']) ?></option><?php endforeach; ?>
                     </select>
                 </div>
-                <div class="form-group"><label for="sabadellDestination">Carga</label><select class="form-input" id="sabadellDestination"><option value="actual">Actualizar grupos del curso</option><option value="nueva">Crear una nueva edición del curso</option></select></div>
-                <div class="form-group"><label for="sabadellEdition">Curso de destino</label><select class="form-input" id="sabadellEdition"></select></div>
-                <div class="form-group"><label for="sabadellStart">Inicio del curso</label><input class="form-input" type="date" id="sabadellStart"></div>
-                <div class="form-group"><label for="sabadellEnd">Fin del curso (opcional)</label><input class="form-input" type="date" id="sabadellEnd"></div>
+                <div class="form-group"><label for="sabadellStart">Inicio de las actividades</label><input class="form-input" type="date" id="sabadellStart"></div>
+                <div class="form-group"><label for="sabadellEnd">Fin de las actividades (opcional)</label><input class="form-input" type="date" id="sabadellEnd"></div>
             </div>
+            <p id="sabadellDatesNotice" class="sabadell-warning" role="status" hidden>Las actividades existentes tienen fechas por revisar. Indica las fechas correctas para los grupos nuevos. Las fechas anteriores no se corrigen automáticamente.</p>
             <p id="sabadellScopeHelp" class="form-hint">Se actualizan los participantes de los grupos incluidos. Los grupos ausentes del PDF se mantienen.</p>
+            <details class="sabadell-options">
+                <summary>Opciones de actualización</summary>
+                <p class="form-hint">Para las cargas mensuales, utiliza «Añadir o actualizar grupos». Elige un período nuevo cuando quieras empezar una temporada independiente. Cambiar estas opciones reinicia la revisión del PDF.</p>
+                <div class="sabadell-controls">
+                    <div class="form-group"><label for="sabadellDestination">Qué quieres hacer</label><select class="form-input" id="sabadellDestination"><option value="actual">Añadir o actualizar grupos</option><option value="nueva">Empezar un período nuevo</option></select></div>
+                    <div class="form-group" id="sabadellEditionField" hidden><label for="sabadellEdition">Período que quieres actualizar</label><select class="form-input" id="sabadellEdition"></select></div>
+                </div>
+            </details>
             <div class="sabadell-file">
                 <label for="sabadellFile">PDF del Ayuntamiento</label>
                 <input type="file" accept=".pdf" id="sabadellFile" aria-describedby="sabadellFileHelp">

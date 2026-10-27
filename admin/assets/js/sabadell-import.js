@@ -4,6 +4,22 @@ const Sabadell = { draft: null, groups: [], editions: [], preview: null, payload
 const sabadellEl = id => document.getElementById(id);
 const sabadellEscape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
+/** Match server date validation; never turn an old malformed year into a guessed year. */
+function sabadellDateValue(value) {
+  if (typeof value !== 'string' || !/^[1-9]\d{3}-\d{2}-\d{2}$/.test(value)) return '';
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? value : '';
+}
+
+function sabadellPeriodLabel(edition) {
+  const format = value => value.split('-').reverse().join('/');
+  const start = sabadellDateValue(edition.fecha_inicio);
+  const end = sabadellDateValue(edition.fecha_fin);
+  if (!start || (edition.fecha_fin && !end)) return 'Actividades existentes · fechas por revisar';
+  return `${format(start)} — ${end ? format(end) : 'sin fecha de fin'}`;
+}
+
 function sabadellInvalidate() {
   Sabadell.preview = null;
   Sabadell.payload = null;
@@ -54,12 +70,14 @@ function sabadellClearDraft() {
 
 function sabadellUpdateDates() {
   const renewal = sabadellEl('sabadellDestination').value === 'nueva';
-  sabadellEl('sabadellEdition').disabled = renewal || !Sabadell.editions.length;
+  sabadellEl('sabadellEditionField').hidden = renewal || Sabadell.editions.length < 2;
+  sabadellEl('sabadellEdition').disabled = renewal || Sabadell.editions.length < 2;
   sabadellEl('sabadellScopeHelp').textContent = renewal
-    ? 'Se creará un curso independiente. Los cursos anteriores conservarán sus datos.'
+    ? 'Se guardarán los grupos en un período nuevo. Las actividades y el historial anteriores se conservarán.'
     : 'Se actualizan los participantes de los grupos incluidos. Los grupos ausentes del PDF se mantienen.';
   const edition = renewal ? null : Sabadell.editions.find(e => String(e.id) === sabadellEl('sabadellEdition').value);
-  sabadellEl('sabadellStart').required = !edition;
+  sabadellEl('sabadellStart').required = !sabadellDateValue(edition?.fecha_inicio);
+  sabadellEl('sabadellDatesNotice').hidden = !edition || !((edition.fecha_inicio && !sabadellDateValue(edition.fecha_inicio)) || (edition.fecha_fin && !sabadellDateValue(edition.fecha_fin)));
 }
 
 async function sabadellLoadCenter() {
@@ -71,16 +89,16 @@ async function sabadellLoadCenter() {
   if (!sabadellEl('sabadellCenter').value) return;
   const result = await sabadellRequest({ ...sabadellBase(), operation: 'context' });
   Sabadell.editions = result.ediciones;
-  sabadellEl('sabadellEdition').replaceChildren(...result.ediciones.map(e => new Option(`${e.nombre} · ${e.fecha_inicio || 'sin inicio'} — ${e.fecha_fin || 'sin fin'}`, String(e.id))));
-  if (!result.ediciones.length) sabadellEl('sabadellEdition').append(new Option('Primera edición del centro', ''));
+  sabadellEl('sabadellEdition').replaceChildren(...result.ediciones.map(e => new Option(sabadellPeriodLabel(e), String(e.id))));
+  if (!result.ediciones.length) sabadellEl('sabadellEdition').append(new Option('Primera carga del centro', ''));
   sabadellEl('sabadellEdition').value = result.edicion_id ? String(result.edicion_id) : '';
   sabadellSetPeriod();
 }
 
 function sabadellSetPeriod() {
   const edition = sabadellEl('sabadellDestination').value === 'nueva' ? null : Sabadell.editions.find(e => String(e.id) === sabadellEl('sabadellEdition').value);
-  sabadellEl('sabadellStart').value = edition?.fecha_inicio || '';
-  sabadellEl('sabadellEnd').value = edition?.fecha_fin || '';
+  sabadellEl('sabadellStart').value = sabadellDateValue(edition?.fecha_inicio);
+  sabadellEl('sabadellEnd').value = sabadellDateValue(edition?.fecha_fin);
 }
 
 async function sabadellLoadContext() {
@@ -144,8 +162,8 @@ function sabadellRenderGroups() {
         <div class="form-group"><label>Acción<select class="form-input" data-field="action">${group.candidates.length
           ? `<option value="">Resuelve la coincidencia</option><option value="reuse" ${group.action === 'reuse' ? 'selected' : ''}>Actualizar participantes y conservar la clase</option><option value="replace">Sustituir la clase con los datos revisados</option>`
           : '<option value="new">Crear este grupo</option>'}</select></label></div>
-        ${sabadellInput('fecha_inicio', 'Inicio de esta clase', view.fecha_inicio || sabadellEl('sabadellStart').value, 'date')}
-        ${sabadellInput('fecha_fin', 'Fin de esta clase (opcional)', view.fecha_fin ?? sabadellEl('sabadellEnd').value, 'date')}
+        ${sabadellInput('fecha_inicio', 'Inicio de esta clase', sabadellDateValue(view.fecha_inicio) || sabadellEl('sabadellStart').value, 'date')}
+        ${sabadellInput('fecha_fin', 'Fin de esta clase (opcional)', sabadellDateValue(view.fecha_fin) || sabadellEl('sabadellEnd').value, 'date')}
       </div>
       <p class="sabadell-warning" data-resolution ${group.action === '' ? '' : 'hidden'}>Este código ya existe con datos distintos o varias coincidencias. Selecciona la clase y elige si conservarla o sustituirla. Una sustitución crea otra clase y conserva el historial de la anterior.</p>
       <table class="sabadell-people"><thead><tr><th>Nombre original del PDF</th><th>Nombre</th><th>Apellidos</th><th>Excluir</th></tr></thead><tbody>${group.participants.map(p => `<tr data-person="${sabadellEscape(p.id)}"><td class="sabadell-original">${sabadellEscape(p.original)}${counts.get(p.original) > 1 ? '<span class="sabadell-duplicate">Nombre repetido: revisa estas filas</span>' : ''}</td><td><input class="form-input" type="text" data-person-field="nombre" aria-label="Nombre de ${sabadellEscape(p.original)}" value="${sabadellEscape(p.nombre)}"></td><td><input class="form-input" type="text" data-person-field="apellidos" aria-label="Apellidos de ${sabadellEscape(p.original)}" value="${sabadellEscape(p.apellidos)}"></td><td><label><input type="checkbox" data-person-field="exclude" aria-label="Excluir fila de ${sabadellEscape(p.original)}"> Excluir</label></td></tr>`).join('')}</tbody></table>
@@ -194,7 +212,7 @@ function sabadellGroupChange(event) {
     if (candidate) {
       Object.entries({ ...candidate, actividad: candidate.nombre }).forEach(([key, value]) => {
         const input = node.querySelector(`[data-field="${key}"]`);
-        if (input && !['target_id', 'action', 'grupo'].includes(key)) input.value = value || '';
+        if (input && !['target_id', 'action', 'grupo'].includes(key)) input.value = key.startsWith('fecha_') ? sabadellDateValue(value) : value || '';
       });
       node.querySelector('[data-resolution]').hidden = true;
     }
@@ -227,7 +245,7 @@ async function sabadellReview() {
   Sabadell.preview = result;
   const labels = { instalaciones_creadas: 'Instalaciones nuevas', actividades_creadas: 'Clases nuevas', actividades_reutilizadas: 'Clases existentes', actividades_retiradas: 'Clases sustituidas', participantes_creados: 'Participantes nuevos', participantes_mantenidos: 'Participantes que siguen', participantes_reactivados: 'Reincorporaciones', participantes_desactivados: 'Bajas' };
   const details = result.deactivation_names?.length ? `<p>Ejemplos de bajas: ${result.deactivation_names.map(sabadellEscape).join(', ')}</p>` : '';
-  sabadellEl('sabadellReview').innerHTML = `<h2>${result.nueva_edicion ? 'Crear nueva edición' : 'Actualizar grupos del curso'}</h2><p>${sabadellEscape(result.nombre_edicion)} · ${sabadellEscape(result.periodo.fecha_inicio)} — ${sabadellEscape(result.periodo.fecha_fin || 'sin fin definido')}</p><dl>${Object.entries(labels).map(([key, label]) => `<dt>${label}</dt><dd>${result.stats[key] || 0}</dd>`).join('')}<dt>Filas excluidas expresamente</dt><dd>${result.excluded_count}</dd></dl>${details}<p>Las asistencias y evaluaciones anteriores se conservan. ${result.nueva_edicion ? 'Se creará un curso independiente.' : 'Los grupos ausentes del PDF se mantienen.'}</p>`;
+  sabadellEl('sabadellReview').innerHTML = `<h2>${result.nueva_edicion ? 'Empezar un período nuevo' : 'Añadir o actualizar grupos'}</h2><p>${sabadellEscape(sabadellPeriodLabel(result.periodo))}</p><dl>${Object.entries(labels).map(([key, label]) => `<dt>${label}</dt><dd>${result.stats[key] || 0}</dd>`).join('')}<dt>Filas excluidas expresamente</dt><dd>${result.excluded_count}</dd></dl>${details}<p>Las asistencias y evaluaciones anteriores se conservan. ${result.nueva_edicion ? 'Se creará un período independiente.' : 'Los grupos ausentes del PDF se mantienen.'}</p>`;
   sabadellEl('sabadellReview').hidden = false;
   sabadellEl('sabadellSave').hidden = false;
   sabadellEl('sabadellReviewButton').hidden = true;

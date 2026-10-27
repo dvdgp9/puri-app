@@ -10,12 +10,12 @@ En **Administradores**, crear o editar la cuenta y marcar **Importar listados de
 
 1. Crear el centro y asignarlo a la administradora.
 2. Desde la ficha del centro, abrir **Cargar datos → Listado del Ayuntamiento de Sabadell**.
-3. Seleccionar el curso de destino o crear una renovación explícita. Para la primera carga, introducir las fechas del curso.
+3. Indicar las fechas de las actividades. La carga habitual añade o actualiza los grupos del período actual. **Opciones de actualización** permite empezar un período independiente o elegir otro existente; el selector solo aparece si hay varios períodos.
 4. Subir el PDF con texto del Ayuntamiento. No se admiten el XLS maquetado ni PDF escaneados. Límites: 5 MB, 100 páginas, 20.000 filas y una página por grupo.
 5. Abrir cada grupo, comprobar los nombres y excluir expresamente las filas que no deben cargarse. Los dos primeros términos se proponen como apellidos para nombres nuevos; esa separación no es una identificación fiable. Cuando el nombre completo coincide inequívocamente dentro de la clase, se reutiliza la separación existente.
 6. Confirmar la revisión de cada grupo y pulsar **Revisar cambios**. Comprobar altas, bajas, reincorporaciones, clases nuevas/sustituidas y exclusiones. Pulsar **Guardar listado**.
 
-Cambiar el centro elimina el borrador visible. Cambiar el curso o elegir renovación vuelve a preparar los grupos desde el PDF y reinicia las correcciones/confirmaciones; elegir el destino antes de revisar. Cambiar cualquier dato después de una revisión invalida esa revisión.
+Cambiar el centro elimina el borrador visible. Cambiar el período o elegir renovación vuelve a preparar los grupos desde el PDF y reinicia las correcciones/confirmaciones; elegir estas opciones antes de revisar. Cambiar cualquier dato después de una revisión invalida esa revisión. Las fechas antiguas inválidas (por ejemplo, un año `0206`) no se rellenan como fechas sugeridas ni se convierten en un año supuesto; se muestra un aviso para revisarlas. Esto no corrige ni borra fechas existentes en la base de datos.
 
 ## Actualización mensual
 
