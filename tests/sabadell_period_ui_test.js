@@ -26,6 +26,12 @@ async function load(ediciones, id, destination = 'actual') {
   el('sabadellCenter').value = '1';
   el('sabadellDestination').value = destination;
   await run('sabadellLoadCenter()');
+  assert.equal(el('sabadellDestination').value, 'nueva', 'Cada carga de centro propone un período nuevo, incluso tras una actualización anterior.');
+  if (destination !== 'nueva') {
+    // Updating an existing period now requires an explicit selection.
+    el('sabadellDestination').value = destination;
+    run('sabadellSetPeriod()');
+  }
   run('sabadellUpdateDates()');
 }
 
@@ -37,6 +43,11 @@ async function load(ediciones, id, destination = 'actual') {
   assert.equal(run('sabadellBase().edicion_id'), null);
 
   const valid = { id: 7, nombre: 'Curso 2026–2027', fecha_inicio: '2026-09-01', fecha_fin: '2027-06-30' };
+  await load([valid], 7, 'nueva');
+  assert.equal(run('sabadellBase().destination'), 'nueva');
+  assert.equal(run('sabadellBase().edicion_id'), null, 'La opción predeterminada no envía una edición existente como destino.');
+  assert.equal(el('sabadellStart').value, '');
+  assert.equal(el('sabadellStart').required, true);
   await load([valid], 7);
   assert.equal(el('sabadellEditionField').hidden, true, 'Una única agrupación se utiliza sin selector.');
   assert.equal(run('sabadellBase().edicion_id'), '7', 'Ocultar el selector conserva el destino y el historial.');

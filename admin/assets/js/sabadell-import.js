@@ -30,7 +30,7 @@ function sabadellInvalidate() {
 
 function sabadellBase() {
   return { centro_id: Number(sabadellEl('sabadellCenter').value), destination: sabadellEl('sabadellDestination').value,
-    edicion_id: sabadellEl('sabadellEdition').value || null, draft_id: Sabadell.draft,
+    edicion_id: sabadellEl('sabadellDestination').value === 'nueva' ? null : sabadellEl('sabadellEdition').value || null, draft_id: Sabadell.draft,
     fecha_inicio: sabadellEl('sabadellStart').value, fecha_fin: sabadellEl('sabadellEnd').value };
 }
 
@@ -82,6 +82,7 @@ function sabadellUpdateDates() {
 
 async function sabadellLoadCenter() {
   sabadellClearDraft();
+  sabadellEl('sabadellDestination').value = 'nueva';
   Sabadell.editions = [];
   sabadellEl('sabadellEdition').replaceChildren();
   sabadellEl('sabadellStart').value = '';
@@ -141,15 +142,46 @@ function sabadellInput(field, label, value, type = 'text', readonly = false) {
   return `<div class="form-group"><label>${sabadellEscape(label)}<input class="form-input" data-field="${field}" type="${type}" value="${sabadellEscape(value)}" ${readonly ? 'readonly' : ''}></label></div>`;
 }
 
+/** Automatic checks support sample review; the server validates the entire list again. */
+function sabadellGroupIssues(group) {
+  const issues = [];
+  if (!['new', 'reuse', 'replace'].includes(group.action)
+      || (group.action !== 'new' && !(Number(group.target_id) > 0))) {
+    issues.push('Resuelve la coincidencia con la clase existente.');
+  }
+  if (['instalacion', 'actividad', 'grupo', 'dias_semana'].some(key => !String(group[key] || '').trim())) {
+    issues.push('Completa la instalación, actividad, código y días del grupo.');
+  }
+  if (!sabadellDateValue(group.fecha_inicio)
+      || (group.fecha_fin && (!sabadellDateValue(group.fecha_fin) || group.fecha_fin < group.fecha_inicio))) {
+    issues.push('Indica fechas válidas; el fin no puede ser anterior al inicio.');
+  }
+  const seconds = value => {
+    const m = /^(\d{1,2})[:.](\d{2})(?::(\d{2}))?$/.exec(value || '');
+    return m && Number(m[1]) < 24 && Number(m[2]) < 60 && Number(m[3] || 0) < 60
+      ? Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3] || 0) : null;
+  };
+  if (group.hora_inicio || group.hora_fin) {
+    const start = seconds(group.hora_inicio), end = seconds(group.hora_fin);
+    if (start === null || end === null || end <= start) issues.push('Revisa las horas de inicio y fin.');
+  }
+  const people = group.participants.filter(person => !person.exclude);
+  if (!people.length) issues.push('El grupo no puede quedar sin participantes.');
+  if (people.some(person => !person.nombre.trim())) issues.push('Hay participantes sin nombre.');
+  const normalize = value => value.trim().replace(/\s+/gu, ' ').toLowerCase();
+  const keys = people.map(person => normalize(person.nombre) + '\x1f' + normalize(person.apellidos));
+  if (new Set(keys).size !== keys.length) issues.push('Hay participantes repetidos. Corrige sus nombres o excluye las filas duplicadas.');
+  return issues;
+}
+
 function sabadellRenderGroups() {
   const html = Sabadell.groups.map(group => {
     const counts = new Map();
     group.participants.forEach(p => counts.set(p.original, (counts.get(p.original) || 0) + 1));
-    const duplicate = group.participants.some(p => counts.get(p.original) > 1);
     const candidate = group.candidates.find(c => Number(c.id) === Number(group.target_id));
     const view = group.action === 'reuse' && candidate ? { ...group, ...candidate, actividad: candidate.nombre } : group;
     return `<details class="sabadell-group" data-group="${sabadellEscape(group.id)}" id="sabadell-${sabadellEscape(group.id)}">
-      <summary>${sabadellEscape(group.grupo)} · ${sabadellEscape(group.actividad)} · ${group.participants.length} ${group.participants.length === 1 ? 'fila' : 'filas'} <span class="sabadell-source">Página ${group.page}${duplicate ? ' · nombres repetidos' : ''}</span></summary>
+      <summary>${sabadellEscape(group.grupo)} · ${sabadellEscape(group.actividad)} · ${group.participants.length} ${group.participants.length === 1 ? 'fila' : 'filas'} <span class="sabadell-source">Página ${group.page}</span><span class="sabadell-issue-status" data-issue-status></span></summary>
       <p class="sabadell-source">PDF: ${sabadellEscape(group.instalacion)} · ${sabadellEscape(group.dias_semana)} · ${sabadellEscape(group.hora_inicio.slice(0, 5))}–${sabadellEscape(group.hora_fin.slice(0, 5))}</p>
       <div class="sabadell-controls">
         ${sabadellInput('grupo', 'Código del grupo', group.grupo, 'text', true)}
@@ -167,12 +199,12 @@ function sabadellRenderGroups() {
       </div>
       <p class="sabadell-warning" data-resolution ${group.action === '' ? '' : 'hidden'}>Este código ya existe con datos distintos o varias coincidencias. Selecciona la clase y elige si conservarla o sustituirla. Una sustitución crea otra clase y conserva el historial de la anterior.</p>
       <table class="sabadell-people"><thead><tr><th>Nombre original del PDF</th><th>Nombre</th><th>Apellidos</th><th>Excluir</th></tr></thead><tbody>${group.participants.map(p => `<tr data-person="${sabadellEscape(p.id)}"><td class="sabadell-original">${sabadellEscape(p.original)}${counts.get(p.original) > 1 ? '<span class="sabadell-duplicate">Nombre repetido: revisa estas filas</span>' : ''}</td><td><input class="form-input" type="text" data-person-field="nombre" aria-label="Nombre de ${sabadellEscape(p.original)}" value="${sabadellEscape(p.nombre)}"></td><td><input class="form-input" type="text" data-person-field="apellidos" aria-label="Apellidos de ${sabadellEscape(p.original)}" value="${sabadellEscape(p.apellidos)}"></td><td><label><input type="checkbox" data-person-field="exclude" aria-label="Excluir fila de ${sabadellEscape(p.original)}"> Excluir</label></td></tr>`).join('')}</tbody></table>
-      <label class="sabadell-check"><input type="checkbox" data-confirmed> He revisado los nombres, las exclusiones y los datos de este grupo.</label>
+      <ul class="sabadell-warning sabadell-issues" data-issues hidden></ul>
     </details>`;
   }).join('');
   sabadellEl('sabadellGroups').innerHTML = html;
   document.querySelectorAll('[data-group]').forEach(sabadellClassDates);
-  sabadellProgress();
+  sabadellProgress().filter(item => item.issues.length).forEach(item => { item.node.open = true; });
 }
 
 function sabadellClassDates(node) {
@@ -180,26 +212,41 @@ function sabadellClassDates(node) {
   node.querySelectorAll('[data-field="fecha_inicio"], [data-field="fecha_fin"]').forEach(input => { input.disabled = reuse; });
 }
 
+function sabadellCollectGroup(node) {
+  const fields = Object.fromEntries([...node.querySelectorAll('[data-field]')].map(input => [input.dataset.field, input.value.trim()]));
+  return { ...fields, id: node.dataset.group,
+    participants: [...node.querySelectorAll('[data-person]')].map(row => ({ id: row.dataset.person,
+      nombre: row.querySelector('[data-person-field="nombre"]').value.trim(), apellidos: row.querySelector('[data-person-field="apellidos"]').value.trim(),
+      exclude: row.querySelector('[data-person-field="exclude"]').checked })) };
+}
+
 function sabadellCollect() {
-  return { ...sabadellBase(), groups: [...document.querySelectorAll('[data-group]')].map(node => {
-    const fields = Object.fromEntries([...node.querySelectorAll('[data-field]')].map(input => [input.dataset.field, input.value.trim()]));
-    return { ...fields, id: node.dataset.group, confirmed: node.querySelector('[data-confirmed]').checked,
-      participants: [...node.querySelectorAll('[data-person]')].map(row => ({ id: row.dataset.person,
-        nombre: row.querySelector('[data-person-field="nombre"]').value.trim(), apellidos: row.querySelector('[data-person-field="apellidos"]').value.trim(),
-        exclude: row.querySelector('[data-person-field="exclude"]').checked })) };
-  }) };
+  return { ...sabadellBase(), groups: [...document.querySelectorAll('[data-group]')].map(sabadellCollectGroup) };
 }
 
 function sabadellProgress() {
-  const count = document.querySelectorAll('[data-confirmed]:checked').length;
-  sabadellEl('sabadellProgress').textContent = `${count} de ${Sabadell.groups.length} grupos revisados`;
+  const result = [...document.querySelectorAll('[data-group]')].map(node => {
+    const issues = sabadellGroupIssues(sabadellCollectGroup(node));
+    if (node.dataset.serverIssue) issues.push(node.dataset.serverIssue);
+    node.classList.toggle('has-issues', issues.length > 0);
+    node.querySelector('[data-issue-status]').textContent = issues.length ? 'Requiere atención' : 'Sin incidencias detectadas';
+    const list = node.querySelector('[data-issues]');
+    list.innerHTML = issues.map(issue => `<li>${sabadellEscape(issue)}</li>`).join('');
+    list.hidden = !issues.length;
+    return { node, issues };
+  });
+  const count = result.filter(item => item.issues.length).length;
+  sabadellEl('sabadellProgress').textContent = count
+    ? `${count} de ${result.length} grupos con incidencias`
+    : `${result.length} grupos · sin incidencias detectadas`;
+  return result;
 }
 
 function sabadellGroupChange(event) {
   const node = event.target.closest('[data-group]');
   if (!node) return;
   sabadellInvalidate();
-  if (!event.target.matches('[data-confirmed]')) node.querySelector('[data-confirmed]').checked = false;
+  delete node.dataset.serverIssue;
   const group = Sabadell.groups.find(g => g.id === node.dataset.group);
   const action = node.querySelector('[data-field="action"]');
   const field = event.target.dataset.field;
@@ -233,14 +280,25 @@ function sabadellGroupChange(event) {
 async function sabadellReview() {
   sabadellInvalidate();
   const payload = sabadellCollect();
-  const pending = payload.groups.find(g => !g.confirmed);
+  const pending = sabadellProgress().find(item => item.issues.length);
   if (pending) {
-    const node = sabadellEl(`sabadell-${pending.id}`);
+    const node = pending.node;
     node.open = true;
     node.querySelector('summary').focus();
-    throw new Error('Revisa y confirma todos los grupos antes de continuar.');
+    throw new Error('Resuelve las incidencias del grupo ' + node.querySelector('[data-field="grupo"]').value + ' antes de continuar.');
   }
-  const result = await sabadellRequest({ ...payload, operation: 'review' });
+  let result;
+  try { result = await sabadellRequest({ ...payload, operation: 'review' }); }
+  catch (error) {
+    const node = [...document.querySelectorAll('[data-group]')].find(group => error.message.startsWith('Grupo ' + group.querySelector('[data-field="grupo"]').value + ' (página '));
+    if (node) {
+      node.dataset.serverIssue = error.message;
+      node.open = true;
+      sabadellProgress();
+      node.querySelector('summary').focus();
+    }
+    throw error;
+  }
   Sabadell.payload = payload;
   Sabadell.preview = result;
   const labels = { instalaciones_creadas: 'Instalaciones nuevas', actividades_creadas: 'Clases nuevas', actividades_reutilizadas: 'Clases existentes', actividades_retiradas: 'Clases sustituidas', participantes_creados: 'Participantes nuevos', participantes_mantenidos: 'Participantes que siguen', participantes_reactivados: 'Reincorporaciones', participantes_desactivados: 'Bajas' };
@@ -275,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-group]').forEach(node => {
       if (node.querySelector('[data-field="action"]').value !== 'reuse') {
         node.querySelector(`[data-field="${key}"]`).value = sabadellEl(id).value;
-        node.querySelector('[data-confirmed]').checked = false;
+        delete node.dataset.serverIssue;
       }
     });
     sabadellProgress();

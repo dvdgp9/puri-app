@@ -71,7 +71,7 @@ function sabadellContext(array $snapshot, array $draft, array $input): array
     return ['groups' => $groups, 'edicion_id' => $edition, 'ediciones' => $snapshot['ediciones'], 'period' => $period];
 }
 
-/** All source rows must be accounted for; exclusions and group review are explicit. */
+/** Account for every source row and validate real issues; manual review is optional. */
 function sabadellPlan(array $snapshot, array $draft, array $input): array
 {
     $edition = sabadellEdition($snapshot, $input);
@@ -83,7 +83,6 @@ function sabadellPlan(array $snapshot, array $draft, array $input): array
         $id = $group['id'] ?? '';
         if (!is_string($id) || !isset($source[$id]) || isset($seen[$id])) throw new DomainException('Grupo desconocido o repetido.');
         $seen[$id] = true;
-        if (($group['confirmed'] ?? false) !== true) throw new DomainException('Revisa y confirma los nombres del grupo ' . $source[$id]['grupo'] . '.');
         $class = [];
         foreach (['instalacion', 'actividad', 'grupo', 'dias_semana', 'hora_inicio', 'hora_fin'] as $field) {
             if (!is_string($group[$field] ?? null)) throw new DomainException('Faltan datos del grupo.');

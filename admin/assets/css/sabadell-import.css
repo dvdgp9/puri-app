@@ -4,7 +4,7 @@
 .sabadell-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .sabadell-controls .form-group { margin: 0; }
 .sabadell-options { margin-top: 16px; }
-.sabadell-options summary { cursor: pointer; font-weight: 600; }
+.sabadell-options h2 { font-size: inherit; font-weight: 600; margin: 0; }
 .sabadell-options .sabadell-controls { margin-top: 12px; }
 .sabadell-file { border-top: 1px solid #dce2e8; margin-top: 24px; padding: 20px 0; }
 .sabadell-file label { display: block; font-weight: 600; margin-bottom: 10px; }
@@ -22,7 +22,9 @@
 .sabadell-people tr.is-excluded .sabadell-original { text-decoration: line-through; }
 .sabadell-original { font-size: 12px; color: #526071; overflow-wrap: anywhere; }
 .sabadell-duplicate { display: block; color: #9c4700; font-size: 12px; }
-.sabadell-check { display: flex; gap: 8px; align-items: flex-start; padding: 10px 0; }
+.sabadell-issue-status { display: block; font-size: 13px; font-weight: 400; color: #526071; }
+.sabadell-group.has-issues > summary .sabadell-issue-status { color: #8a460c; font-weight: 600; }
+.sabadell-issues { padding-left: 30px; }
 .sabadell-footer { position: sticky; bottom: 0; background: #fff; padding: 16px 0; border-top: 1px solid #dce2e8; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; z-index: 2; }
 .sabadell-footer span { margin-right: auto; color: #526071; }
 .sabadell-review { background: #f5f8fa; padding: 20px; margin: 20px 0; border: 1px solid #dce2e8; border-radius: 8px; }

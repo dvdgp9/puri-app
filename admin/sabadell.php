@@ -45,15 +45,15 @@ $escape = static fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
                 <div class="form-group"><label for="sabadellEnd">Fin de las actividades (opcional)</label><input class="form-input" type="date" id="sabadellEnd"></div>
             </div>
             <p id="sabadellDatesNotice" class="sabadell-warning" role="status" hidden>Las actividades existentes tienen fechas por revisar. Indica las fechas correctas para los grupos nuevos. Las fechas anteriores no se corrigen automáticamente.</p>
-            <p id="sabadellScopeHelp" class="form-hint">Se actualizan los participantes de los grupos incluidos. Los grupos ausentes del PDF se mantienen.</p>
-            <details class="sabadell-options">
-                <summary>Opciones de actualización</summary>
-                <p class="form-hint">Para las cargas mensuales, utiliza «Añadir o actualizar grupos». Elige un período nuevo cuando quieras empezar una temporada independiente. Cambiar estas opciones reinicia la revisión del PDF.</p>
+            <p id="sabadellScopeHelp" class="form-hint">Se guardarán los grupos en un período nuevo. Las actividades y el historial anteriores se conservarán.</p>
+            <section class="sabadell-options" aria-labelledby="sabadellOptionsTitle">
+                <h2 id="sabadellOptionsTitle">Opciones de actualización</h2>
+                <p class="form-hint">Por defecto se propone un período independiente. Para actualizar un listado existente, elige «Añadir o actualizar grupos». Cambiar estas opciones reinicia la revisión del PDF.</p>
                 <div class="sabadell-controls">
-                    <div class="form-group"><label for="sabadellDestination">Qué quieres hacer</label><select class="form-input" id="sabadellDestination"><option value="actual">Añadir o actualizar grupos</option><option value="nueva">Empezar un período nuevo</option></select></div>
+                    <div class="form-group"><label for="sabadellDestination">Qué quieres hacer</label><select class="form-input" id="sabadellDestination"><option value="nueva" selected>Empezar un período nuevo</option><option value="actual">Añadir o actualizar grupos</option></select></div>
                     <div class="form-group" id="sabadellEditionField" hidden><label for="sabadellEdition">Período que quieres actualizar</label><select class="form-input" id="sabadellEdition"></select></div>
                 </div>
-            </details>
+            </section>
             <div class="sabadell-file">
                 <label for="sabadellFile">PDF del Ayuntamiento</label>
                 <input type="file" accept=".pdf" id="sabadellFile" aria-describedby="sabadellFileHelp">
@@ -62,7 +62,7 @@ $escape = static fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
             <p id="sabadellStatus" role="status" aria-live="polite"></p>
             <p id="sabadellError" class="form-error" role="alert"></p>
             <div id="sabadellEditor" hidden>
-                <p class="sabadell-note">Comprueba los nombres de cada grupo. En nombres nuevos, los dos primeros términos se proponen como apellidos; corrige los apellidos compuestos y otros casos. Para omitir una fila, marca «Excluir».</p>
+                <p class="sabadell-note">Puedes revisar uno o dos grupos como muestra. Resuelve los grupos con incidencias antes de guardar. En nombres nuevos, los dos primeros términos se proponen como apellidos; puedes corregirlos. Para omitir una fila, marca «Excluir».</p>
                 <div id="sabadellGroups"></div>
                 <div id="sabadellReview" class="sabadell-review" tabindex="-1" aria-live="polite" hidden></div>
                 <div class="sabadell-footer"><span id="sabadellProgress"></span><button type="submit" class="btn btn-primary" id="sabadellReviewButton">Revisar cambios</button><button type="button" class="btn btn-primary" id="sabadellSave" hidden>Guardar listado</button></div>

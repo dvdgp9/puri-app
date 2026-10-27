@@ -99,7 +99,9 @@ sbCheck(!sabadellSameMetadata($draft['groups'][0], $legacy), 'Las clases antigua
 $changedInput = $input; $changedInput['groups'][0]['participants'][0]['nombre'] = 'Ana María';
 sbCheck(sabadellPlan(programSnapshot($pdo, 1), $draft, $changedInput)['fingerprint'] !== $repeat['fingerprint'], 'La corrección invalida la revisión.');
 $unconfirmed = $input; $unconfirmed['groups'][0]['confirmed'] = false;
-sbReject(fn() => sabadellPlan(programSnapshot($pdo, 1), $draft, $unconfirmed), 'Todos los grupos requieren revisión.');
+sbCheck(sabadellPlan(programSnapshot($pdo, 1), $draft, $unconfirmed)['stats'] === $repeat['stats'], 'Se puede importar sin marcar revisado cuando no hay incidencias.');
+unset($unconfirmed['groups'][0]['confirmed']);
+sbCheck(sabadellPlan(programSnapshot($pdo, 1), $draft, $unconfirmed)['stats'] === $repeat['stats'], 'La confirmación manual no es un requisito de la API.');
 $omitted = $input; array_pop($omitted['groups'][0]['participants']);
 sbReject(fn() => sabadellPlan(programSnapshot($pdo, 1), $draft, $omitted), 'No se omiten filas del documento.');
 $empty = $input; foreach ($empty['groups'][0]['participants'] as &$p) $p['exclude'] = true; unset($p);
