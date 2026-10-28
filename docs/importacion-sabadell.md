@@ -25,6 +25,16 @@ Los códigos de grupo se comparan dentro del curso seleccionado. Una diferencia 
 
 Reimportar el mismo listado en el mismo curso no crea actividades ni participantes. Una renovación crea otra edición y no modifica las anteriores. No hay identidad personal común entre cursos, igual que en las importaciones generales de Puri.
 
+## Fecha de inicio y asistencia
+
+Las altas iniciales de una actividad nueva empiezan en su fecha de inicio, aunque el PDF se cargue antes. El monitor muestra solo las personas cuya inscripción está vigente en el día seleccionado.
+
+Si se adelanta el inicio al editar la actividad, se adelantan también las altas iniciales que coincidían con el inicio anterior y conservan una única vigencia abierta. No se cambian las incorporaciones con otra fecha, las bajas ni las reincorporaciones. Retrasar el inicio no recorta el historial de inscripciones. El cambio se guarda en una transacción junto con la actividad y el período.
+
+Para una actividad cuyo inicio ya se adelantó antes de esta corrección y cuyo listado sigue vacío: tras desplegar, guardar primero el inicio original de la importación y después volver a guardar el inicio deseado. Esto ejecuta el ajuste de las altas iniciales sin reimportar el PDF. No se realiza una reparación masiva de datos existentes.
+
+Un listado vacío en la pantalla de asistencia indica que no hay participantes de alta para la fecha seleccionada y, si existen vigencias futuras, muestra la próxima fecha de alta.
+
 ## Procesamiento
 
 El servidor usa `smalot/pdfparser`, instalado con Composer, y las posiciones del texto para reconocer el formato municipal. Se valida la cabecera, la numeración consecutiva y que no quede texto sin interpretar en la columna de participantes. Las páginas incompletas o los códigos repetidos bloquean todo el documento; no se importan solo las páginas válidas.
@@ -41,6 +51,7 @@ El alcance interno `groups` de `programPlan` sincroniza participantes dentro de 
 
 - `php tests/sabadell_import_test.php`: lector por posiciones, páginas incompletas, permisos/revocación, exclusiones, revisión, actualización parcial, sustituciones, renovaciones, historial y borradores.
 - `node tests/sabadell_review_ui_test.js`: revisión por muestra sin casillas, apertura automática de incidencias, duplicados resueltos y errores adicionales del servidor.
+- `php tests/activity_start_roster_test.php`: reproduce la importación futura y el cambio a octubre; verifica la lista del monitor y la conservación de bajas, reincorporaciones e historial.
 - `php tests/program_editions_test.php`, `php tests/program_spreadsheet_test.php`, `php tests/bulk_import_aforo_test.php`, `php tests/recurring_roster_test.php`: regresiones del importador general.
 - El PDF de referencia se utiliza solo para comprobar la extracción local, sin copiarlo al repositorio ni importar sus participantes en la base habitual. Los casos de pruebas persistidos son ficticios.
 - El recorrido de subida/revisión/guardado se ha comprobado también en un servidor PHP y MariaDB aislados: 33 comprobaciones HTTP de los endpoints reales, incluyendo revocación del permiso/asignación, sesión de superadmin obsoleta, revisión modificada, cambios concurrentes y rechazo de archivos inválidos. La pantalla se comprobó con datos ficticios en escritorio y móvil.

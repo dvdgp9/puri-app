@@ -97,6 +97,14 @@ $stmtUsuarios = $pdo->prepare("
 ");
 $stmtUsuarios->execute([$actividad_id, $fecha_seleccionada, $fecha_seleccionada]);
 $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
+$proximaAlta = null;
+if (!$usuarios && !$es_aforo) {
+    $stmtProximaAlta = $pdo->prepare('SELECT MIN(v.inicio) FROM inscrito_vigencias v
+        JOIN inscritos i ON i.id = v.inscrito_id
+        WHERE i.actividad_id = ? AND v.inicio > ? AND (v.fin IS NULL OR v.fin > v.inicio)');
+    $stmtProximaAlta->execute([$actividad_id, $fecha_seleccionada]);
+    $proximaAlta = $stmtProximaAlta->fetchColumn() ?: null;
+}
 
 // Consultamos las asistencias para esta actividad en la fecha seleccionada
 $stmt = $pdo->prepare("SELECT usuario_id, asistio FROM asistencias 
@@ -853,6 +861,12 @@ require_once 'includes/header.php';
             </tr>
           </thead>
           <tbody>
+            <?php if (!$usuarios): ?>
+            <tr><td colspan="2">
+              No hay participantes de alta para la fecha seleccionada.
+              <?php if ($proximaAlta): ?>Próximas altas: <?php echo htmlspecialchars($formatDate($proximaAlta)); ?>.<?php endif; ?>
+            </td></tr>
+            <?php endif; ?>
             <?php foreach($usuarios as $usuario): 
                 $estado = isset($asistencias[$usuario['id']]) ? $asistencias[$usuario['id']] : 0;
             ?>

@@ -29,6 +29,36 @@ function rosterInsert(PDO $pdo, int $activityId, string $name, string $surname, 
     return $id;
 }
 
+/**
+ * Advance only the initial roster tied to the activity's previous start.
+ * Later admissions, withdrawals and reactivations keep their own dates.
+ * The caller owns the transaction and locks the activity before changing it.
+ */
+function rosterAdvanceActivityStart(PDO $pdo, int $activityId, ?string $oldStart, ?string $newStart): int
+{
+    if (!$oldStart || !$newStart || $newStart >= $oldStart) return 0;
+    if (!$pdo->inTransaction()) throw new LogicException('El cambio de inicio requiere una transacción.');
+
+    $sql = 'SELECT i.id, v.id AS vigencia_id FROM inscritos i
+            JOIN inscrito_vigencias v ON v.inscrito_id = i.id
+            WHERE i.actividad_id = ? AND i.activo = 1 AND i.alta_at = ?
+              AND v.inicio = ? AND v.fin IS NULL
+              AND NOT EXISTS (SELECT 1 FROM inscrito_vigencias other
+                              WHERE other.inscrito_id = i.id AND other.id <> v.id)
+            ORDER BY i.id';
+    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') $sql .= ' FOR UPDATE';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$activityId, $oldStart, $oldStart]);
+    $people = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $interval = $pdo->prepare('UPDATE inscrito_vigencias SET inicio = ? WHERE id = ?');
+    $admission = $pdo->prepare('UPDATE inscritos SET alta_at = ? WHERE id = ?');
+    foreach ($people as $person) {
+        $interval->execute([$newStart, $person['vigencia_id']]);
+        $admission->execute([$newStart, $person['id']]);
+    }
+    return count($people);
+}
+
 function rosterEnsureActive(PDO $pdo, int $activityId, string $name, string $surname, string $date): array
 {
     $stmt = $pdo->prepare('SELECT id, nombre, apellidos, activo FROM inscritos WHERE actividad_id = ?');

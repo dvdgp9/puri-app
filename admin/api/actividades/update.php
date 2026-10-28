@@ -118,16 +118,25 @@ try {
 
     $pdo->beginTransaction();
     $pdo->prepare('SELECT id FROM centros WHERE id = ? FOR UPDATE')->execute([$row['centro_id']]);
+    $currentStmt = $pdo->prepare('SELECT fecha_inicio, fecha_fin FROM actividades WHERE id = ? FOR UPDATE');
+    $currentStmt->execute([$id]);
+    $current = $currentStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$current) throw new DomainException('Actividad no encontrada.');
+    $effectiveStart = $fecha_inicio ?? $current['fecha_inicio'];
+    $effectiveEnd = array_key_exists('fecha_fin', $input) ? $fecha_fin : $current['fecha_fin'];
+    if ($effectiveEnd && $effectiveEnd < $effectiveStart) throw new DomainException('La fecha de fin es anterior al inicio.');
     $params[] = $id;
     $sql = 'UPDATE actividades SET ' . implode(', ', $fields) . ' WHERE id = ?';
     $stmt = $pdo->prepare($sql);
     $ok = $stmt->execute($params);
 
     if ($ok) {
+        if ($fecha_inicio !== null) rosterAdvanceActivityStart($pdo, $id, $current['fecha_inicio'], $fecha_inicio);
         if ($row['edicion_id']) editionRecalculate($pdo, (int) $row['edicion_id']);
         $pdo->commit();
         echo json_encode(['success' => true, 'message' => 'Actividad actualizada']);
     } else {
+        $pdo->rollBack();
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Error al actualizar la actividad']);
     }

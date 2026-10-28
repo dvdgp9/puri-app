@@ -1,6 +1,6 @@
 <?php
 require_once 'config/config.php';
-require_once 'includes/ediciones.php';
+require_once 'includes/program_import.php';
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id) {
@@ -38,15 +38,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($nombre) || (empty($dias_semana) && empty($_POST['horario'])) || !$instalacion_id || empty($fecha_inicio)) {
         $error = "El nombre, los días de la semana, la instalación y la fecha de inicio son obligatorios.";
     } else {
-        $stmt = $pdo->prepare("UPDATE actividades SET nombre = ?, grupo = ?, horario = ?, dias_semana = ?, hora_inicio = ?, hora_fin = ?, instalacion_id = ?, fecha_inicio = ?, fecha_fin = ? WHERE id = ?");
-        $result = $stmt->execute([$nombre, $grupo, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin ?: null, $id]);
+        try {
+            $fecha_inicio = programDate($fecha_inicio);
+            $fecha_fin = programDate($fecha_fin ?: '');
+            if (!$fecha_inicio) throw new DomainException('La fecha de inicio es obligatoria.');
+            if ($fecha_fin && $fecha_fin < $fecha_inicio) throw new DomainException('La fecha de fin es anterior al inicio.');
+            $pdo->beginTransaction();
+            $pdo->prepare('SELECT id FROM centros WHERE id = (SELECT centro_id FROM instalaciones WHERE id = ?) FOR UPDATE')->execute([$actividad['instalacion_id']]);
+            $currentStmt = $pdo->prepare('SELECT fecha_inicio FROM actividades WHERE id = ? FOR UPDATE');
+            $currentStmt->execute([$id]);
+            $current = $currentStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$current) throw new DomainException('Actividad no encontrada.');
+            $stmt = $pdo->prepare("UPDATE actividades SET nombre = ?, grupo = ?, horario = ?, dias_semana = ?, hora_inicio = ?, hora_fin = ?, instalacion_id = ?, fecha_inicio = ?, fecha_fin = ? WHERE id = ?");
+            $result = $stmt->execute([$nombre, $grupo, $horario, $dias_semana, $hora_inicio, $hora_fin, $instalacion_id, $fecha_inicio, $fecha_fin, $id]);
 
-        if ($result) {
+            if (!$result) throw new RuntimeException('Error al actualizar la actividad.');
+            rosterAdvanceActivityStart($pdo, (int) $id, $current['fecha_inicio'], $fecha_inicio);
             if ($actividad['edicion_id']) editionRecalculate($pdo, (int) $actividad['edicion_id']);
-             // Redirigir a la lista de actividades, *incluyendo el instalacion_id*
+            $pdo->commit();
+            // Redirigir a la lista de actividades, incluyendo el instalacion_id.
             header("Location: actividades.php?instalacion_id=" . $actividad['instalacion_id'] . "&edicion_id=" . ($actividad['edicion_id'] ?? ''));
             exit;
-        } else {
+        } catch (DomainException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            $error = $e->getMessage();
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log('Error en editar_actividad.php: ' . $e->getMessage());
             $error = "Error al actualizar la actividad.";
         }
     }
@@ -138,4 +156,4 @@ require_once 'includes/header.php';
     </form>
 </body>
 </html>
-<?php require_once 'includes/footer.php'; ?> 
+<?php require_once 'includes/footer.php'; ?>
